@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git: cherry-pick, stash, rebase, bisect — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 1 · Жизненный цикл разработки ПО</p>
+    <h1>Git: cherry-pick, stash, rebase и bisect — простыми словами</h1>
+    <p class="lead">
+      Четыре команды, которые отличают уверенного разработчика: зачем они нужны, когда применять
+      и чем опасны. На аналогиях, с командами и ответами для интервью.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#cherry">cherry-pick</a></li>
+      <li><a href="#stash">stash</a></li>
+      <li><a href="#rebase">rebase</a></li>
+      <li><a href="#bisect">bisect</a></li>
+      <li><a href="#rules">Правила</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Четыре команды — четыре разные задачи</h2>
+
+    <p>Git хранит всю историю проекта: кто, что и когда менял. Но иногда историю нужно
+    <strong>подправить</strong>: перенести один фикс в другую ветку, временно убрать недоделанное,
+    привести свои коммиты в порядок или найти тот самый коммит, после которого всё сломалось.
+    Для этого есть четыре инструмента.</p>
+
+    <div class="table-wrap">
+      <table class="commands">
+        <thead>
+          <tr><th>Команда</th><th>Задача</th><th>Аналогия</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>cherry-pick</code></td>
+            <td>Перенести один конкретный коммит в другую ветку</td>
+            <td>Скопировать один рецепт из чужой книги в свой блокнот</td>
+          </tr>
+          <tr>
+            <td><code>stash</code></td>
+            <td>Временно убрать незакоммиченные изменения</td>
+            <td>Сложить недоделанное в ящик стола и достать позже</td>
+          </tr>
+          <tr>
+            <td><code>rebase -i</code></td>
+            <td>Переписать свою историю: склеить, переставить, переименовать коммиты</td>
+            <td>Привести черновик в порядок перед сдачей</td>
+          </tr>
+          <tr>
+            <td><code>bisect</code></td>
+            <td>Найти коммит, который сломал работу</td>
+            <td>Найти перегоревшую лампочку в гирлянде делением пополам</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Главное отличие.</strong> <code>cherry-pick</code> и <code>rebase</code> создают
+      <strong>новые коммиты с новыми SHA</strong>. <code>stash</code> просто прячет изменения,
+      а <code>bisect</code> вообще ничего не меняет — только переключает коммиты и спрашивает
+      «здесь ещё работает?».
+    </div>
+  </div>
+</section>
+
+<section id="cherry">
+  <div class="wrap">
+    <h2><span class="badge">2</span> cherry-pick: перенести один коммит</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      В одной ветке есть коммит с нужным исправлением. Мы берём <strong>только его</strong>
+      и применяем в другой ветке. Вся остальная история первой ветки нам не нужна.
+    </div>
+
+    <p>Представь, что у тебя две книги рецептов. В одной появился хороший рецепт супа.
+    Ты не забираешь всю книгу — просто переписываешь один рецепт в свою. В Git это и есть
+    <code>cherry-pick</code>: изменения скопированы, но связи с исходным коммитом нет.</p>
+
+    <h3>Когда нужно</h3>
+    <ul>
+      <li>Хотфикс сделали в <code>main</code>, а он нужен ещё в <code>release/1.4</code> и <code>release/1.3</code>.</li>
+      <li>Нужен один коммит из чужой ветки, а вся ветка ещё сырая.</li>
+      <li>Случайно закоммитили не в ту ветку — переносим коммит куда надо.</li>
+    </ul>
+
+    <div class="flow">
+      <span class="node">main · фикс готов</span>
+      <span class="arrow">→</span>
+      <span class="node key">release/1.4 · копия фикса</span>
+    </div>
+    <p class="flow-note">Новый коммит, новый SHA, тот же набор изменений.</p>
+
+    <h3>Команды</h3>
+<pre class="cmd">git switch release/1.4
+git cherry-pick -x 4f2c9ab
+
+# если конфликт: правим файлы, затем
+git add .
+git cherry-pick --continue
+
+# или отменить перенос целиком
+git cherry-pick --abort</pre>
+
+    <p>Флаг <code>-x</code> дописывает в сообщение коммита строку вида
+    «cherry picked from commit 4f2c9ab». Через полгода это объяснит, откуда взялся фикс.</p>
+
+    <div class="callout warn">
+      <strong>Cherry-pick не заменяет merge.</strong> Он копирует изменения, а не историю.
+      Если потом влить исходную ветку целиком, те же изменения могут прийти второй раз —
+      получится конфликт или дубль. Для «забрать всю ветку» нужен <code>merge</code>,
+      для «забрать один фикс» — <code>cherry-pick</code>.
+    </div>
+  </div>
+</section>
+
+<section id="stash">
+  <div class="wrap">
+    <h2><span class="badge">3</span> stash: убрать недоделанное на время</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      Ты правишь код, но срочно нужно переключиться на другую задачу. Коммитить сырое
+      не хочется. Тогда изменения складываются в <strong>ящик стола</strong> — рабочая папка
+      становится чистой, можно спокойно переключаться. Потом ящик открывается, и работа возвращается.
+    </div>
+
+    <h3>Когда нужно</h3>
+    <ul>
+      <li>Срочный баг в другой ветке, а текущая правка ещё не готова.</li>
+      <li>Нужно подтянуть свежий <code>main</code>, но есть незакоммиченные файлы.</li>
+      <li>Хочется проверить чужую ветку, не теряя свою работу.</li>
+    </ul>
+
+    <h3>Команды</h3>
+<pre class="cmd"># убрать изменения, включая новые файлы (-u)
+git stash push -u -m "wip: player retry"
+
+git stash list
+git stash show -p stash@{0}
+
+# переключились, сделали дела, вернулись
+git stash pop      # применить и удалить из стека
+git stash apply    # применить и оставить в стеке</pre>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Команда</th><th>Что делает</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>git stash push -u</code></td><td>Прячет изменения вместе с новыми (untracked) файлами</td></tr>
+          <tr><td><code>git stash list</code></td><td>Показывает все сохранённые записи</td></tr>
+          <tr><td><code>git stash show -p</code></td><td>Показывает, что лежит в записи</td></tr>
+          <tr><td><code>git stash pop</code></td><td>Достаёт и удаляет запись, если конфликтов нет</td></tr>
+          <tr><td><code>git stash apply</code></td><td>Достаёт, но запись оставляет</td></tr>
+          <tr><td><code>git stash drop</code></td><td>Удаляет запись, не применяя</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <strong>Stash — не бэкап.</strong> Это временное хранилище, и оно легко превращается
+      в свалку из десяти забытых записей. Если работа важная — лучше сделать коммит в отдельной
+      ветке. И помни: без <code>-u</code> новые файлы останутся в рабочей папке и переедут
+      вместе с тобой в другую ветку.
+    </div>
+  </div>
+</section>
+
+<section id="rebase">
+  <div class="wrap">
+    <h2><span class="badge">4</span> rebase -i: привести свою историю в порядок</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      У тебя есть черновик: три коммита «правка», «ещё правка», «ой, забыл файл».
+      Перед сдачей их хочется склеить в один понятный коммит и переписать сообщение.
+      Interactive rebase — это редактор твоей истории: переставить коммиты, склеить,
+      переименовать или выбросить.
+    </div>
+
+    <p>Обычный <code>rebase</code> переносит твои коммиты на свежую основную ветку. Флаг
+    <code>-i</code> (interactive) открывает список коммитов и даёт выбрать, что с каждым сделать.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Действие</th><th>Что произойдёт</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>pick</code></td><td>Оставить коммит как есть</td></tr>
+          <tr><td><code>reword</code></td><td>Оставить изменения, переписать сообщение</td></tr>
+          <tr><td><code>squash</code></td><td>Склеить с предыдущим, объединив сообщения</td></tr>
+          <tr><td><code>fixup</code></td><td>Склеить с предыдущим, выбросив своё сообщение</td></tr>
+          <tr><td><code>edit</code></td><td>Остановиться и дать поправить коммит</td></tr>
+          <tr><td><code>drop</code></td><td>Выбросить коммит</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Команды</h3>
+<pre class="cmd">git switch feature/player
+git fetch origin
+git rebase origin/main
+
+# конфликт: правим файлы, затем
+git add .
+git rebase --continue
+# или отменить всё
+git rebase --abort
+
+# привести в порядок последние три коммита
+git rebase -i HEAD~3
+
+# после переписывания СВОЕЙ ветки
+git push --force-with-lease</pre>
+
+    <div class="callout warn">
+      <strong>Золотое правило rebase.</strong> Переписывать можно только свою, ещё не опубликованную
+      историю. Если ветку уже забрали коллеги, rebase поменяет SHA, и у всех разъедется история.
+      Общие ветки — <code>main</code>, <code>release</code>, <code>develop</code> — не rebase'ят.
+    </div>
+
+    <p><strong>Чем <code>--force-with-lease</code> лучше <code>--force</code>:</strong> он push'ит
+    только если удалённая ветка не менялась с твоего последнего <code>fetch</code>. Если кто-то
+    успел запушить, Git откажется, и чужая работа не пропадёт.</p>
+  </div>
+</section>
+
+<section id="bisect">
+  <div class="wrap">
+    <h2><span class="badge">5</span> bisect: найти коммит, который всё сломал</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      В гирлянде перегорела одна лампочка. Можно проверять по одной — долго. А можно делить
+      гирлянду пополам: если половина не горит, проблема там, вторую половину можно не трогать.
+      <code>git bisect</code> делает то же самое с коммитами.
+    </div>
+
+    <p>Ты знаешь, что на версии <code>v1.42.0</code> всё работало, а сейчас — нет. Между ними,
+    скажем, 1000 коммитов. Bisect включает середину, ты проверяешь и говоришь «работает» или
+    «сломано». Каждая проверка отбрасывает половину оставшихся. 1000 → 500 → 250 → …
+    Примерно <strong>10 проверок</strong>, потому что 2<sup>10</sup> ≈ 1024.</p>
+
+    <h3>Ручной режим</h3>
+<pre class="cmd">git bisect start
+git bisect bad              # текущий коммит сломан
+git bisect good v1.42.0     # последний известный рабочий
+
+# Git переключил на середину — проверяем и говорим:
+git bisect good             # здесь работает
+# или
+git bisect bad              # здесь уже сломано
+
+# когда виновник найден
+git bisect reset</pre>
+
+    <h3>Автоматический режим</h3>
+    <p>Если есть тест, который воспроизводит баг, bisect сам прогонит его на каждом шаге:</p>
+<pre class="cmd">git bisect start HEAD v1.42.0
+git bisect run ./vendor/bin/phpunit --filter=PlaybackTest</pre>
+
+    <div class="callout">
+      <strong>Как Git понимает результат.</strong> Код возврата <code>0</code> — коммит хороший,
+      <code>1–127</code> — плохой, <code>125</code> — «пропустить, проверить нельзя». Тест должен
+      быть быстрым и одинаково воспроизводимым, иначе bisect покажет случайный коммит.
+    </div>
+  </div>
+</section>
+
+<section id="rules">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Правила и частые ошибки</h2>
+
+    <h3>Шесть правил, которые спасают</h3>
+    <ol class="steps">
+      <li><strong>Переписывай только своё.</strong> Rebase и cherry-pick меняют SHA. Общие ветки не трогаем.</li>
+      <li><strong>Перед rebase — чистое дерево.</strong> Либо закоммить, либо <code>stash</code>.</li>
+      <li><strong>После rebase — <code>--force-with-lease</code>.</strong> Никогда не <code>--force</code> в общую ветку.</li>
+      <li><strong>Cherry-pick — точечно.</strong> Для целой ветки есть merge.</li>
+      <li><strong>Stash — на минуты, не на недели.</strong> Важное — в коммит.</li>
+      <li><strong>Bisect — только с воспроизводимым тестом.</strong> Иначе это гадание.</li>
+    </ol>
+
+    <h3>Частые ошибки</h3>
+    <ul>
+      <li>Сделали rebase общей ветки и запушили с <code>--force</code> — у коллег разъехалась история.</li>
+      <li>Перенесли фикс через <code>cherry-pick</code>, а потом влили ветку целиком — двойные изменения и конфликты.</li>
+      <li>Забыли <code>-u</code> в stash: новые файлы остались и переехали в другую ветку.</li>
+      <li>Сделали <code>stash pop</code> поверх таких же изменений — конфликт и потеря времени.</li>
+      <li>Запустили <code>bisect run</code> с «плавающим» тестом — виновник найден неверно.</li>
+      <li>Испугались после неудачного rebase и удалили ветку. А надо было просто посмотреть <code>git reflog</code>.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Страховка — <code>git reflog</code>.</strong> Он хранит перемещения HEAD примерно
+      90 дней, включая состояние до rebase. Нашёл нужную запись — вернулся:
+      <code>git reset --hard HEAD@{2}</code>.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем cherry-pick отличается от merge?</span></div>
+      <p class="a">«Cherry-pick берёт изменения одного коммита и создаёт в текущей ветке новый коммит
+      с новым SHA. Merge вливает всю ветку и сохраняет связь между ветками. Cherry-pick нужен для
+      точечного переноса — например, хотфикса в release. Заменой merge он не является: при
+      последующем слиянии те же изменения могут прийти второй раз и дать конфликт».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это как скопировать один рецепт из чужой книги: у меня он появился, но связи с книгой нет.
+        Merge — влить всю книгу целиком. Поэтому cherry-pick — для одного фикса, а не вместо слияния.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Когда rebase, а когда merge?</span></div>
+      <p class="a">«Rebase переписывает мои коммиты поверх свежей основной ветки и даёт линейную
+      историю. Его применяют к личной ветке перед MR. Merge сохраняет реальную историю ветвления
+      и безопасен для общих веток. Правило: не rebase'ить то, что уже ушло в общую ветку, иначе
+      у коллег разъедется история».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Свою ветку перед MR можно почистить rebase'ом. Общую — только merge. Если перепишу общую,
+        коллегам придётся разбираться с разъехавшейся историей.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Зачем stash и чем pop отличается от apply?</span></div>
+      <p class="a">«Stash убирает незакоммиченные изменения в стек и возвращает рабочее дерево
+      в чистое состояние. Pop применяет изменения и удаляет запись из стека, apply — применяет
+      и оставляет. Если при pop случился конфликт, запись остаётся».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Срочно надо переключиться — убрал недоделанное в ящик, потом достал. Pop — достал
+        и выкинул ярлык, apply — достал, ярлык оставил.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как найти коммит, который сломал прод?</span></div>
+      <p class="a">«Через git bisect. Отмечаю текущий коммит как bad, последний рабочий как good,
+      Git делит диапазон пополам и предлагает проверить середину. Каждая проверка отбрасывает
+      половину. Для 1000 коммитов это около 10 шагов. Проверку можно автоматизировать:
+      git bisect run с тестом».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Делю историю пополам: если середина плохая — ищу в левой половине, если хорошая —
+        в правой. Или просто отдаю тест команде bisect run, и он сам бегает.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Зачем --force-with-lease?</span></div>
+      <p class="a">«После rebase SHA меняются, и обычный push отклоняется. Force перезаписывает
+      удалённую ветку вслепую, force-with-lease — только если удалённая ветка не изменилась
+      с моего последнего fetch. Если кто-то успел запушить, операция отклонится, и я не потеряю
+      его коммиты».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это force с проверкой: если кто-то успел запушить, Git меня остановит, а не сотрёт
+        чужую работу.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Что делать, если после rebase всё сломалось?</span></div>
+      <p class="a">«git reflog хранит перемещения HEAD, включая состояние до rebase. Нахожу нужную
+      запись и делаю git reset --hard HEAD@{n} или создаю ветку от неё. Reflog хранится около
+      90 дней, поэтому локальные переписанные коммиты ещё доступны».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Смотрю reflog — там видно, где я был до rebase. Возвращаюсь на эту запись, и всё на месте.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="gt1" data-id="gt1"><label for="gt1">Объясни разницу между cherry-pick и merge.</label></li>
+      <li><input type="checkbox" class="check-item" id="gt2" data-id="gt2"><label for="gt2">Когда rebase уместен, а когда — только merge?</label></li>
+      <li><input type="checkbox" class="check-item" id="gt3" data-id="gt3"><label for="gt3">Чем pop отличается от apply и что не попадёт в stash без <code>-u</code>?</label></li>
+      <li><input type="checkbox" class="check-item" id="gt4" data-id="gt4"><label for="gt4">Как bisect находит коммит примерно за 10 проверок на 1000 коммитов?</label></li>
+      <li><input type="checkbox" class="check-item" id="gt5" data-id="gt5"><label for="gt5">Зачем <code>--force-with-lease</code> и как откатиться через <code>git reflog</code>?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить только одно:</strong> переписывать историю можно только у себя
+      и только до публикации. Всё, что уже ушло в общую ветку, меняется через merge.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Жизненный цикл разработки ПО» ·
+    <a href="DeployStrategies.html">Blue-green, canary, rolling</a> ·
+    <a href="JiraWorkflow.html">Jira workflow и оценка</a> ·
+    <a href="ScrumKanban.html">Scrum и Kanban</a> ·
+    <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senior Backend — подготовка к ассесменту</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="wide">
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Учебный сайт · Senior Backend</p>
+    <h1>Общие компетенции: подготовка к ассесменту</h1>
+    <p class="lead">
+      План на 12 недель, разборы тем простыми словами и прогресс, который сохраняется
+      в браузере. Всё работает офлайн: открой страницу и занимайся.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" href="planSenjor.html">Открыть план на 12 недель</a>
+      <a class="btn" href="#materials">Все материалы</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="num">12</span><span class="lbl">недель до цели</span></div>
+      <div class="stat"><span class="num">96</span><span class="lbl">часов, по 8 в неделю</span></div>
+      <div class="stat"><span class="num">10</span><span class="lbl">компетенций до уровня 3</span></div>
+      <div class="stat"><span class="num">9</span><span class="lbl">готовых разборов</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <ul>
+      <li><a href="#progress">Прогресс</a></li>
+      <li><a href="#weeks">Карта курса</a></li>
+      <li><a href="#materials">Материалы</a></li>
+      <li><a href="#how">Как заниматься</a></li>
+      <li><a href="planSenjor.html">План</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="progress">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Твой прогресс</h2>
+    <p class="sub">
+      Отметки из плана и материалов сохраняются в браузере и сразу видны здесь.
+      Ничего не отправляется в интернет.
+    </p>
+
+    <div class="dash">
+      <div class="dash-card">
+        <span class="kicker">Всего отмечено</span>
+        <div class="overall-row">
+          <span class="overall-num" id="overallPercent">0%</span>
+          <span class="overall-sub" id="overallCount">0 из 71 пунктов</span>
+        </div>
+        <div class="dash-bar" id="overallBar"><i></i></div>
+
+        <div class="prow" data-group="weeks">
+          <span class="lbl">Недели плана</span>
+          <span class="track"><i></i></span>
+          <span class="val">0 / 12</span>
+        </div>
+        <div class="prow" data-group="materials">
+          <span class="lbl">Материалы</span>
+          <span class="track"><i></i></span>
+          <span class="val">0 / 46</span>
+        </div>
+        <div class="prow" data-group="skip">
+          <span class="lbl">Что не учить</span>
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+        </div>
+        <div class="prow" data-group="artifacts">
+          <span class="lbl">Артефакты</span>
+          <span class="track"><i></i></span>
+          <span class="val">0 / 8</span>
+        </div>
+      </div>
+
+      <div class="dash-card continue-card">
+        <span class="kicker">Следующий шаг</span>
+        <span class="big" id="continueTitle">Неделя 1</span>
+        <p id="continueText">Жизненный цикл ПО</p>
+        <a class="btn primary" id="continueLink" href="planSenjor.html#weeks">Открыть неделю в плане</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="weeks">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Карта курса</h2>
+    <p class="sub">
+      Двенадцать недель, по одному блоку за раз. Когда отмечаешь неделю в плане,
+      карточка здесь становится неактивной.
+      <span class="progress" id="weeksDone">0 / 12</span>
+    </p>
+
+    <ol class="week-map">
+      <li class="week-item" data-week="1">
+        <div class="top"><span class="n">1</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Жизненный цикл ПО</a>
+      </li>
+      <li class="week-item" data-week="2">
+        <div class="top"><span class="n">2</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Обеспечение качества</a>
+      </li>
+      <li class="week-item" data-week="3">
+        <div class="top"><span class="n">3</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Качество + ИИ + алгоритмы</a>
+      </li>
+      <li class="week-item" data-week="4">
+        <div class="top"><span class="n">4</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Алгоритмы + паттерны</a>
+      </li>
+      <li class="week-item" data-week="5">
+        <div class="top"><span class="n">5</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Паттерны + архитектура</a>
+      </li>
+      <li class="week-item" data-week="6">
+        <div class="top"><span class="n">6</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Архитектура</a>
+      </li>
+      <li class="week-item" data-week="7">
+        <div class="top"><span class="n">7</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Архитектура + инфраструктура</a>
+      </li>
+      <li class="week-item" data-week="8">
+        <div class="top"><span class="n">8</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Инфраструктура и Cloud + Kafka</a>
+      </li>
+      <li class="week-item" data-week="9">
+        <div class="top"><span class="n">9</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Протоколы, API</a>
+      </li>
+      <li class="week-item" data-week="10">
+        <div class="top"><span class="n">10</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Безопасность</a>
+      </li>
+      <li class="week-item" data-week="11">
+        <div class="top"><span class="n">11</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Базы данных</a>
+      </li>
+      <li class="week-item" data-week="12">
+        <div class="top"><span class="n">12</span><span class="status">в плане</span></div>
+        <a class="title" href="planSenjor.html#weeks">Mock-интервью</a>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="materials">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Материалы</h2>
+    <p class="sub">
+      Готовые разборы: недели 1–2, алгоритмы и паттерны. Сначала простыми словами,
+      потом вопросы для интервью и чекбоксы для самопроверки.
+    </p>
+
+    <div class="search-row">
+      <input class="search" id="topicSearch" type="search" placeholder="Найти тему: Git, Kafka, Quality Gate…" aria-label="Поиск по материалам">
+      <span class="search-count" id="searchCount"></span>
+    </div>
+
+    <div class="mat-grid" id="materialGrid">
+
+      <article class="mat-card" data-key="jira">
+        <div class="top">
+          <div>
+            <h3>Jira workflow и оценка</h3>
+            <span class="file">JiraWorkflow.html</span>
+          </div>
+        </div>
+        <p>Статусы, переходы, категории оценки трудозатрат и планирование спринта.</p>
+        <div class="tags">
+          <span class="tag">Jira</span><span class="tag">оценка</span><span class="tag">Scrum</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 6</span>
+          <a class="open" href="JiraWorkflow.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="scrum">
+        <div class="top">
+          <div>
+            <h3>Scrum и Kanban</h3>
+            <span class="file">ScrumKanban.html</span>
+          </div>
+        </div>
+        <p>Две системы управления работой: роли, события, доска и правила выбора.</p>
+        <div class="tags">
+          <span class="tag">Scrum</span><span class="tag">Kanban</span><span class="tag">процессы</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="ScrumKanban.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="deploy">
+        <div class="top">
+          <div>
+            <h3>Blue-green, canary, rolling</h3>
+            <span class="file">DeployStrategies.html</span>
+          </div>
+        </div>
+        <p>Как выкатывать новую версию без простоя и как откатываться, если что-то пошло не так.</p>
+        <div class="tags">
+          <span class="tag">деплой</span><span class="tag">релизы</span><span class="tag">откат</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="DeployStrategies.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="git">
+        <div class="top">
+          <div>
+            <h3>Git: cherry-pick, stash, rebase, bisect</h3>
+            <span class="file">GitOperations.html</span>
+          </div>
+        </div>
+        <p>Команды, которые нужны в реальной работе, с примерами и разбором опасных мест.</p>
+        <div class="tags">
+          <span class="tag">Git</span><span class="tag">история</span><span class="tag">отладка</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="GitOperations.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="gitlab">
+        <div class="top">
+          <div>
+            <h3>GitLab: protected branches, approvals, CI</h3>
+            <span class="file">GitLabWorkflow.html</span>
+          </div>
+        </div>
+        <p>Как защитить основную ветку, заставить коллег одобрить MR и автоматически проверять код.</p>
+        <div class="tags">
+          <span class="tag">GitLab</span><span class="tag">CI/CD</span><span class="tag">ревью</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="GitLabWorkflow.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="docs">
+        <div class="top">
+          <div>
+            <h3>Техническая документация</h3>
+            <span class="file">TechDocumentation.html</span>
+          </div>
+        </div>
+        <p>README, ADR, runbook, OpenAPI и docs-as-code: что писать и как сделать, чтобы не устаревало.</p>
+        <div class="tags">
+          <span class="tag">документация</span><span class="tag">ADR</span><span class="tag">API</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="TechDocumentation.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="quality">
+        <div class="top">
+          <div>
+            <h3>Обеспечение качества</h3>
+            <span class="file">QualityAssurance.html</span>
+          </div>
+        </div>
+        <p>Пирамида тестов, integration-тесты с Postgres и Kafka, нагрузка, SonarQube и Quality Gate, рефакторинг и CI.</p>
+        <div class="tags">
+          <span class="tag">тесты</span><span class="tag">нагрузка</span><span class="tag">CI</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="QualityAssurance.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="algorithms">
+        <div class="top">
+          <div>
+            <h3>Структуры данных и алгоритмы</h3>
+            <span class="file">Algorithms.html</span>
+          </div>
+        </div>
+        <p>Сложность O(n), выбор структуры, сортировка и поиск, rate limiter на Redis, профилирование и LRU-кэш.</p>
+        <div class="tags">
+          <span class="tag">алгоритмы</span><span class="tag">Redis</span><span class="tag">профилирование</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="Algorithms.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="patterns">
+        <div class="top">
+          <div>
+            <h3>Паттерны, ООП vs ФП, DI</h3>
+            <span class="file">Patterns.html</span>
+          </div>
+        </div>
+        <p>Функциональный подход, паттерны GoF, внедрение зависимостей, feature toggles и цена абстракции.</p>
+        <div class="tags">
+          <span class="tag">паттерны</span><span class="tag">DI</span><span class="tag">feature toggle</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="Patterns.html">Открыть</a>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="empty" id="materialsEmpty">Ничего не найдено. Попробуй другое слово или посмотри план — тема может быть в другой неделе.</div>
+
+    <div class="callout">
+      <strong>Материалы будут пополняться.</strong> Сейчас готовы недели 1–2, а также
+      блоки «Алгоритмы» и «Паттерны». Следующие темы (ИИ, legacy, архитектура, Kafka,
+      API, безопасность, базы) добавляются по мере прохождения плана.
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Как заниматься</h2>
+    <p class="sub">
+      Восемь часов в неделю: два коротких вечера и один длинный блок.
+      Регулярность важнее рывков — план рассчитан на три месяца без переработок.
+    </p>
+
+    <div class="rhythm">
+      <div><strong>Будни</strong><span>2 × 2 ч</span><small>теория и разбор</small></div>
+      <div><strong>Выходные</strong><span>4 ч</span><small>практика и вопросы</small></div>
+      <div><strong>Итого</strong><span>8 ч</span><small>в неделю</small></div>
+    </div>
+
+    <ol class="steps">
+      <li><strong>Прочитай разбор.</strong> Сначала целиком, не пытаясь запомнить всё. Отметь непонятные места.</li>
+      <li><strong>Ответь на вопросы вслух.</strong> Сначала модельный ответ, потом своими словами. На интервью нужен второй.</li>
+      <li><strong>Отметь чекбоксы.</strong> Они сохраняются в браузере: на главной видно, сколько уже пройдено.</li>
+      <li><strong>Сделай артефакт.</strong> Для недели 1 — gap-матрица и регламент релиза. Без практики теория выветривается.</li>
+      <li><strong>Вернись к сложному.</strong> Через несколько дней проговори темы, где запнулся. Это и есть подготовка.</li>
+    </ol>
+
+    <div class="callout">
+      <strong>Цель — уровень 3 по всем 10 компетенциям, не уровень 4.</strong>
+      Не нужно знать всё: нужно уверенно отвечать на вопросы своего уровня и показывать
+      инженерное мышление на примерах из своего стека — PHP, PostgreSQL, Kafka, микросервисы.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Учебный сайт для подготовки к ассесменту Senior Backend ·
+    <a href="planSenjor.html">План на 12 недель</a> ·
+    <a href="#materials">Материалы</a> ·
+    <a href="#progress">Прогресс</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+<script src="assets/home.js"></script>
+
+</body>
+</html>

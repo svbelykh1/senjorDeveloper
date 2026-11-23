@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senior Backend — план подготовки к ассесменту на 12 недель</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="wide">
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">MTS · Developer: Общие компетенции · Q1 2026</p>
+    <h1>Senior Backend: план подготовки на 12 недель</h1>
+    <p class="lead">
+      Цель — уровень 3 («Уровень опыта») по всем 10 компетенциям матрицы.
+      Формат ассесмента — интервью. Бюджет — 8 часов в неделю.
+      Стек: PHP, PostgreSQL, Kafka, микросервисы, GitLab, Jira.
+    </p>
+    <div class="stats">
+      <div class="stat"><span class="num">30</span><span class="lbl">целевых баллов: 3 × 10 компетенций</span></div>
+      <div class="stat"><span class="num">96</span><span class="lbl">часов: 12 недель × 8 часов</span></div>
+      <div class="stat"><span class="num">10</span><span class="lbl">компетенций в матрице</span></div>
+      <div class="stat"><span class="num">3</span><span class="lbl">mock-интервью</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <ul>
+      <li><a href="#budget">Бюджет времени</a></li>
+      <li><a href="#weeks">План по неделям</a></li>
+      <li><a href="#questions">Банк вопросов</a></li>
+      <li><a href="#mocks">Mock-интервью</a></li>
+      <li><a href="#skip">Что не учить</a></li>
+      <li><a href="#artifacts">Артефакты</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="budget">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Бюджет времени</h2>
+    <p class="sub">
+      8 часов в неделю — это 96 часов на всё. Распределение ниже уже сбалансировано:
+      тяжёлые для middle компетенции (архитектура, инфраструктура, БД, безопасность) получают больше времени,
+      а mock-интервью — отдельный резерв, который нельзя расходовать на теорию.
+    </p>
+
+    <div class="table-wrap">
+      <table class="hours">
+        <thead>
+          <tr><th>Блок</th><th>Загрузка</th><th>Часы</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Жизненный цикл разработки ПО</td><td><div class="bar"><i style="width:44%"></i></div></td><td>7</td></tr>
+          <tr><td>Обеспечение качества</td><td><div class="bar"><i style="width:56%"></i></div></td><td>9</td></tr>
+          <tr><td>Работа с инструментами ИИ</td><td><div class="bar"><i style="width:25%"></i></div></td><td>4</td></tr>
+          <tr><td>Структуры данных и алгоритмы</td><td><div class="bar"><i style="width:44%"></i></div></td><td>7</td></tr>
+          <tr><td>Паттерны разработки</td><td><div class="bar"><i style="width:44%"></i></div></td><td>7</td></tr>
+          <tr><td>Архитектура</td><td><div class="bar"><i style="width:100%"></i></div></td><td>16</td></tr>
+          <tr><td>Инфраструктура и Cloud</td><td><div class="bar"><i style="width:81%"></i></div></td><td>13</td></tr>
+          <tr><td>Протоколы, API</td><td><div class="bar"><i style="width:44%"></i></div></td><td>7</td></tr>
+          <tr><td>Безопасность</td><td><div class="bar"><i style="width:44%"></i></div></td><td>7</td></tr>
+          <tr><td>Базы данных</td><td><div class="bar"><i style="width:44%"></i></div></td><td>7</td></tr>
+          <tr><td>Mock-интервью и закрытие пробелов</td><td><div class="bar"><i style="width:75%"></i></div></td><td>12</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Недельный ритм</h3>
+    <div class="rhythm">
+      <div><strong>Пн</strong><span>1 ч</span><small>Теория: 5–7 тезисов</small></div>
+      <div><strong>Ср</strong><span>2 ч</span><small>Практика на своём коде</small></div>
+      <div><strong>Сб</strong><span>4 ч</span><small>Глубокая практика + артефакт</small></div>
+      <div><strong>Вс</strong><span>1 ч</span><small>Рефлексия и пробелы</small></div>
+    </div>
+
+    <div class="callout">
+      <strong>Правило недели:</strong> каждая тема закрывается устным ответом на 5 минут без подглядывания.
+      На интервью оценивают именно способность объяснить, а не факт прочтения.
+    </div>
+  </div>
+</section>
+
+<section id="weeks">
+  <div class="wrap">
+    <h2><span class="badge">2</span> План по неделям</h2>
+    <p class="sub">
+      Каждая строка — один level-3 блок матрицы, практика на реальном стеке и артефакт,
+      который потом превращается в историю на интервью.
+      <span class="progress" id="weekProgress">0 / 12</span>
+    </p>
+
+    <div class="table-wrap">
+      <table class="weeks">
+        <thead>
+          <tr>
+            <th>Готово</th>
+            <th>Компетенция</th>
+            <th>Level 3 — что освоить</th>
+            <th>Практика на твоём стеке</th>
+            <th>Артефакт</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w1"><span>1</span></label></td>
+            <td>Жизненный цикл ПО</td>
+            <td>
+              <ol class="topics">
+                <li><a class="topic noarrow" href="JiraWorkflow.html">Jira workflow и категории оценки</a></li>
+                <li><a class="topic noarrow" href="DeployStrategies.html">Blue-green, canary, rolling</a></li>
+                <li><a class="topic noarrow" href="GitOperations.html">Git: <code>cherry-pick</code>, <code>bisect</code>, <code>stash</code>, interactive rebase</a></li>
+                <li><a class="topic noarrow" href="GitLabWorkflow.html">GitLab: MR approvals, protected branches, CI pipelines</a></li>
+                <li><a class="topic noarrow" href="TechDocumentation.html">Техническая документация</a></li>
+                <li><a class="topic noarrow" href="ScrumKanban.html">Scrum и Kanban</a> — ведущая роль в планировании</li>
+              </ol>
+            </td>
+            <td>Self-score по 10 компетенциям. В GitLab: protected branch + MR approval + pipeline. Описать release/rollback своего сервиса</td>
+            <td>Gap-матрица + регламент релиза</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w2"><span>2</span></label></td>
+            <td>Обеспечение качества</td>
+            <td>
+              <ol class="topics">
+                <li><a class="topic noarrow" href="QualityAssurance.html">Тестирование взаимодействия компонентов</a></li>
+                <li><a class="topic noarrow" href="QualityAssurance.html">Тестирование производительности автотестами</a></li>
+                <li><a class="topic noarrow" href="QualityAssurance.html">Инструменты: JMeter / Gatling</a></li>
+                <li><a class="topic noarrow" href="QualityAssurance.html">Статический анализ: SonarQube / Coverity</a></li>
+                <li><a class="topic noarrow" href="QualityAssurance.html">Рефакторинг</a></li>
+                <li><a class="topic noarrow" href="QualityAssurance.html">CI/CD workflow разработчика</a></li>
+                <li><a class="topic noarrow" href="QualityAssurance.html">Контроль процессов качества</a></li>
+              </ol>
+            </td>
+            <td>Integration-тесты на реальный сервис (PHP + Postgres + Kafka в docker-compose). Quality Gate в SonarQube. Запуск в CI</td>
+            <td>Pipeline + Quality Gate + PR с рефакторингом</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w3"><span>3</span></label></td>
+            <td>Качество + ИИ + алгоритмы</td>
+            <td>
+              <ol class="topics">
+                <li>Legacy и сложные сценарии</li>
+                <li>ИИ в процессах качества</li>
+                <li>RAG-промпты и Chain-of-Thought</li>
+                <li>GDPR и приватность данных</li>
+                <li><a class="topic noarrow" href="Algorithms.html">Деревья и списки, rate limiting, профилирование</a></li>
+              </ol>
+            </td>
+            <td>Нагрузочный тест API (Gatling/JMeter) + профилирование PHP (Xdebug/xhprof). AI-assisted code review с чек-листом</td>
+            <td>Отчёт нагрузочного теста + AI-чек-лист</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w4"><span>4</span></label></td>
+            <td>Алгоритмы + паттерны</td>
+            <td>
+              <ol class="topics">
+                <li><a class="topic noarrow" href="Algorithms.html">Выбор сортировки и поиска под данные и объём</a></li>
+                <li><a class="topic noarrow" href="Algorithms.html">Rate limiter на счётчике</a></li>
+                <li><a class="topic noarrow" href="Patterns.html">ООП vs ФП: pure functions, immutability, HOF, composition, мемоизация</a></li>
+                <li><a class="topic noarrow" href="Patterns.html">Паттерны GoF</a></li>
+                <li><a class="topic noarrow" href="Patterns.html">IoC / DI</a></li>
+                <li><a class="topic noarrow" href="Patterns.html">Feature Toggles</a></li>
+              </ol>
+            </td>
+            <td>LRU-кэш и rate limiter на PHP. Перевести модуль на DI-контейнер. Включить feature toggle</td>
+            <td>Код + benchmark + PR с DI</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w5"><span>5</span></label></td>
+            <td>Паттерны + архитектура</td>
+            <td>
+              <ol class="topics">
+                <li><a class="topic noarrow" href="Patterns.html#balance">Баланс переиспользования и сложности</a></li>
+                <li>DDD и Clean Architecture</li>
+                <li>MVC / MVVM / MVP / CQRS / Saga / Pub-Sub / Event Sourcing / Microkernel — различия и цена</li>
+              </ol>
+            </td>
+            <td>Спроектировать домен: каталог видео, сессии просмотра, биллинг. Выделить bounded contexts</td>
+            <td>ADR + диаграмма контекстов</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w6"><span>6</span></label></td>
+            <td>Архитектура</td>
+            <td>
+              <ol class="topics">
+                <li>Паттерны отказоустойчивости: rate limiting, circuit breaker, timeout, retry, fallback, bulkhead</li>
+                <li>Concurrency и согласованность</li>
+                <li>Наблюдаемость</li>
+                <li>Требования к логам и безопасности</li>
+              </ol>
+            </td>
+            <td>Видео-пайплайн: ingest → transcode → package → CDN → playback. Saga + Circuit Breaker. Prometheus/Grafana, логи</td>
+            <td>Architecture doc + dashboard + postmortem</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w7"><span>7</span></label></td>
+            <td>Архитектура + инфраструктура</td>
+            <td>
+              <ol class="topics">
+                <li>Документирование архитектуры</li>
+                <li>Распределённые системы: LB, sidecar, two-phase commit, разделение запросов по типам данных</li>
+                <li>Отладка распределённых систем</li>
+                <li>Балансировщики и прокси</li>
+              </ol>
+            </td>
+            <td>Найти узкое место в своём сервисе через метрики. Собрать multi-stage Dockerfile</td>
+            <td>Диаграмма + Dockerfile</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w8"><span>8</span></label></td>
+            <td>Инфраструктура и Cloud + Kafka</td>
+            <td>
+              <ol class="topics">
+                <li>CDN: edge computing, content routing</li>
+                <li>kubectl и docker</li>
+                <li>Масштабирование в Kubernetes</li>
+                <li>Управление данными в брокере</li>
+                <li>Стратегии кеширования: Write-Through / Write-Behind / Cache-Aside</li>
+              </ol>
+            </td>
+            <td>K8s deployment + HPA. Kafka: партиции, consumer groups, offsets, at-least-once vs exactly-once, идемпотентный consumer, DLQ. Выбрать cache strategy для каталога</td>
+            <td>K8s-манифесты + event-driven дизайн</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w9"><span>9</span></label></td>
+            <td>Протоколы, API</td>
+            <td>
+              <ol class="topics">
+                <li>HTTP/2, WebSocket, SSE, сокеты</li>
+                <li>Whitelist / blacklist</li>
+                <li>Идемпотентность</li>
+                <li>Пулинг соединений</li>
+                <li>Дублирующиеся запросы</li>
+                <li>Выбор архитектуры API</li>
+              </ol>
+            </td>
+            <td>REST + gRPC интеграция. Idempotency key на Postgres. Rate limiting на gateway. Разобрать пулинг в PHP-FPM</td>
+            <td>API design + реализация + mock #1</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w10"><span>10</span></label></td>
+            <td>Безопасность</td>
+            <td>
+              <ol class="topics">
+                <li>OAuth 2.0 / OIDC, PKCE</li>
+                <li>OWASP Top 10: SQLi, XSS, CSRF</li>
+                <li>ACL / RBAC / ABAC</li>
+                <li>SAST / DAST</li>
+                <li>SHA-256/512 и хеширование паролей</li>
+                <li>CORS</li>
+              </ol>
+            </td>
+            <td>Auth-flow своего сервиса (OIDC + JWT + refresh). Прогнать SAST. CORS и заголовки безопасности. Threat model на одну фичу</td>
+            <td>Security checklist + scan report + mock #2</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w11"><span>11</span></label></td>
+            <td>Базы данных</td>
+            <td>
+              <ol class="topics">
+                <li>Уровни изоляции и аномалии</li>
+                <li>Транзакции и обработка ошибок</li>
+                <li>Индексация и оптимизация в NoSQL</li>
+                <li>Масштабирование</li>
+                <li>Репликация vs шардирование vs партиционирование</li>
+                <li>Сложный SQL</li>
+                <li>Хранимые процедуры</li>
+              </ol>
+            </td>
+            <td>Схема каталога и истории просмотров в Postgres. <code>EXPLAIN ANALYZE</code> на медленном запросе. Эксперимент с isolation levels. Партиционирование по дате</td>
+            <td>Схема + набор запросов + отчёт + mock #3</td>
+          </tr>
+          <tr>
+            <td><label class="wk"><input type="checkbox" class="wk-check" data-id="w12"><span>12</span></label></td>
+            <td>Mock-интервью</td>
+            <td>
+              <ol class="topics">
+                <li>Теория по всем 10 компетенциям</li>
+                <li>System design</li>
+                <li>Code review</li>
+                <li>Поведенческая часть</li>
+              </ol>
+            </td>
+            <td>3 полных прогона. Закрыть топ-3 пробела по итогам scorecard</td>
+            <td>Scorecard + финальный план</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="questions">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Банк вопросов</h2>
+    <p class="sub">
+      Минимум, на который нужно отвечать вслух и без подглядывания. Это ровно level-3 пункты матрицы,
+      переформулированные так, как их задают на интервью.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Жизненный цикл</h3>
+        <ul>
+          <li><a class="topic noarrow" href="DeployStrategies.html">Чем blue-green отличается от canary и rolling? Когда что выбираешь?</a></li>
+          <li><a class="topic noarrow" href="JiraWorkflow.html">Как оцениваешь трудозатраты на комплексную фичу? Какие методики знаешь?</a></li>
+          <li>Когда реально нужен <a class="topic noarrow" href="GitOperations.html"><code>git bisect</code></a>? Как организовать ветвление в команде из 8 человек?</li>
+          <li><a class="topic noarrow" href="GitLabWorkflow.html">Как настроить protected branch и обязательные approvals? Что должно быть в pipeline перед merge?</a></li>
+          <li><a class="topic noarrow" href="TechDocumentation.html">Как сделать так, чтобы техническая документация не устаревала? Что такое ADR и что в нём должно быть?</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Качество</h3>
+        <ul>
+          <li><a class="topic noarrow" href="QualityAssurance.html">Как тестировать взаимодействие микросервисов? Что закрывает integration-тест, а что — contract-тест?</a></li>
+          <li><a class="topic noarrow" href="QualityAssurance.html">Как настроить Quality Gate, чтобы он не мешал, но ловил регресс?</a></li>
+          <li><a class="topic noarrow" href="QualityAssurance.html">Как убедить команду, что технический долг пора гасить?</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Инструменты ИИ</h3>
+        <ul>
+          <li>Как декомпозируешь задачу для LLM? Что такое RAG и зачем он нужен?</li>
+          <li>Какие данные нельзя отправлять в модель? Что требует GDPR?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Алгоритмы</h3>
+        <ul>
+          <li><a class="topic noarrow" href="Algorithms.html">Сложность операций в hash map, дереве, связном списке. Что выбрать для rate limiting?</a></li>
+          <li><a class="topic noarrow" href="Algorithms.html">Как ограничить частоту запросов счётчиком? Почему <code>sleep</code> — плохо?</a></li>
+          <li><a class="topic noarrow" href="Algorithms.html">Как профилировать PHP-сервис и найти узкое место?</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Паттерны</h3>
+        <ul>
+          <li><a class="topic noarrow" href="Patterns.html">ООП vs ФП: где в PHP-микросервисе уместно каждое?</a></li>
+          <li><a class="topic noarrow" href="Patterns.html">Чем DI отличается от Service Locator и почему второго избегают?</a></li>
+          <li><a class="topic noarrow" href="Patterns.html">Feature toggle: как не превратить его в вечный <code>if</code>?</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Архитектура</h3>
+        <ul>
+          <li>Saga vs two-phase commit — когда что?</li>
+          <li>Circuit breaker, retry, timeout, bulkhead: как взаимодействуют и где легко сделать хуже?</li>
+          <li>Как обеспечиваешь согласованность при конкурентном доступе?</li>
+          <li>Как логировать, не нарушая требования безопасности?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Инфраструктура</h3>
+        <ul>
+          <li>Как устроен consumer group в Kafka? Что будет при добавлении партиции?</li>
+          <li>At-least-once vs exactly-once: что реально достижимо и какой ценой?</li>
+          <li>Cache-Aside vs Write-Through vs Write-Behind — что выберешь для каталога видео?</li>
+          <li>Как масштабируется stateless-сервис в Kubernetes? Что делать со stateful?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>API</h3>
+        <ul>
+          <li>Идемпотентность: как реализуешь для <code>POST /payment</code>?</li>
+          <li>Когда WebSocket, когда SSE, когда polling?</li>
+          <li>Как борешься с дублирующимися запросами и пулингом соединений в PHP?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Безопасность</h3>
+        <ul>
+          <li>Authorization Code + PKCE: зачем PKCE и где хранить токены?</li>
+          <li>RBAC vs ABAC — что выберешь для мультитенантного сервиса?</li>
+          <li>Как защититься от SQLi и XSS в PHP? Чем SAST отличается от DAST?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Базы данных</h3>
+        <ul>
+          <li>Уровни изоляции и какие аномалии допускают. Где нужен Serializable?</li>
+          <li>Репликация vs шардирование vs партиционирование — что и когда?</li>
+          <li>Как читать <code>EXPLAIN ANALYZE</code>? Почему индекс не используется?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="mocks">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Mock-интервью</h2>
+    <p class="sub">Четыре точки контроля. Между ними — только практика и устные прогоны.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Когда</th><th>Формат</th><th>Что проверяем</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Неделя 9</td><td>Теория, 30 вопросов, таймер</td><td>База по всем компетенциям, скорость и точность формулировок</td></tr>
+          <tr><td>Неделя 10</td><td>System design</td><td>«Спроектируй сервис live-трансляций на 1 млн зрителей»</td></tr>
+          <tr><td>Неделя 11</td><td>Code review + поведенческая часть</td><td>Чужой PR на PHP + Postgres, разбор конфликта и приоритизации</td></tr>
+          <tr><td>Неделя 12</td><td>Полный прогон, 60–90 минут</td><td>Имитация реального интервью целиком</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      Идеально — 1–2 mock с коллегой уровня senior. Самопроверка не ловит слепые зоны:
+      то, что кажется понятным, разваливается на первом уточняющем вопросе.
+    </div>
+  </div>
+</section>
+
+<section id="skip">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Что не учить</h2>
+    <p class="sub">
+      Всё, что в матрице помечено как Staff / Tech Lead. На Senior-интервью это не спрашивают,
+      а время на это уходит неоправданно много.
+      <span class="progress" id="skipProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="skip-check" id="s1" data-id="s1"><label for="s1">KPI для оценки эффективности команды и отдельных участников</label></li>
+      <li><input type="checkbox" class="skip-check" id="s2" data-id="s2"><label for="s2">Аудит и оптимизация процессов разработки с использованием Agile-подходов</label></li>
+      <li><input type="checkbox" class="skip-check" id="s3" data-id="s3"><label for="s3">Принципы выбора методики оценки трудозатрат для больших комплексных программ</label></li>
+      <li><input type="checkbox" class="skip-check" id="s4" data-id="s4"><label for="s4">Самодокументирующийся код как стандарт организации</label></li>
+      <li><input type="checkbox" class="skip-check" id="s5" data-id="s5"><label for="s5">Стандартизация методологий и инструментов работы с Git на уровне компании</label></li>
+    </ul>
+  </div>
+</section>
+
+<section id="artifacts">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Артефакты и fallback</h2>
+    <p class="sub">
+      Не 20 артефактов, а 8 настоящих — из своего проекта. На интервью каждый превращается в историю:
+      ситуация → действие → результат.
+      <span class="progress" id="artifactProgress">0 / 8</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="art-check" id="a1" data-id="a1"><label for="a1">Gap-матрица self-score по 10 компетенциям</label></li>
+      <li><input type="checkbox" class="art-check" id="a2" data-id="a2"><label for="a2">Pipeline с Quality Gate</label></li>
+      <li><input type="checkbox" class="art-check" id="a3" data-id="a3"><label for="a3">Отчёт нагрузочного теста API</label></li>
+      <li><input type="checkbox" class="art-check" id="a4" data-id="a4"><label for="a4">PR с рефакторингом и переводом на DI</label></li>
+      <li><input type="checkbox" class="art-check" id="a5" data-id="a5"><label for="a5">Architecture doc видео-пайплайна с диаграммами</label></li>
+      <li><input type="checkbox" class="art-check" id="a6" data-id="a6"><label for="a6">Дашборд метрик + postmortem по инциденту</label></li>
+      <li><input type="checkbox" class="art-check" id="a7" data-id="a7"><label for="a7">K8s-манифесты + разбор гарантий доставки Kafka</label></li>
+      <li><input type="checkbox" class="art-check" id="a8" data-id="a8"><label for="a8">Security checklist + схема БД с оптимизированным запросом</label></li>
+    </ul>
+
+    <h3>Если времени будет меньше 8 часов</h3>
+    <div class="callout">
+      Режь в таком порядке: <strong>ИИ → алгоритмы → паттерны</strong>.
+      Не режь архитектуру, инфраструктуру, безопасность и БД: там у middle самый большой разрыв до level 3,
+      и именно там чаще всего валятся на интервью.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Источник критериев: матрица «Developer: Общие Компетенции», статус Q1 2026.
+    Целевой профиль Backend Senior — уровень 3 по всем 10 компетенциям · <a href="index.html">На главную</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

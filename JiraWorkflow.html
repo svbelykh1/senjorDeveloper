@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jira workflow и категории оценки трудозатрат — подготовка к ассесменту</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 1 · Жизненный цикл разработки ПО · Level 3</p>
+    <h1>Jira workflow и категории оценки трудозатрат</h1>
+    <p class="lead">
+      Что нужно знать на уровне Senior и как рассказать это на интервью:
+      устройство workflow, правила переходов, метрики потока и методики оценки
+      с примерами на backend-команде.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#scope">Что проверяют</a></li>
+      <li><a href="#jira">Jira workflow</a></li>
+      <li><a href="#estimate">Оценка</a></li>
+      <li><a href="#answers">Ответы</a></li>
+      <li><a href="#check">Самопроверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="scope">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Что именно проверяют</h2>
+    <p class="sub">Формулировки взяты из матрицы компетенций, уровень 3 — «Уровень опыта».</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Блок</th><th>Формулировка</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ЗНАЕТ</strong></td>
+            <td>Принципы управления рабочим процессом в Jira или другом инструменте. Категории оценки трудозатрат разработки, может назвать несколько инструментов и методик</td>
+          </tr>
+          <tr>
+            <td><strong>УМЕЕТ</strong></td>
+            <td>Вести техническую документацию. Брать на себя ведущую роль в команде по Scrum и проводить планирование</td>
+          </tr>
+          <tr>
+            <td><strong>Не требуется (Staff)</strong></td>
+            <td>KPI команды, аудит процессов, точная оценка целого продукта, GitFlow как стандарт организации</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Как выглядит сильный ответ за 60 секунд:</strong>
+      «У нас Scrum, статусы от Backlog до Done, переходы ограничены правилами: в Code Review может перевести только автор,
+      из Code Review — только ревьюер, в Done нельзя без привязанного MR. Оцениваем в story points через planning poker,
+      для рискованных задач используем spike и три точки. В оценку закладываем не только код, но и review, тесты,
+      интеграции, деплой и буфер на риски — иначе стабильно занижаем в полтора-два раза».
+    </div>
+  </div>
+</section>
+
+<section id="jira">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Jira workflow</h2>
+
+    <h3>Анатомия</h3>
+    <p>Workflow — это не список статусов, а <strong>граф переходов с правилами</strong>. Четыре слоя, которые надо назвать:</p>
+    <ol>
+      <li><strong>Issue type</strong> — Epic, Story, Task, Sub-task, Bug, Spike, Incident</li>
+      <li><strong>Statuses</strong> — где задача находится</li>
+      <li><strong>Transitions</strong> — между какими статусами можно перейти</li>
+      <li><strong>Transition rules</strong> — что проверяется и что происходит при переходе</li>
+    </ol>
+
+    <p>Правила перехода — это то, что отличает senior-ответ от junior:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Тип правила</th><th>Что делает</th><th>Пример</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Condition</strong></td><td>Кто может нажать</td><td>Переход в Code Review — только автор; из Code Review — только reviewer</td></tr>
+          <tr><td><strong>Validator</strong></td><td>Что должно быть выполнено</td><td>Нельзя в Done без привязанного MR; нельзя в QA без заполненного Test plan</td></tr>
+          <tr><td><strong>Post-function</strong></td><td>Что произойдёт автоматически</td><td>Назначить ревьюера, проставить дату, дёрнуть webhook в CI</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Рабочий пример для backend-команды</h3>
+    <div class="flow">
+      <span class="node">Backlog</span><span class="arrow">→</span>
+      <span class="node key">Ready for Dev</span><span class="arrow">→</span>
+      <span class="node">In Progress</span><span class="arrow">→</span>
+      <span class="node key">Code Review</span><span class="arrow">→</span>
+      <span class="node key">QA</span><span class="arrow">→</span>
+      <span class="node">Ready for Release</span><span class="arrow">→</span>
+      <span class="node">Done</span>
+    </div>
+    <p class="flow-note">Плюс отдельные статусы: Blocked и Reopened. Blocked — статус, а не комментарий.</p>
+
+    <p>Почему именно так:</p>
+    <ul>
+      <li><strong>Ready for Dev</strong> — точка, где срабатывает Definition of Ready. Без неё команда начинает спринт с задачами, которые ещё не готовы к работе.</li>
+      <li><strong>Code Review</strong> отдельно от In Progress — иначе непонятно, где задача стоит в очереди на ревью, и она «висит в работе» неделю.</li>
+      <li><strong>QA</strong> отдельно — не потому что есть отдельный QA, а чтобы был виден этап проверки и не терялись баги.</li>
+      <li><strong>Ready for Release</strong> — буфер между «сделано» и «в проде», если релизы не непрерывные.</li>
+      <li><strong>Blocked</strong> — отдельный статус, иначе блокеры не видно ни на доске, ни в метриках.</li>
+    </ul>
+
+    <h3>Типы задач</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Тип</th><th>Когда используется</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Epic</strong></td><td>Крупная фича или квартальная инициатива</td></tr>
+          <tr><td><strong>Story</strong></td><td>Пользовательская ценность, формулируется через «как пользователь…»</td></tr>
+          <tr><td><strong>Task</strong></td><td>Техническая работа без прямой пользовательской ценности</td></tr>
+          <tr><td><strong>Sub-task</strong></td><td>Декомпозиция Story или Task до ≤1–2 дней</td></tr>
+          <tr><td><strong>Spike</strong></td><td>Исследование с таймбоксом, результат — решение, а не код</td></tr>
+          <tr><td><strong>Bug</strong></td><td>Отклонение от ожидаемого поведения</td></tr>
+          <tr><td><strong>Incident</strong></td><td>Прод-инцидент, часто с отдельным SLA и процессом</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Поля, которые реально работают</h3>
+    <ul>
+      <li><strong>components</strong> — сервис или домен: video-catalog, playback, billing</li>
+      <li><strong>labels</strong> — сквозные метки: tech-debt, security, p1</li>
+      <li><strong>fixVersion / affectsVersion</strong> — в каком релизе исправлено / где воспроизводится</li>
+      <li><strong>story points</strong> — относительная оценка</li>
+      <li><strong>linked issues</strong> — blocks / is blocked by / relates to; важно для зависимостей между сервисами</li>
+    </ul>
+
+    <h3>Доска и метрики</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Метрика</th><th>Что показывает</th><th>Как использовать</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Velocity</strong></td><td>Сколько команда закрывает за спринт</td><td>Только для прогноза. Не KPI</td></tr>
+          <tr><td><strong>Cycle time</strong></td><td>От «в работе» до «готово»</td><td>Показывает, где задача застревает</td></tr>
+          <tr><td><strong>Lead time</strong></td><td>От создания до «готово»</td><td>Отражает ожидание пользователя</td></tr>
+          <tr><td><strong>Cumulative Flow</strong></td><td>Накопление задач по статусам</td><td>Рост полосы = растёт WIP, скоро bottleneck</td></tr>
+          <tr><td><strong>Control chart</strong></td><td>Разброс cycle time</td><td>Показывает стабильность процесса</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Scrum-доска: спринты, burndown, velocity. Kanban: непрерывный поток, WIP-лимиты, cycle time.
+    <strong>WIP-лимит</strong> — главный инструмент против «в работе 15 задач одновременно».</p>
+
+    <h3>JQL — минимум, который стоит помнить</h3>
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td><code>project = VIDEO AND status = "In Progress" AND assignee = currentUser()</code></td></tr>
+          <tr><td><code>sprint in openSprints() AND issuetype = Bug</code></td></tr>
+          <tr><td><code>status changed to Done during (startOfWeek(-4), now())</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Достаточно уметь объяснить, что JQL — это фильтр по полям, и привести 2–3 примера.</p>
+
+    <h3>Time tracking в Jira</h3>
+    <p>Три поля, которые часто путают:</p>
+    <ul>
+      <li><strong>Original estimate</strong> — оценка до начала работ</li>
+      <li><strong>Remaining estimate</strong> — сколько ещё осталось; обновляется по ходу</li>
+      <li><strong>Time spent</strong> — сумма по worklog'ам</li>
+    </ul>
+    <div class="callout warn">
+      Если требовать заполнять worklog каждый день, люди начинают «рисовать» часы.
+      <strong>Оценка и учёт времени — разные инструменты:</strong> оценка нужна команде для планирования,
+      учёт — для отчётности. Смешивать их вредно.
+    </div>
+
+    <h3>Антипаттерны — назови хотя бы три</h3>
+    <ul>
+      <li>Статусы-декорации: «Dev Done», «Dev Done Done», «Testing 2»</li>
+      <li>Нет Definition of Done → задача «готова», но не задеплоена и без тестов</li>
+      <li>WIP без лимита</li>
+      <li>Задачи на две недели — прогресс невозможно измерить</li>
+      <li>Workflow у каждой команды свой без причины</li>
+      <li>Оценка превращена в обещание и используется для наказания</li>
+    </ul>
+  
+    <div class="callout">
+      <strong>Отдельный материал:</strong>
+      <a class="inline-link" href="ScrumKanban.html">Scrum и Kanban — определения, устройство и различия</a>.
+      Эти подходы относятся к той же компетенции «Жизненный цикл разработки ПО».
+    </div>
+  </div>
+</section>
+
+<section id="estimate">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Оценка трудозатрат</h2>
+
+    <h3>Три оси категорий</h3>
+    <p>Самый частый провал на интервью: человек говорит «оцениваю в story points» и всё.
+    Нужно показать, что категорий несколько.</p>
+
+    <h4>Ось A. По типу работ — что вообще входит в оценку</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Категория</th><th>Типичная доля</th></tr></thead>
+        <tbody>
+          <tr><td>Анализ и уточнение требований</td><td>5–10%</td></tr>
+          <tr><td>Проектирование</td><td>5–15%</td></tr>
+          <tr><td>Разработка</td><td>40–50%</td></tr>
+          <tr><td>Code review</td><td>5–10%</td></tr>
+          <tr><td>Тесты: unit, integration, ручные</td><td>15–20%</td></tr>
+          <tr><td>Интеграция и зависимости</td><td>5–15%</td></tr>
+          <tr><td>Деплой, фича-тоглы, миграции</td><td>5%</td></tr>
+          <tr><td>Документация</td><td>2–5%</td></tr>
+          <tr><td>Мониторинг, алерты, наблюдаемость</td><td>5%</td></tr>
+          <tr><td>Буфер на риски</td><td>10–20%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <strong>«Оценка — это не только код. Если не заложить review, тесты, деплой и риски,
+      она всегда занижена — обычно в 1,5–2 раза». </strong>
+    </div>
+
+    <h4>Ось B. По уровню неопределённости</h4>
+    <ul>
+      <li><strong>Known</strong> — делал похожее, есть reference story → обычная оценка</li>
+      <li><strong>Known unknown</strong> — понятно, чего не знаем → <strong>spike</strong> с таймбоксом 0,5–1 день</li>
+      <li><strong>Unknown unknown</strong> — не понимаем масштаб → диапазон и исследование, а не точка</li>
+    </ul>
+
+    <h4>Ось C. По единицам измерения</h4>
+    <ul>
+      <li><strong>Story points</strong> — относительные, Fibonacci</li>
+      <li><strong>Ideal hours / man-days</strong> — абсолютные, но зависят от человека</li>
+      <li><strong>T-shirt sizes</strong> — S/M/L/XL, для грубого бэклога</li>
+      <li><strong>Buckets</strong> — ≤1 дня / 1–3 / 3–5 / &gt;5</li>
+    </ul>
+
+    <h3>Методы — назови 4–5 и выбери под ситуацию</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Метод</th><th>Когда применять</th><th>Ограничение</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Expert judgment</strong></td><td>Знакомая область, есть опыт</td><td>Субъективно, зависит от одного человека</td></tr>
+          <tr><td><strong>Analogy / reference story</strong></td><td>Есть похожая задача</td><td>Нужна база reference stories</td></tr>
+          <tr><td><strong>Bottom-up (WBS)</strong></td><td>Комплексная задача</td><td>Дорого по времени, нужна декомпозиция</td></tr>
+          <tr><td><strong>Top-down</strong></td><td>Рано, грубо, для roadmap</td><td>Низкая точность</td></tr>
+          <tr><td><strong>Three-point / PERT</strong></td><td>Высокая неопределённость</td><td>Нужны три оценки, а не одна</td></tr>
+          <tr><td><strong>Planning poker</strong></td><td>Командная оценка в спринте</td><td>Долго для большого бэклога</td></tr>
+          <tr><td><strong>Wideband Delphi</strong></td><td>Экспертная оценка без группы</td><td>Дорого</td></tr>
+          <tr><td><strong>Bucket system</strong></td><td>Большой бэклог, много людей</td><td>Грубо</td></tr>
+          <tr><td><strong>#NoEstimates</strong></td><td>Стабильный поток, мелкие задачи</td><td>Не везде применимо</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="formula">
+      <span>PERT: E = (O + 4M + P) / 6</span>
+      <span>σ = (P − O) / 6</span>
+    </div>
+    <p>Хорошо звучит на интервью: «для рискованных кусков считаю три точки, а не одну».</p>
+
+    <h3>Конус неопределённости</h3>
+    <p>Точность оценки зависит от стадии, а не от старания:</p>
+    <ul>
+      <li>Идея / концепт: <strong>×0,25 – ×4</strong></li>
+      <li>Согласованные требования: <strong>×0,5 – ×2</strong></li>
+      <li>Дизайн готов: <strong>×0,8 – ×1,25</strong></li>
+      <li>Реализация начата: <strong>±10–20%</strong></li>
+    </ul>
+    <div class="callout">
+      Сильный ответ: «на ранней стадии я даю диапазон и называю допущения, а не точное число».
+    </div>
+
+    <h3>Story points vs часы</h3>
+    <ul>
+      <li>SP <strong>относительны</strong> и не конвертируются в часы</li>
+      <li>Velocity — <strong>внутрикомандный</strong> инструмент прогноза, не метрика производительности</li>
+      <li>Если нужны часы (подряд, отчётность) — давай <strong>диапазон</strong> и фиксируй допущения</li>
+      <li>Использование velocity как KPI разрушает оценку: команда начинает завышать SP</li>
+    </ul>
+
+    <h3>Алгоритм оценки комплексной задачи</h3>
+    <p>Это то, что стоит рассказать на интервью как свой процесс:</p>
+    <ol class="steps">
+      <li>Выписать критерии приёмки и <strong>нефункциональные</strong> требования</li>
+      <li>Декомпозировать до кусков <strong>≤1–2 дней</strong>; если кусок больше — резать дальше</li>
+      <li>Для каждого куска: знакомо? есть reference?</li>
+      <li>Неизвестное — <strong>spike с таймбоксом</strong>, а не «заложим побольше»</li>
+      <li>Оценить втроём: автор, исполнитель, тестировщик</li>
+      <li>Для рискованных кусков — три точки</li>
+      <li>Добавить <strong>явно</strong>: review, тесты, миграции, фича-тоглы, деплой, мониторинг</li>
+      <li>Буфер на риски <strong>10–20%</strong>, а не «на всякий случай 50%»</li>
+      <li>Зафиксировать <strong>допущения и зависимости</strong> в задаче</li>
+      <li>Пересмотреть после spike или первого дня работы</li>
+    </ol>
+
+    <h3>Пример на домене видео</h3>
+    <p>Задача: «Кэшировать каталог видео в Redis с инвалидацией по событию из Kafka».</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Работа</th><th>Дни</th></tr></thead>
+        <tbody>
+          <tr><td>Анализ и дизайн ключей, TTL, стратегии инвалидации</td><td>0,5</td></tr>
+          <tr><td>Реализация кэша (Cache-Aside)</td><td>1,5</td></tr>
+          <tr><td>Consumer инвалидации + идемпотентность</td><td>1,0</td></tr>
+          <tr><td>Unit + integration тесты</td><td>1,0</td></tr>
+          <tr><td>Code review</td><td>0,25</td></tr>
+          <tr><td>Нагрузочный тест</td><td>0,5</td></tr>
+          <tr><td>Фича-тогл, деплой, откат</td><td>0,5</td></tr>
+          <tr><td>Метрики и алерты на hit ratio</td><td>0,5</td></tr>
+          <tr><td>Буфер на риски ~15%</td><td>0,8</td></tr>
+          <tr><td><strong>Итого</strong></td><td><strong>≈6,5–7 дней</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      Смысл примера: <strong>«в коде это полтора дня»</strong>. Именно этот разрыв чаще всего и приводит
+      к провалу оценки. Хороший ответ на интервью — показать такую разбивку, а не назвать одно число.
+    </div>
+  </div>
+</section>
+
+<section id="answers">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Вопросы и модельные ответы</h2>
+    <p class="sub">Два блока на каждый вопрос: <strong>модельный ответ</strong> — структура и формулировки для интервью, и <strong>«своими словами»</strong> — как это звучит вживую, без канцелярита.</p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как устроен ваш workflow в Jira?</span></div>
+      <p class="a">«У нас Scrum. Статусы: Backlog → Ready for Dev → In Progress → Code Review → QA → Ready for Release → Done, плюс Blocked. Переход в Code Review только автором, из Code Review — только ревьюером. В Done нельзя без привязанного MR, это валидатор. DoR фиксирует, что задача готова к спринту, DoD — что она реально закрыта: код в master, тесты зелёные, задеплоено, метрики есть».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>У нас всё довольно обычно: бэклог, готово к разработке, в работе, ревью, тесты, готово к релизу, готово. Плюс Blocked. Самое полезное — что из ревью задачу может вытащить только ревьюер, а в Done не перевести, пока не привязан MR. Иначе статусы быстро превращаются в декорацию: все двигают, никто не проверяет.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Чем story points отличаются от часов?</span></div>
+      <p class="a">«SP относительны: они измеряют сложность, неопределённость и объём относительно других задач команды. В часы не конвертируются. Velocity нужна для прогноза, а не для сравнения людей — иначе команда начинает играть с оценками».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сторипоинты — это не часы, переводить их в часы бессмысленно. Ими сравниваю задачи между собой: вот эта примерно как та, что была в прошлом спринте. Велосити нужна только чтобы прикинуть, сколько влезет в спринт. Как только её начинают сравнивать между командами или тащить в отчёты — оценка умирает, все начинают завышать.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Как оценить задачу с высокой неопределённостью?</span></div>
+      <p class="a">«Сначала отделяю известное от неизвестного. На неизвестное ставлю spike с таймбоксом полдня-день. Дальше оцениваю тремя точками и даю диапазон с явными допущениями. Если и после spike непонятно — режу задачу на меньшие части, а не увеличиваю буфер».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Если задача непонятная, я не пытаюсь оценить её «посильнее». Беру полдня-день на spike, чтобы понять, что внутри. После этого либо оценка становится нормальной, либо задача режется. Наращивать буфер — худшее, что можно сделать: он всё равно не спасает, а сроки раздувает.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Какие категории работ включаете в оценку?</span></div>
+      <p class="a">«Не только разработку: анализ, дизайн, review, тесты, интеграции, деплой, документацию, мониторинг и буфер на риски. Без этого оценка занижается в полтора-два раза — это видно по факту».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>По факту в оценку идёт не только код. У меня в последнем проекте полтора дня кода превратились в неделю: тесты, ревью, миграция, фича-тогл, деплой, дашборд. Поэтому я всегда явно проговариваю: вот это разработка, вот это тесты, вот это выкатка, вот это риски. Иначе потом «почему так долго».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что такое Definition of Ready и Definition of Done?</span></div>
+      <p class="a">«DoR — задача готова к работе: есть критерии приёмки, оценка, зависимости, понятен способ проверки. DoD — задача действительно закрыта: код в основной ветке, тесты проходят, задеплоено, документация и метрики на месте. DoR защищает от старта сырых задач, DoD — от «готово, но не работает»».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>DoR — это когда задачу можно брать, а не «вроде понятно». Есть критерии приёмки, оценка, понятно, как проверять. DoD — когда реально готово: влито, задеплоено, тесты зелёные. У нас раньше «готово» значило «код написан», и это каждый раз вылезало на релизе.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как понять, что процесс деградирует?</span></div>
+      <p class="a">«По Cumulative Flow: растёт полоса WIP — значит, задачи копятся в работе. По cycle time: если растёт при стабильном объёме, где-то bottleneck. По разнице lead time и cycle time: много времени уходит до старта работы, то есть проблема в приоритизации, а не в разработке».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Смотрю на доску и на цифры. Если в работе висит двадцать задач — это уже не «мы быстрые», это WIP. Если cycle time растёт, а объём тот же — ищу, где застревает: ревью, тесты, ожидание инфры. И отдельно смотрю, сколько задача лежит до старта: часто проблема не в разработке, а в том, что её месяц не брали.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">07</span><span>Scrum или Kanban?</span></div>
+      <p class="a">«Scrum — когда есть крупные фичи и нужна синхронизация по спринтам. Kanban — когда поток непрерывный: поддержка, инциденты, много мелких задач. Часто гибрид: Scrum для продуктовой работы, Kanban-доска для дежурства».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Scrum беру, когда есть крупные фичи и нужны спринты, чтобы синхронизироваться. Kanban — когда поток: поддержка, инциденты, мелкие правки, там спринты только мешают. У нас было гибридно: продукт в Scrum, дежурство на Kanban-доске с WIP-лимитом.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">08</span><span>Что делать, если оценка не сошлась с фактом?</span></div>
+      <p class="a">«Разбираю не «кто виноват», а где именно разошлось: не учли интеграцию, недооценили тесты, был блокер. Фиксирую как reference story, чтобы следующая похожая задача оценивалась точнее. Оценка — это инструмент обучения, а не обещание».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Смотрю, где именно разошлось. Обычно дело не в «плохо оценили», а в том, что забыли интеграцию, тесты или ждали другую команду. Записываю как reference, чтобы в следующий раз похожее оценивать по факту, а не по ощущениям. И стараюсь не превращать оценку в обещание — иначе все начинают закладывать сверху.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Самопроверка</h2>
+    <p class="sub">
+      Ответь вслух, без подглядывания. Если на любой вопрос уходит больше 60 секунд — тема не закрыта.
+      <span class="progress" id="checkProgress">0 / 6</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="q1" data-id="jq1"><label for="q1">Назови 5 статусов своего workflow и правило перехода, которое реально что-то запрещает</label></li>
+      <li><input type="checkbox" class="check-item" id="q2" data-id="jq2"><label for="q2">Чем condition отличается от validator и post-function?</label></li>
+      <li><input type="checkbox" class="check-item" id="q3" data-id="jq3"><label for="q3">Назови 4 методики оценки и по одному случаю, где каждая лучше остальных</label></li>
+      <li><input type="checkbox" class="check-item" id="q4" data-id="jq4"><label for="q4">Что входит в оценку помимо написания кода? Перечисли 6 категорий</label></li>
+      <li><input type="checkbox" class="check-item" id="q5" data-id="jq5"><label for="q5">Почему velocity нельзя использовать как KPI?</label></li>
+      <li><input type="checkbox" class="check-item" id="q6" data-id="jq6"><label for="q6">Что такое spike и когда он лучше, чем «заложить побольше»?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Задание на неделю (2–3 часа):</strong> возьми свою последнюю задачу, которую оценивал, и разложи её
+      по таблице из примера выше. Сравни сумму с фактическим временем. Найди, какая категория работ была не учтена.
+      Это и будет твоя reference story для интервью.
+    </div>
+
+    <h3>Что почитать</h3>
+    <ul>
+      <li><strong>Scrum Guide 2020</strong> — 13 страниц, закрывает DoR/DoD, роли и артефакты</li>
+      <li><strong>«Agile Estimating and Planning», Mike Cohn</strong> — главы про story points и planning poker</li>
+      <li><strong>«Software Estimation: Demystifying the Black Art», Steve McConnell</strong> — конус неопределённости и три точки</li>
+      <li>Документация Jira: workflow, transition rules, JQL</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Жизненный цикл разработки ПО», уровень 3 · <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану подготовки</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

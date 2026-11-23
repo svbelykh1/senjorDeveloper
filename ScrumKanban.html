@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scrum и Kanban — определения, устройство и различия</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 1 · Жизненный цикл разработки ПО · Level 2–3</p>
+    <h1>Scrum и Kanban</h1>
+    <p class="lead">
+      Определения, устройство, различия и выбор подхода.
+      На интервью важно не пересказать учебник, а показать, <strong>зачем</strong> нужен каждый
+      подход и когда какой применяют.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#defs">Определения</a></li>
+      <li><a href="#scrum">Scrum</a></li>
+      <li><a href="#kanban">Kanban</a></li>
+      <li><a href="#diff">Различия</a></li>
+      <li><a href="#choose">Выбор</a></li>
+      <li><a href="#check">Самопроверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="defs">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Определения</h2>
+    <p class="sub">Два разных инструмента с разной логикой: один ограничивает время, второй — объём незавершённой работы.</p>
+
+    <div class="two">
+      <div class="panel">
+        <span class="kicker">Фреймворк</span>
+        <h3>Scrum</h3>
+        <p>Каркас для работы со сложными продуктами, где требования меняются. Основан на эмпиризме:
+        знание приходит из опыта, решения принимаются на основе наблюдаемого.</p>
+        <p><strong>Три столпа:</strong> прозрачность, инспекция, адаптация.<br>
+        <strong>Пять ценностей:</strong> commitment, focus, openness, respect, courage.</p>
+      </div>
+
+      <div class="panel">
+        <span class="kicker">Метод</span>
+        <h3>Kanban</h3>
+        <p>Метод управления потоком работ: визуализировать работу, ограничить незавершённое,
+        управлять потоком, сделать политики явными, получать обратную связь и улучшать процесс.</p>
+        <p><strong>Основа:</strong> система «тяни» (pull) и ограничение WIP.
+        Обязательных ролей, спринтов и оценок нет.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Главное различие в одном предложении:</strong> Scrum задаёт ритм и роли,
+      Kanban — поток и ограничения. Первый отвечает на вопрос «что мы успеваем за спринт»,
+      второй — «сколько времени проходит через систему и сколько работы в ней висит».
+    </div>
+  </div>
+</section>
+
+<section id="scrum">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Устройство Scrum</h2>
+    <p class="sub">Ровно три роли, три артефакта и пять событий. Всё остальное — практики, которые команда добавляет сама.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Элемент</th><th>Что это</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Роли</strong></td>
+            <td>Product Owner — ценность и порядок бэклога. Scrum Master — процесс и устранение препятствий. Developers — создают Increment</td>
+          </tr>
+          <tr>
+            <td><strong>Артефакты</strong></td>
+            <td>Product Backlog + Product Goal. Sprint Backlog + Sprint Goal. Increment + Definition of Done</td>
+          </tr>
+          <tr>
+            <td><strong>События</strong></td>
+            <td>Sprint (1–4 недели), Sprint Planning, Daily Scrum, Sprint Review, Sprint Retrospective. Все с таймбоксом</td>
+          </tr>
+          <tr>
+            <td><strong>Правило</strong></td>
+            <td>Если нет ролей, артефактов или событий — это не Scrum, а «спринты вокруг обычной работы»</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Что важно для Senior</h3>
+    <ul>
+      <li><strong>Sprint Goal</strong> — не список задач, а одна цель, ради которой спринт имеет смысл</li>
+      <li><strong>Definition of Done</strong> — общий критерий готовности, а не личное мнение разработчика</li>
+      <li><strong>Sprint Review</strong> — про обратную связь от стейкхолдеров, а не про демонстрацию ради демонстрации</li>
+      <li><strong>Ретроспектива</strong> — про изменения в процессе, а не про «высказались и разошлись»</li>
+    </ul>
+  </div>
+</section>
+
+<section id="kanban">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Устройство Kanban</h2>
+    <p class="sub">Шесть практик и один закон, из которого следует главный рычаг управления.</p>
+
+    <ul>
+      <li><strong>Визуализация</strong> — доска, где колонки отражают состояния работы</li>
+      <li><strong>WIP-лимиты</strong> — ограничение на количество задач в колонке, а не на всю доску</li>
+      <li><strong>Управление потоком</strong> — следим за cycle time и блокерами</li>
+      <li><strong>Явные политики</strong> — что значит «готово» для каждой колонки, прописано и известно всем</li>
+      <li><strong>Обратная связь</strong> — регулярный обзор доски и метрик</li>
+      <li><strong>Улучшение</strong> — изменения процесса на основе данных, а не ощущений</li>
+    </ul>
+
+    <div class="formula">
+      <span>Little's Law: время прохождения ≈ WIP / Throughput</span>
+    </div>
+    <p>Практический вывод: хочешь быстрее — не ускоряй людей, а ограничь количество одновременной работы.</p>
+
+    <h3>Метрики потока</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Метрика</th><th>Что показывает</th></tr></thead>
+        <tbody>
+          <tr><td><strong>WIP</strong></td><td>Сколько задач одновременно в работе</td></tr>
+          <tr><td><strong>Throughput</strong></td><td>Сколько задач завершается за период</td></tr>
+          <tr><td><strong>Cycle time</strong></td><td>От старта работы до «готово»</td></tr>
+          <tr><td><strong>Lead time</strong></td><td>От появления заявки до «готово»</td></tr>
+          <tr><td><strong>Cumulative Flow</strong></td><td>Накопление работы по состояниям; рост полосы = растёт WIP</td></tr>
+          <tr><td><strong>Blocked time</strong></td><td>Сколько задача простояла в блокере</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Частая ошибка:</strong> повесить доску и назвать это Kanban. Без WIP-лимитов и явных политик
+      это просто визуализация — она показывает проблемы, но не заставляет их решать.
+    </div>
+  </div>
+</section>
+
+<section id="diff">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Различия</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>Scrum</th><th>Kanban</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Основа</strong></td><td>Ритм и роли</td><td>Поток и ограничения</td></tr>
+          <tr><td><strong>Единица планирования</strong></td><td>Спринт, 1–4 недели</td><td>Непрерывно, по мере освобождения места</td></tr>
+          <tr><td><strong>Роли</strong></td><td>PO, Scrum Master, Developers — обязательны</td><td>Обязательных нет, роли по потребности</td></tr>
+          <tr><td><strong>Артефакты</strong></td><td>Product Backlog, Sprint Backlog, Increment</td><td>Доска, WIP-лимиты, явные политики</td></tr>
+          <tr><td><strong>Оценка</strong></td><td>Story points, planning poker</td><td>Часто не нужна; важен размер задачи</td></tr>
+          <tr><td><strong>Изменения в середине</strong></td><td>Не приветствуются внутри спринта</td><td>Норма: приоритет меняется в любой момент</td></tr>
+          <tr><td><strong>Ритуалы</strong></td><td>Planning, Daily, Review, Retrospective</td><td>Обзор доски, пополнение, регулярная ретро по желанию</td></tr>
+          <tr><td><strong>Главные метрики</strong></td><td>Velocity, достижение Sprint Goal</td><td>Cycle time, throughput, WIP</td></tr>
+          <tr><td><strong>Что оптимизирует</strong></td><td>Предсказуемость и фокус</td><td>Время прохождения и пропускную способность</td></tr>
+          <tr><td><strong>Когда выбирать</strong></td><td>Крупный продукт, меняющиеся требования, нужна синхронизация со стейкхолдерами</td><td>Поддержка, инциденты, непрерывный поток заявок</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Scrumban</h3>
+    <p>Гибрид: ритм и события Scrum плюс Kanban-доска и WIP-лимиты. Встречается чаще, чем чистые
+    фреймворки: продуктовые команды живут в спринтах, но ограничивают WIP и смотрят cycle time,
+    а дежурство и поддержка идут отдельным потоком.</p>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Выбор и частые ошибки</h2>
+
+    <h3>Когда что выбирать</h3>
+    <ul>
+      <li><strong>Scrum</strong> — есть продукт с крупными фичами, требования меняются, нужны регулярные
+      демо и синхронизация со стейкхолдерами, есть человек на роль Product Owner</li>
+      <li><strong>Kanban</strong> — работа приходит непрерывно и задачи разного размера: поддержка,
+      инциденты, поток заявок. Спринты тут только создают искусственные границы</li>
+      <li><strong>Гибрид</strong> — продукт в Scrum, эксплуатация и дежурство на Kanban-доске</li>
+    </ul>
+
+    <h3>Частые ошибки</h3>
+    <ul>
+      <li>«Kanban — это доска без спринтов». Доска без WIP-лимитов и явных политик — просто визуализация, а не Kanban</li>
+      <li>«Scrum — это спринты». Без ролей, артефактов и пяти событий это не Scrum</li>
+      <li>WIP-лимит на всю доску вместо лимита на колонку</li>
+      <li>Sprint Review превращают в демо без обратной связи от стейкхолдеров</li>
+      <li>Ретроспектива без действий: обсудили и разошлись</li>
+      <li>Одновременно оценивают в story points и требуют часы в отчётности</li>
+    </ul>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Вопрос для интервью и самопроверка</h2>
+
+    <div class="qa">
+      <div class="q">Чем Scrum отличается от Kanban?</div>
+      <p class="a">«Scrum — это фреймворк с фиксированным ритмом: спринты, три роли, три артефакта и пять событий.
+      Kanban — метод управления потоком: доска, WIP-лимиты, явные политики и метрики потока.
+      Scrum оптимизирует предсказуемость и фокус через ограничение времени, Kanban — время прохождения
+      через ограничение незавершённой работы. На практике часто гибрид: продукт в Scrum, поддержка в Kanban».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Если коротко: Scrum задаёт ритм, Kanban — поток. В Scrum мы договариваемся, что делаем за две недели,
+        и стараемся не менять курс. В Kanban мы ограничиваем, сколько задач одновременно в работе, и берём
+        следующую, когда освободилось место. Первое лучше для продукта, второе — для потока заявок и инцидентов.</p>
+      </div>
+    </div>
+
+    <h3>Самопроверка</h3>
+    <p class="sub" style="margin-bottom:14px">
+      Отвечай вслух, без подглядывания.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="sk1" data-id="sk1"><label for="sk1">Чем Scrum отличается от Kanban в одном предложении?</label></li>
+      <li><input type="checkbox" class="check-item" id="sk2" data-id="sk2"><label for="sk2">Назови три роли, три артефакта и пять событий Scrum</label></li>
+      <li><input type="checkbox" class="check-item" id="sk3" data-id="sk3"><label for="sk3">Что такое WIP-лимит и зачем он нужен?</label></li>
+      <li><input type="checkbox" class="check-item" id="sk4" data-id="sk4"><label for="sk4">Сформулируй закон Литтла и практический вывод из него</label></li>
+      <li><input type="checkbox" class="check-item" id="sk5" data-id="sk5"><label for="sk5">Когда выберешь Kanban, а не Scrum?</label></li>
+    </ul>
+
+    <h3>Что почитать</h3>
+    <ul>
+      <li><strong>Scrum Guide 2020</strong> — первоисточник, 13 страниц</li>
+      <li><strong>Kanban Guide for Scrum Teams</strong> — как совместить поток и спринты</li>
+      <li><strong>«Kanban», David J. Anderson</strong> — про эволюцию процесса и классы обслуживания</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Жизненный цикл разработки ПО» · <a href="JiraWorkflow.html">Jira workflow и оценка трудозатрат</a> ·
+    <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

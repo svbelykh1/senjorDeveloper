@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Паттерны разработки, ООП vs ФП, DI и feature toggles — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 5 · Паттерны разработки</p>
+    <h1>Паттерны, ООП vs ФП, DI и feature toggles</h1>
+    <p class="lead">
+      Зачем нужны паттерны, чем функциональный подход отличается от ООП, как работает
+      внедрение зависимостей и как включать новые функции, не превращая код в лес
+      вечных `if`.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#oop-fp">ООП и ФП</a></li>
+      <li><a href="#gof">GoF</a></li>
+      <li><a href="#di">DI</a></li>
+      <li><a href="#toggles">Toggles</a></li>
+      <li><a href="#balance">Баланс</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем нужны паттерны</h2>
+
+    <p>Паттерн — это <strong>название для повторяющегося решения</strong>. Как «дверная ручка»
+    в разговоре с плотником: не нужно объяснять устройство, все понимают, о чём речь.
+    Паттерны нужны для общего языка и для быстрого узнавания знакомой конструкции,
+    а не как обязательный список к применению.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Кулинарный рецепт — не приказ готовить только так. Это проверенная последовательность
+      действий, которую можно адаптировать. Если рецепт не подходит к продуктам, его меняют,
+      а не ломают ужин.
+    </div>
+
+    <p>На интервью Senior обычно спрашивают не «перечисли 23 паттерна GoF», а:
+    <strong>какой паттерн ты применял и почему</strong>, <strong>что он дал</strong> и
+    <strong>чем пришлось заплатить</strong>. Ответ «использую Strategy, чтобы менять
+    тарификацию без правки checkout» звучит сильнее, чем заученный список.</p>
+
+    <div class="callout warn">
+      <strong>Паттерн ради паттерна — антипаттерн.</strong> Если задача решается в пять строк
+      без абстракций, паттерн добавит файлов и слоёв, но не пользы. Абстракция должна
+      окупаться: её вводят, когда есть второе реальное применение или ожидаемая замена.
+    </div>
+  </div>
+</section>
+
+<section id="oop-fp">
+  <div class="wrap">
+    <h2><span class="badge">2</span> ООП vs ФП: где что уместно</h2>
+
+    <p><strong>ООП</strong> собирает состояние и поведение вместе: у объекта есть данные
+    и методы, которые с ними работают. <strong>ФП</strong> строит программу из функций:
+    данные передаются снаружи, функции по возможности чистые, результат — новое значение,
+    а не изменённый объект.</p>
+
+    <div class="two">
+      <div class="plus">
+        <b>ООП сильнее, когда…</b>
+        Есть предметная область с множеством сущностей и правил: заказ, подписка, видео.
+        Нужен полиморфизм: разные реализации за одним интерфейсом. Состояние живёт долго
+        и должно быть инкапсулировано.
+      </div>
+      <div class="plus">
+        <b>ФП сильнее, когда…</b>
+        Есть преобразования данных: списки, отчёты, DTO, валидация. Нужна предсказуемость
+        и лёгкое тестирование. Операции можно разложить на маленькие шаги и собирать
+        из них конвейер.
+      </div>
+    </div>
+
+    <h3>Пять терминов простыми словами</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Термин</th><th>Что значит</th><th>Пример в PHP</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Чистая функция</strong></td>
+            <td>Одинаковый вход даёт одинаковый выход, побочных эффектов нет</td>
+            <td>`function vat(int $sum): int { return intdiv($sum * 20, 120); }`</td>
+          </tr>
+          <tr>
+            <td><strong>Иммутабельность</strong></td>
+            <td>Объект не меняется, вместо изменения возвращается новый</td>
+            <td>`readonly`-свойства, методы `withStatus()`</td>
+          </tr>
+          <tr>
+            <td><strong>Функция высшего порядка</strong></td>
+            <td>Принимает или возвращает функцию</td>
+            <td>`array_map`, `array_filter`, `usort` с callback</td>
+          </tr>
+          <tr>
+            <td><strong>Композиция</strong></td>
+            <td>Собираем сложное поведение из простых функций</td>
+            <td>`compose(trim(...), strtolower(...))`</td>
+          </tr>
+          <tr>
+            <td><strong>Мемоизация</strong></td>
+            <td>Кэшируем результат функции по аргументам</td>
+            <td>Кэш тарифов по `userId` на время запроса</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre class="cmd">$normalize = fn (string $s): string =&gt; mb_strtolower(trim($s));
+
+$emails = array_map($normalize, $rawEmails);
+
+$unique = array_values(array_unique($emails));</pre>
+
+    <p>В PHP оба подхода живут вместе. Сервисы и сущности удобно держать в ООП, а
+    преобразования внутри — в виде чистых функций. Плохой признак — когда объект
+    одновременно хранит состояние, ходит в базу, шлёт письма и форматирует ответ:
+    это уже не ООП, а «божественный объект».</p>
+
+    <div class="callout">
+      <strong>Ответ для интервью.</strong> «Выбираю по задаче: ООП — для предметной области
+      и полиморфизма, ФП — для преобразований и тестируемых расчётов. В PHP они не
+      конкурируют: сервис может быть объектом, а его внутренние шаги — чистыми функциями».
+    </div>
+  </div>
+</section>
+
+<section id="gof">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Паттерны GoF: что реально нужно</h2>
+
+    <p>«Банда четырёх» описала 23 паттерна и разделила их на три группы. Запоминать все
+    не нужно. Достаточно уверенно знать <strong>шесть-восемь</strong> и уметь объяснить,
+    какую проблему каждый решает.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Группа</th><th>Паттерны</th><th>Общая идея</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Порождающие</strong></td><td>Factory Method, Abstract Factory, Builder, Singleton</td><td>Как создавать объекты, не размазывая `new` по коду</td></tr>
+          <tr><td><strong>Структурные</strong></td><td>Adapter, Decorator, Facade, Proxy, Composite</td><td>Как собрать объекты в удобную конструкцию</td></tr>
+          <tr><td><strong>Поведенческие</strong></td><td>Strategy, Observer, Command, Template Method, Chain of Responsibility, State</td><td>Как распределить поведение и связи между объектами</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Strategy — подменяемая логика</h3>
+    <p>Когда есть несколько вариантов одного действия: тарификация, ретраи, выбор
+    транскодера. Вместо `if/else` по типу — общий интерфейс и разные реализации.</p>
+
+<pre class="cmd">interface PricingStrategy
+{
+    public function price(Order $order): int;
+}
+
+final class RegularPricing implements PricingStrategy { /* ... */ }
+final class PromoPricing implements PricingStrategy   { /* ... */ }
+
+final class Checkout
+{
+    public function __construct(private PricingStrategy $pricing) {}
+
+    public function total(Order $order): int
+    {
+        return $this->pricing->price($order);
+    }
+}</pre>
+
+    <h3>Adapter — мост к чужому API</h3>
+    <p>Внешний клиент CDN имеет неудобный интерфейс. Adapter переводит его в наш:
+    остальной код не знает, чья библиотека под капотом, и её можно заменить.</p>
+
+<pre class="cmd">interface Cdn
+{
+    public function purge(string $path): void;
+}
+
+final class CloudCdnAdapter implements Cdn
+{
+    public function __construct(private CloudClient $client) {}
+
+    public function purge(string $path): void
+    {
+        $this->client-&gt;invalidate(['paths' =&gt; [$path]]);
+    }
+}</pre>
+
+    <h3>Decorator — добавить поведение, не меняя класс</h3>
+    <p>Логирование, кэш, метрики, проверка прав — всё это можно навесить слоями вокруг
+    исходного объекта. Каждый слой реализует тот же интерфейс.</p>
+
+<pre class="cmd">final class LoggingVideoRepository implements VideoRepository
+{
+    public function __construct(
+        private VideoRepository $inner,
+        private LoggerInterface $log,
+    ) {}
+
+    public function find(int $id): ?Video
+    {
+        $this->log-&gt;info('video.find', ['id' =&gt; $id]);
+
+        return $this-&gt;inner-&gt;find($id);
+    }
+}</pre>
+
+    <h3>Остальные — коротко</h3>
+    <ul>
+      <li><strong>Factory Method</strong> — создать объект по типу: `hls` → `HlsTranscoder`,
+      `dash` → `DashTranscoder`. `new` живёт в одном месте.</li>
+      <li><strong>Observer</strong> — событие домена рассылается подписчикам: «видео
+      опубликовано» → обновить поиск, отправить уведомление, прогреть CDN.</li>
+      <li><strong>Facade</strong> — простой интерфейс к сложной подсистеме: один метод
+      `publishVideo()` вместо десяти вызовов.</li>
+      <li><strong>Proxy</strong> — тот же интерфейс, но с дополнительным контролем:
+      ленивая загрузка, права, кэш.</li>
+      <li><strong>Chain of Responsibility</strong> — обработчики по цепочке: валидация →
+      обогащение → сохранение. Каждый решает, передать дальше или остановить.</li>
+      <li><strong>Template Method</strong> — базовый класс задаёт скелет процесса, наследники
+      переопределяют шаги: импорт каталога с разными источниками.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Singleton — осторожно.</strong> Он удобен для «одного на всё приложение»,
+      но часто превращается в глобальную переменную: скрытые зависимости и проблемы
+      в тестах. Если нужен один экземпляр — обычно лучше доверить это DI-контейнеру.
+    </div>
+  </div>
+</section>
+
+<section id="di">
+  <div class="wrap">
+    <h2><span class="badge">4</span> IoC и DI: кто кого создаёт</h2>
+
+    <p><strong>Инверсия управления (IoC)</strong> — класс больше не создаёт свои зависимости
+    сам, а получает их снаружи. <strong>Внедрение зависимостей (DI)</strong> — самый
+    распространённый способ это сделать: передать готовый объект в конструктор.</p>
+
+    <div class="two">
+      <div class="minus">
+        <b>Плохо: зависимость создаётся внутри</b>
+        `new RedisClient(...)` прямо в сервисе. Нельзя подменить в тесте, конфигурация
+        размазана, связанность жёсткая.
+      </div>
+      <div class="plus">
+        <b>Хорошо: зависимость приходит снаружи</b>
+        Конструктор принимает интерфейс. В проде — Redis, в тесте — fake. Класс не знает,
+        откуда взялся объект.
+      </div>
+    </div>
+
+<pre class="cmd">interface Cache
+{
+    public function get(string $key): ?string;
+    public function set(string $key, string $value, int $ttl): void;
+}
+
+final class VideoService
+{
+    public function __construct(private Cache $cache) {}
+
+    public function preview(int $id): ?string
+    {
+        return $this-&gt;cache-&gt;get("video:{$id}");
+    }
+}</pre>
+
+    <h3>Контейнер</h3>
+    <p><strong>DI-контейнер</strong> — это фабрика, которая знает, как собрать объект:
+    какой класс подставить под интерфейс, какие у него зависимости, создавать один раз
+    или каждый раз новый. В Laravel это service providers, в Symfony — `services.yaml`
+    с autowire.</p>
+
+<pre class="cmd">// Laravel: интерфейс → реализация
+$this-&gt;app-&gt;bind(Cache::class, RedisCache::class);
+
+// Symfony: services.yaml
+// App\Service\VideoService:
+//     arguments:
+//         $cache: '@App\Cache\RedisCache'</pre>
+
+    <h3>Чем DI лучше Service Locator</h3>
+    <p><strong>Service Locator</strong> — класс сам достаёт зависимости из глобального
+    контейнера: `app(Cache::class)`. Зависимости спрятаны внутри, по конструктору не видно,
+    что нужно классу. В тестах приходится поднимать весь контейнер, а замена одной
+    зависимости может неожиданно сломать другую.</p>
+
+<pre class="cmd">// Service Locator: зависимость скрыта
+final class Report
+{
+    public function send(): void
+    {
+        $mailer = app(Mailer::class); // откуда? кто знает...
+        $mailer-&gt;send('...');
+    }
+}</pre>
+
+    <p>DI делает зависимости <strong>явными</strong>: всё видно в конструкторе, тест
+    подставляет fake, порядок создания контролирует контейнер. Это и есть главный ответ
+    на интервью: DI — про явность и тестируемость, а не про «модно».</p>
+
+    <div class="callout">
+      <strong>Не усложняй.</strong> В маленьком скрипте контейнер не нужен: хватит
+      конструктора и явной передачи. DI окупается, когда граф зависимостей растёт и
+      появляются интерфейсы с несколькими реализациями.
+    </div>
+  </div>
+</section>
+
+<section id="toggles">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Feature toggles: включать без деплоя</h2>
+
+    <p><strong>Feature toggle</strong> — переключатель, который включает или выключает
+    поведение без нового релиза. Это страховка: код уже в проде, но новая функция
+    доступна не всем или выключена до готовности.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Тип</th><th>Зачем</th><th>Сколько живёт</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Release toggle</strong></td><td>Слить код раньше, включить позже</td><td>Дни или недели</td></tr>
+          <tr><td><strong>Experiment toggle</strong></td><td>A/B-тест: часть пользователей видит новое</td><td>До конца эксперимента</td></tr>
+          <tr><td><strong>Ops toggle / kill switch</strong></td><td>Быстро отключить тяжёлую функцию при инциденте</td><td>Долго, сознательно</td></tr>
+          <tr><td><strong>Permission toggle</strong></td><td>Доступ по тарифу или роли</td><td>Долго, это часть продукта</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre class="cmd">if ($this-&gt;flags-&gt;isEnabled('new_player', $user)) {
+    return $this-&gt;newPlayer-&gt;handle($request);
+}
+
+return $this-&gt;oldPlayer-&gt;handle($request);</pre>
+
+    <h3>Как не превратить toggle в вечный `if`</h3>
+    <ol>
+      <li><strong>У каждого переключателя есть владелец и дата удаления.</strong> Записывай
+      их рядом с флагом или в задаче.</li>
+      <li><strong>Release toggle удаляют после раскатки.</strong> Код новой ветки становится
+      основным, старый удаляется. Иначе через год никто не помнит, зачем `if`.</li>
+      <li><strong>Не вкладывай toggle в toggle.</strong> Два-три уровня условий — и
+      поведение уже невозможно проверить.</li>
+      <li><strong>Тестируй оба состояния.</strong> Выключенная ветка — тоже продакшен-код.
+      Хотя бы smoke-тест на оба пути.</li>
+      <li><strong>Логируй вариант.</strong> Без этого нельзя разобрать инцидент: у кого
+      именно было включено.</li>
+      <li><strong>Не используй toggle как конфиг.</strong> Постоянные настройки — это
+      конфигурация, а не фича-флаг.</li>
+    </ol>
+
+    <div class="callout warn">
+      <strong>Признак запущенности:</strong> в коде есть флаг трёхлетней давности, все
+      всегда включён, а рядом лежит мёртвая ветка. Это уже не гибкость, а технический долг.
+    </div>
+  </div>
+</section>
+
+<section id="balance">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Баланс переиспользования и сложности</h2>
+
+    <p>Переиспользование звучит как добро, но у него есть цена: <strong>связность</strong>.
+    Общая библиотека связывает все проекты, которые её используют. Изменение в одном
+    месте ломает три других, и появляются флаги совместимости.</p>
+
+    <div class="two">
+      <div class="plus">
+        <b>Когда абстракция окупается</b>
+        Есть два-три реальных потребителя. Правило стабильно и повторяется. Замена
+        реализации ожидается в обозримом будущем.
+      </div>
+      <div class="minus">
+        <b>Когда вредит</b>
+        Абстракция «на будущее», которого нет. Один потребитель и пять интерфейсов.
+        Слой ради слоя, через который трудно пройти отладчиком.
+      </div>
+    </div>
+
+    <h3>Три правила, которые спасают</h3>
+    <ul>
+      <li><strong>Правило трёх.</strong> Первый раз — пиши просто. Второй — терпи дублирование.
+      Третий — выделяй общее. До третьего случая ещё неизвестно, что именно общее.</li>
+      <li><strong>YAGNI.</strong> «You aren't gonna need it»: не строь механизм под
+      гипотетическое требование. Требование изменится раньше, чем механизм пригодится.</li>
+      <li><strong>Композиция вместо наследования.</strong> Наследование жёстко связывает
+      классы и плохо переносит изменение иерархии. Композиция собирает поведение из
+      независимых частей.</li>
+    </ul>
+
+    <p>На интервью это проверяют вопросом «когда абстракция вредит?». Хороший ответ:
+    «когда она введена до появления второго потребителя и добавляет слой, который не
+    окупается. Тогда проще дублировать, пока не станет понятно, что именно обобщать».</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Паттерн, DI, toggle и переиспользование — инструменты,
+      а не цели. Хорошая архитектура делает изменение дешёвым, а не максимально
+      «правильным» на бумаге.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>ООП или ФП: где что уместно в PHP-микросервисе?</span></div>
+      <p class="a">«ООП — для предметной области, сущностей и полиморфизма: заказ, подписка,
+      разные реализации за интерфейсом. ФП — для преобразований данных, расчётов и
+      валидации: чистые функции, `array_map`, композиция. В PHP они сочетаются: сервис —
+      объект, его шаги внутри — чистые функции. Главный критерий — где меньше скрытого
+      состояния и проще тестировать».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>ООП — про «кто» и «что умеет», ФП — про «как преобразовать данные». Смешивать
+        их нормально, лишь бы объект не превращался в комбайн.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Чем DI отличается от Service Locator и почему второго избегают?</span></div>
+      <p class="a">«DI передаёт зависимости явно, обычно через конструктор: по сигнатуре
+      видно, что нужно классу. Service Locator достаёт их из глобального контейнера внутри
+      метода: зависимости скрыты, тест требует весь контейнер, замена одной может сломать
+      другую. DI лучше тестируется и честнее описывает связи».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>DI — «мне принесли инструменты», Service Locator — «я сам пошёл в кладовку».
+        Во втором случае никто не знает, что мне понадобится.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Какие паттерны GoF ты используешь и зачем?</span></div>
+      <p class="a">«Strategy — когда несколько вариантов одного действия, например тарификация
+      или выбор транскодера. Adapter — чтобы изолировать чужой API за своим интерфейсом.
+      Decorator — для логирования, кэша и метрик без правки основного класса. Observer —
+      для доменных событий. Factory — чтобы `new` жил в одном месте. Остальные применяю
+      по необходимости, а не для коллекции».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Паттерн — это ответ на конкретную боль: много вариантов, чужой API, сквозная
+        логика, событие. Если боли нет, паттерн не нужен.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как не превратить feature toggle в вечный `if`?</span></div>
+      <p class="a">«У флага есть владелец и дата удаления. Release toggle удаляется сразу
+      после раскатки: новая ветка становится основной, старая вычищается. Не вкладываю
+      флаги друг в друга, тестирую оба состояния и логирую вариант. Постоянные настройки
+      держу в конфиге, а не в фича-флаге».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Флаг — это временные леса, а не часть здания. Когда ремонт закончен, леса
+        убирают, иначе они мешают жить.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Когда абстракция вредит?</span></div>
+      <p class="a">«Когда введена до появления второго реального потребителя и добавляет
+      слой, который не окупается. Тогда изменение становится дороже: нужно пройти через
+      интерфейс, фабрику и конфиг, чтобы поменять одну строку. До третьего случая
+      дублирование дешевле, потому что ещё неизвестно, что именно общее».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Абстракция — это кредит: сначала удобно, потом платишь связностью. Брать его
+        стоит, когда есть понятная выгода.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Наследование или композиция?</span></div>
+      <p class="a">«По умолчанию композиция: класс собирает поведение из независимых частей,
+      и замена одной части не ломает иерархию. Наследование уместно, когда есть настоящая
+      связь «является» и общий контракт с шаблонными шагами. Но глубокая иерархия быстро
+      становится хрупкой: изменение базового класса задевает всех наследников».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Композиция — «у меня есть двигатель», наследование — «я и есть двигатель».
+        Первое легче заменить.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="pat1" data-id="pat1"><label for="pat1">Объясни разницу ООП и ФП и приведи пример из своего кода</label></li>
+      <li><input type="checkbox" class="check-item" id="pat2" data-id="pat2"><label for="pat2">Назови три паттерна GoF и проблему, которую каждый решает</label></li>
+      <li><input type="checkbox" class="check-item" id="pat3" data-id="pat3"><label for="pat3">Чем DI отличается от Service Locator?</label></li>
+      <li><input type="checkbox" class="check-item" id="pat4" data-id="pat4"><label for="pat4">Какой жизненный цикл у feature toggle и когда его удалять?</label></li>
+      <li><input type="checkbox" class="check-item" id="pat5" data-id="pat5"><label for="pat5">Когда абстракция вредит и что такое правило трёх?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> паттерны и абстракции — это кредит под будущие
+      изменения. Бери его, когда выгода видна, и возвращай вовремя: удаляй флаги,
+      упрощай лишние слои.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Паттерны разработки» ·
+    <a href="Algorithms.html">Структуры данных и алгоритмы</a> ·
+    <a href="QualityAssurance.html">Обеспечение качества</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

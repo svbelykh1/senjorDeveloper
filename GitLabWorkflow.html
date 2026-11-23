@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitLab: protected branches, MR approvals, CI pipelines — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 1 · Жизненный цикл разработки ПО</p>
+    <h1>GitLab: protected branches, MR approvals и CI pipelines</h1>
+    <p class="lead">
+      Как GitLab не даёт сломать основную ветку, заставляет коллег одобрить изменения
+      и автоматически проверяет код перед merge. Простыми словами, с настройками и примерами.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#process">Процесс</a></li>
+      <li><a href="#protected">Protected</a></li>
+      <li><a href="#approvals">Approvals</a></li>
+      <li><a href="#ci">CI</a></li>
+      <li><a href="#rules">Правила</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем это нужно</h2>
+
+    <p>GitLab — это не просто место, где лежит код. Это система, которая мешает случайно
+    сломать основную ветку: не пускает напрямую в <code>main</code>, требует одобрения коллег
+    и автоматически запускает проверки перед merge.</p>
+
+    <div class="table-wrap">
+      <table class="terms">
+        <thead>
+          <tr><th>Механизм</th><th>Что защищает</th><th>Аналогия</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Protected branch</td>
+            <td>В важную ветку нельзя пушить напрямую и нельзя переписать историю</td>
+            <td>Дверь с охраной: просто так не пройти</td>
+          </tr>
+          <tr>
+            <td>MR approvals</td>
+            <td>Изменения должны одобрить коллеги, а не сам автор</td>
+            <td>Подписи на пропуске</td>
+          </tr>
+          <tr>
+            <td>CI pipeline</td>
+            <td>Код автоматически проверяется: тесты, статический анализ, сборка</td>
+            <td>Конвейер с ОТК: брак дальше не едет</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Сила — в комбинации.</strong> Protected branch без обязательного pipeline и approvals
+      остаётся формальностью: свой MR можно смержить самому, не дожидаясь проверок.
+      На интервью важно показать, что ты настраиваешь все три вещи вместе.
+    </div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Как устроен процесс</h2>
+
+    <div class="flow">
+      <span class="node">Issue</span>
+      <span class="arrow">→</span>
+      <span class="node">Ветка</span>
+      <span class="arrow">→</span>
+      <span class="node">Коммиты</span>
+      <span class="arrow">→</span>
+      <span class="node key">Merge Request</span>
+      <span class="arrow">→</span>
+      <span class="node">Pipeline</span>
+      <span class="arrow">→</span>
+      <span class="node">Review + approvals</span>
+      <span class="arrow">→</span>
+      <span class="node key">Merge</span>
+      <span class="arrow">→</span>
+      <span class="node">Deploy</span>
+    </div>
+    <p class="flow-note">Ветка живёт отдельно, в основную попадает только через MR.</p>
+
+    <ol class="steps">
+      <li><strong>Задача.</strong> Issue описывает, что и зачем делаем.</li>
+      <li><strong>Ветка от <code>main</code>.</strong> Например, <code>feature/123-player-retry</code>.</li>
+      <li><strong>Коммиты.</strong> Маленькие и с понятными сообщениями.</li>
+      <li><strong>Merge Request.</strong> Сначала Draft, пока работа не готова к ревью.</li>
+      <li><strong>Pipeline.</strong> Автоматически проверяет код на каждом новом коммите.</li>
+      <li><strong>Review и approvals.</strong> Коллеги смотрят код и ставят одобрение.</li>
+      <li><strong>Merge.</strong> Только когда pipeline зелёный и approvals собраны.</li>
+      <li><strong>Deploy.</strong> Автоматически или по кнопке — зависит от окружения.</li>
+    </ol>
+
+    <h3>Слова, которые пригодятся</h3>
+    <div class="table-wrap">
+      <table class="terms">
+        <thead>
+          <tr><th>Термин</th><th>Простыми словами</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Project</td><td>Проект в GitLab: репозиторий плюс настройки, задачи, pipeline</td></tr>
+          <tr><td>Branch</td><td>Отдельная линия изменений, чтобы не трогать <code>main</code></td></tr>
+          <tr><td>Merge Request (MR)</td><td>Заявка «влейте мою ветку в main, вот изменения»</td></tr>
+          <tr><td>Pipeline</td><td>Весь конвейер проверок по стадиям</td></tr>
+          <tr><td>Stage</td><td>Очередь: сначала тесты, потом качество, потом деплой</td></tr>
+          <tr><td>Job</td><td>Одно задание внутри стадии, например «прогнать phpunit»</td></tr>
+          <tr><td>Runner</td><td>Машина или контейнер, который выполняет job</td></tr>
+          <tr><td>Environment</td><td>Окружение: staging, production</td></tr>
+          <tr><td>Artifact</td><td>Файл-результат job, который передают дальше или скачивают</td></tr>
+          <tr><td>Cache</td><td>Кэш зависимостей, чтобы job запускался быстрее</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="protected">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Protected branches: дверь с охраной</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      <code>main</code> — это общая ветка, по которой все ориентируются. Если каждый сможет
+      пушить в неё напрямую, одна ошибка сломает сборку у всей команды. Protected branch
+      закрывает прямой вход: изменения только через MR, с проверками и одобрением.
+    </div>
+
+    <h3>Что можно запретить</h3>
+    <ul>
+      <li><strong>Прямой push</strong> — изменения только через Merge Request.</li>
+      <li><strong>Force push</strong> — нельзя переписать историю и «потерять» чужие коммиты.</li>
+      <li><strong>Удаление ветки</strong> — <code>main</code> нельзя случайно снести.</li>
+      <li><strong>Merge без проверок</strong> — требовать зелёный pipeline и approvals.</li>
+    </ul>
+
+    <h3>Где настроить</h3>
+    <p><strong>Settings → Repository → Protected branches.</strong> Для каждой ветки или шаблона
+    (<code>main</code>, <code>release/*</code>) выбираются роли:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Настройка</th><th>Что означает</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Allowed to merge</td><td>Кто может нажать Merge, когда проверки пройдены</td></tr>
+          <tr><td>Allowed to push and merge</td><td>Кто может пушить напрямую, минуя MR. Для <code>main</code> — <strong>No one</strong></td></tr>
+          <tr><td>Allowed to force push</td><td>Почти всегда выключено</td></tr>
+          <tr><td>Require approval from code owners</td><td>Нужно одобрение владельцев затронутых файлов</td></tr>
+          <tr><td>Status checks must succeed</td><td>Без зелёного pipeline merge недоступен</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Отдельно защищают <strong>теги</strong> релизов: чтобы никто не перезаписал
+    <code>v1.42.0</code> другим кодом.</p>
+
+    <div class="callout warn">
+      <strong>Частая дыра.</strong> Ветка защищена, но у maintainer'ов оставлен прямой push
+      «на всякий случай». В итоге проверки обходят именно в тот момент, когда спешат.
+      Если правило есть — оно должно действовать для всех.
+    </div>
+  </div>
+</section>
+
+<section id="approvals">
+  <div class="wrap">
+    <h2><span class="badge">4</span> MR approvals: подписи на пропуске</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      Merge Request — это заявка на вливание ветки. Approval — формальное «я посмотрел,
+      согласен». Пока нужное число подписей не собрано, кнопка Merge не сработает.
+    </div>
+
+    <h3>Что настраивается</h3>
+    <p><strong>Settings → Merge requests → Approvals.</strong> Набор параметров зависит
+    от тарифа GitLab, но логика везде одна:</p>
+    <ul>
+      <li><strong>Сколько approvals нужно</strong> — например, один или два.</li>
+      <li><strong>Кто может одобрять</strong> — конкретные люди, группа или code owners.</li>
+      <li><strong>Автор не одобряет сам себя</strong> — иначе смысла в проверке нет.</li>
+      <li><strong>Сброс approvals при новом коммите</strong> — если код изменился, подписи собираются заново.</li>
+      <li><strong>Pipeline обязателен</strong> — merge только после зелёных проверок.</li>
+      <li><strong>Все обсуждения закрыты</strong> — нельзя мержить с открытыми комментариями.</li>
+    </ul>
+
+    <h3>Как выглядит работа</h3>
+    <ol class="steps">
+      <li>Открываешь <strong>Draft MR</strong>, пока работа не готова: коллеги не тратят время.</li>
+      <li>Когда готово — снимаешь Draft и добавляешь reviewers.</li>
+      <li>Pipeline проверяет код, ревьюеры оставляют комментарии.</li>
+      <li>Исправляешь замечания. Если включён сброс — approvals нужно получить заново.</li>
+      <li>Когда pipeline зелёный и approvals собраны — Merge.</li>
+    </ol>
+
+    <p>Полезные настройки MR: <strong>Squash commits</strong> (один аккуратный коммит вместо десяти),
+    <strong>Delete source branch</strong> (ветка не копится),
+    <strong>Merge when pipeline succeeds</strong> (автоматический merge после проверок).</p>
+
+    <div class="callout warn">
+      <strong>Approval ≠ review.</strong> Галочку можно поставить за две секунды, не открывая diff.
+      Поэтому в команде нужен короткий чек-лист: тесты, миграции, обработка ошибок, безопасность,
+      план отката. Иначе approvals создают ощущение контроля, не давая его.
+    </div>
+  </div>
+</section>
+
+<section id="ci">
+  <div class="wrap">
+    <h2><span class="badge">5</span> CI pipelines: конвейер проверок</h2>
+
+    <div class="idea">
+      <span class="lbl">Идея на пальцах</span>
+      Pipeline — это конвейер на заводе. Деталь проходит стадии: собрали, проверили,
+      прогнали тесты, отправили дальше. Если на любой стадии брак — дальше она не едет.
+    </div>
+
+    <p>Pipeline описывается файлом <code>.gitlab-ci.yml</code> в корне репозитория. Внутри —
+    <strong>стадии</strong> и <strong>задания</strong>. Задания выполняют <strong>runner'ы</strong>:
+    отдельные машины или контейнеры, зарегистрированные в GitLab.</p>
+
+    <h3>Минимальный пример</h3>
+<pre class="cmd">stages: [test, deploy]
+
+unit:
+  stage: test
+  image: registry.example.com/php-ci:8.3
+  script:
+    - composer install --no-interaction --prefer-dist
+    - vendor/bin/phpunit</pre>
+
+    <h3>Рабочий пример для PHP-сервиса</h3>
+<pre class="cmd">stages: [test, quality, deploy]
+
+# не запускать два pipeline на один MR
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+default:
+  image: registry.example.com/php-ci:8.3
+  cache:
+    key:
+      files: [composer.lock]
+    paths: [.composer-cache/]
+  before_script:
+    - composer install --no-interaction --prefer-dist
+
+unit:
+  stage: test
+  script:
+    - vendor/bin/phpunit --coverage-text
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths: [coverage/]
+
+static:
+  stage: quality
+  script:
+    - vendor/bin/phpstan analyse --no-progress
+
+deploy:
+  stage: deploy
+  needs: [unit, static]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  environment:
+    name: production
+    url: https://video.example.com
+  script:
+    - ./deploy.sh
+  when: manual</pre>
+
+    <p>Что здесь важно:</p>
+    <ul>
+      <li><strong><code>workflow:rules</code></strong> убирает двойной запуск: отдельно для MR и отдельно для ветки.</li>
+      <li><strong><code>cache</code></strong> хранит зависимости Composer между запусками — экономит минуты.</li>
+      <li><strong><code>artifacts</code></strong> сохраняет отчёт о покрытии, даже если тесты упали.</li>
+      <li><strong><code>needs</code></strong> позволяет деплою не ждать все задания, а только нужные.</li>
+      <li><strong><code>rules</code></strong> ограничивает деплой веткой <code>main</code>.</li>
+      <li><strong><code>environment</code> + <code>when: manual</code></strong> — прод только по кнопке.</li>
+    </ul>
+
+    <h3>Artifacts и cache — не одно и то же</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Вопрос</th><th>Artifacts</th><th>Cache</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Что это</td><td>Результат job: отчёты, собранные файлы</td><td>Заготовки для ускорения: зависимости</td></tr>
+          <tr><td>Где хранится</td><td>В GitLab</td><td>На runner'е или в общем хранилище</td></tr>
+          <tr><td>Гарантировано ли</td><td>Да, можно скачать и передать дальше</td><td>Нет, может пропасть</td></tr>
+          <tr><td>Срок жизни</td><td>Задаётся <code>expire_in</code></td><td>Пока не вытеснится</td></tr>
+          <tr><td>Зачем</td><td>Передать результат, сохранить отчёт</td><td>Ускорить повторный запуск</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Правило:</strong> если без файла pipeline сломается — это artifacts. Если файл нужен
+    только для скорости — cache. Pipeline должен работать и с пустым кэшем.</p>
+
+    <div class="callout">
+      <strong>Секреты — только в CI/CD variables.</strong> Не в <code>.gitlab-ci.yml</code>:
+      этот файл лежит в репозитории. Переменные помечают <em>masked</em> (значение скрыто в логах)
+      и <em>protected</em> (доступно только на защищённых ветках и тегах).
+    </div>
+
+    <h3>Деплой и откат</h3>
+    <p>Деплой привязывается к окружению: <code>environment: production</code>. Тогда GitLab
+    хранит историю выкладок, и откат — это повторный запуск pipeline с предыдущим тегом
+    или коммитом. Для прода обычно включают <strong>protected environment</strong>:
+    запускать деплой может только определённая роль.</p>
+  </div>
+</section>
+
+<section id="rules">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Правила и частые ошибки</h2>
+
+    <h3>Шесть правил</h3>
+    <ol class="steps">
+      <li><strong>В <code>main</code> — только через MR.</strong> Прямой push выключен для всех.</li>
+      <li><strong>Merge только с зелёным pipeline и approvals.</strong> Оба условия обязательны.</li>
+      <li><strong>Новый коммит сбрасывает approvals.</strong> Иначе одобрят один код, а вольют другой.</li>
+      <li><strong>Секреты — в masked/protected variables.</strong> Не в YAML и не в логах.</li>
+      <li><strong>Деплой — с <code>main</code> или тега, прод — вручную.</strong> Никаких деплоев с любой ветки.</li>
+      <li><strong>Artifacts для результата, cache для скорости.</strong> Не наоборот.</li>
+    </ol>
+
+    <h3>Частые ошибки</h3>
+    <ul>
+      <li>Protected branch включён, но обязательный pipeline — нет. Merge проходит с падающими тестами.</li>
+      <li>Оставили прямой push для maintainer'ов — правила обходят «по-быстрому».</li>
+      <li>Автор может одобрить свой MR — approvals превращаются в галочку.</li>
+      <li>Секрет положили в <code>.gitlab-ci.yml</code> или залогировали через <code>echo</code>.</li>
+      <li>У качественного job стоит <code>allow_failure: true</code> — статический анализ никогда не блокирует merge.</li>
+      <li>Деплой-джоба без <code>rules</code> — прод обновляется с каждой ветки.</li>
+      <li>Кэш используют как хранилище результатов: на новом runner'е pipeline падает.</li>
+      <li>Огромные MR на тысячу строк — ревью формальное, ошибки проходят.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> GitLab защищает <code>main</code> не одной настройкой,
+      а связкой «protected branch + обязательные approvals + зелёный pipeline». Убери любую часть —
+      и защита превращается в декорацию.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Зачем нужен protected branch и что он запрещает?</span></div>
+      <p class="a">«Protected branch запрещает прямой push и force-push в важную ветку, может
+      требовать merge только через MR, обязательные approvals и успешный pipeline. Настраивается
+      в Settings → Repository → Protected branches отдельно для main и шаблонов вроде release/*.
+      Смысл — ни один разработчик, включая maintainer, не может обойти проверки».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это дверь с охраной: напрямую в main не пройти, только через MR, с одобрением
+        и зелёным pipeline.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Что происходит с approvals после нового коммита?</span></div>
+      <p class="a">«Если включена настройка сброса approvals при добавлении коммитов, все одобрения
+      снимаются и собираются заново. Это защищает от ситуации, когда одобрили один код, а потом
+      в тот же MR дослали другой. Force-push в MR обычно тоже сбрасывает approvals».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Изменил код — подписи сгорели, одобряем заново. Иначе после approval можно протащить
+        что угодно.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Чем artifacts отличаются от cache?</span></div>
+      <p class="a">«Artifacts — результаты job, которые сохраняются в GitLab и передаются следующим
+      стадиям или скачиваются; у них есть expire_in. Cache — ускоряет повторные запуски, хранится
+      на runner'ах и не гарантирует наличие. Для корректности pipeline нужны artifacts,
+      cache — только оптимизация».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Artifacts — коробка с результатом, её передают дальше. Cache — шкаф с заготовками,
+        чтобы не делать всё заново. Если шкаф пропал, pipeline должен всё равно работать.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как устроен pipeline и что такое runner?</span></div>
+      <p class="a">«Pipeline описывается в .gitlab-ci.yml: stages и jobs. Job — набор команд,
+      stage — очередь. Jobs выполняются на runner'ах — агентах, зарегистрированных в проекте,
+      группе или на уровне GitLab. Jobs внутри стадии идут параллельно, стадии — последовательно;
+      needs позволяет запускать задание раньше, не дожидаясь всей стадии».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Конвейер: стадии по порядку, внутри каждой — задания. Задания выполняют runner'ы,
+        то есть рабочие машины. needs позволяет не ждать всю стадию.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Как сделать деплой только с main и с ручным подтверждением?</span></div>
+      <p class="a">«В job деплоя ставлю rules с условием CI_COMMIT_BRANCH == "main", environment
+      с именем production и when: manual. Дополнительно включаю protected environment, чтобы
+      запускать мог только определённый круг ролей. Откат — повторный запуск pipeline
+      с предыдущим тегом или коммитом».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Деплой-джоба запускается только на main и только после нажатия кнопки. Случайно
+        в прод не улетит.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Где хранить секреты в CI?</span></div>
+      <p class="a">«В CI/CD variables, помеченных masked и protected: masked скрывает значение
+      в логах, protected отдаёт переменную только на защищённых ветках и тегах. В .gitlab-ci.yml
+      секретов быть не должно, файл лежит в репозитории. Для внешних систем лучше короткоживущие
+      токены, а не долгоживущие пароли».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Секреты — в настройках GitLab, не в YAML. Маскирую, чтобы не светились в логах,
+        и разрешаю только на защищённых ветках.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="gl1" data-id="gl1"><label for="gl1">Что запрещает protected branch и как его настроить?</label></li>
+      <li><input type="checkbox" class="check-item" id="gl2" data-id="gl2"><label for="gl2">Как сделать обязательные approvals и что с ними происходит после нового коммита?</label></li>
+      <li><input type="checkbox" class="check-item" id="gl3" data-id="gl3"><label for="gl3">Чем artifacts отличаются от cache?</label></li>
+      <li><input type="checkbox" class="check-item" id="gl4" data-id="gl4"><label for="gl4">Как ограничить деплой веткой <code>main</code> и добавить ручное подтверждение?</label></li>
+      <li><input type="checkbox" class="check-item" id="gl5" data-id="gl5"><label for="gl5">Где хранить секреты и зачем нужны masked/protected variables?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Короткая формула для интервью:</strong> protected branch закрывает вход,
+      approvals добавляют вторые глаза, pipeline проверяет автоматически. Merge возможен,
+      только когда все три условия выполнены.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Жизненный цикл разработки ПО» ·
+    <a href="GitOperations.html">Git: cherry-pick, stash, rebase, bisect</a> ·
+    <a href="DeployStrategies.html">Blue-green, canary, rolling</a> ·
+    <a href="JiraWorkflow.html">Jira workflow и оценка</a> ·
+    <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

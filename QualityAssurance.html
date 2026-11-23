@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Обеспечение качества — тесты, нагрузка, статический анализ</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 2 · Обеспечение качества</p>
+    <h1>Обеспечение качества — простыми словами</h1>
+    <p class="lead">
+      Какие тесты писать, как проверить, что сервис выдержит нагрузку, что такое
+      Quality Gate и как встроить всё это в CI так, чтобы проверки ловили регресс,
+      но не мешали работать.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#pyramid">Пирамида</a></li>
+      <li><a href="#integration">Интеграция</a></li>
+      <li><a href="#perf">Нагрузка</a></li>
+      <li><a href="#static">Анализ</a></li>
+      <li><a href="#refactor">Рефакторинг</a></li>
+      <li><a href="#ci">CI/CD</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем это нужно</h2>
+
+    <p><strong>Обеспечение качества</strong> — это не «найти баги перед релизом». Это набор
+    датчиков, которые срабатывают, когда поведение системы сломалось. Хороший датчик не
+    мешает ехать, но загорается в нужный момент. Плохой — либо молчит, либо мигает всё время,
+    и его перестают замечать.</p>
+
+    <p>На Senior-интервью не спрашивают, «умеешь ли ты писать тесты». Спрашивают другое:
+    <strong>что</strong> ты тестируешь, <strong>на каком уровне</strong>, <strong>как это
+    встроено в процесс</strong>, <strong>какие метрики смотришь</strong> и <strong>что делаешь
+    с техническим долгом</strong>. Ответ «мы пишем unit-тесты» — это уровень middle.
+    Ответ с уровнями, порогами и метриками — уровень 3.</p>
+
+    <div class="idea">
+      <span class="lbl">Главная мысль</span>
+      У теста есть цена: его надо написать, поддерживать и гонять. Поэтому тестируют там,
+      где ошибка дорога: деньги, авторизация, работа с данными, интеграции с другими
+      сервисами. Сто процентов покрытия — не цель. Цель — предсказуемое поведение системы.
+    </div>
+
+    <div class="callout">
+      <strong>Хороший тест</strong> падает, когда поведение сломалось, и не падает, когда код
+      переписали без изменения поведения. Если тест падает от любого рефакторинга, он проверяет
+      реализацию, а не поведение.
+    </div>
+  </div>
+</section>
+
+<section id="pyramid">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Пирамида тестов: unit, integration, e2e</h2>
+
+    <p>Представь, что собираешь автомобиль. <strong>Unit-тест</strong> — проверить одну деталь
+    на стенде: работает ли насос. <strong>Integration-тест</strong> — состыковать насос
+    с двигателем и проверить, что топливо реально идёт. <strong>E2E-тест</strong> — выехать
+    на тест-драйв: завестись, доехать, затормозить. Чем дальше от детали, тем дороже проверка
+    и тем больше она покрывает.</p>
+
+    <div class="flow">
+      <span class="node key">Unit · быстро · много</span>
+      <span class="arrow">→</span>
+      <span class="node">Integration · среднее</span>
+      <span class="arrow">→</span>
+      <span class="node">E2E · медленно · мало</span>
+    </div>
+    <p class="flow-note">Ориентир по количеству: примерно 70% unit, 20% integration, 10% e2e.
+    Это не закон, а здравый смысл: дешёвых проверок должно быть больше.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Уровень</th><th>Что проверяет</th><th>Скорость</th><th>Чего не ловит</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Unit</strong></td>
+            <td>Одна функция или класс в изоляции: расчёты, правила, преобразования</td>
+            <td>Миллисекунды</td>
+            <td>Реальные SQL, сериализацию, сеть, права, конфиги</td>
+          </tr>
+          <tr>
+            <td><strong>Integration</strong></td>
+            <td>Код вместе с реальными Postgres, Kafka, HTTP-сервисом, кэшем</td>
+            <td>Секунды</td>
+            <td>Полный пользовательский сценарий и UI</td>
+          </tr>
+          <tr>
+            <td><strong>E2E</strong></td>
+            <td>Путь пользователя целиком через все сервисы</td>
+            <td>Минуты</td>
+            <td>Локализацию причины: упало — непонятно где</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Три частые ошибки</h3>
+    <ul>
+      <li><strong>Всё проверять через e2e.</strong> Дорого, медленно и нестабильно: падает
+      не там, где сломалось. Такой набор быстро начинают игнорировать.</li>
+      <li><strong>Только unit-тесты.</strong> Локально всё зелёное, а в проде падает на
+      сериализации в Kafka или на неверном SQL. Моки повторяют наши предположения, а не
+      реальность.</li>
+      <li><strong>Погоня за 100% покрытия.</strong> Покрытие показывает, что строки
+      выполнялись, а не что проверено поведение. Тест без `assert` тоже даёт «покрытие».</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Правило выбора уровня:</strong> проверяй на самом низком уровне, который ещё
+      способен поймать ошибку. Если ошибка в формуле — unit. Если в SQL-запросе —
+      integration. Если в связке «оплата → подписка → доступ» — e2e, и то не на каждый MR.
+    </div>
+  </div>
+</section>
+
+<section id="integration">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Тестирование взаимодействия компонентов</h2>
+
+    <p>Integration-тест проверяет, что наш код <strong>правильно общается</strong> с внешним
+    миром: пишет в Postgres, отправляет событие в Kafka, вызывает чужой HTTP API. Всё внешнее
+    здесь настоящее — только поднятое локально или в CI.</p>
+
+    <div class="two">
+      <div class="minus">
+        <b>Почему мока недостаточно</b>
+        Мок Kafka вернёт «отправлено», даже если топика нет, прав не хватает, а сообщение
+        не сериализуется. Мок — это наше предположение о чужом поведении. Ошибка в
+        предположении останется незамеченной.
+      </div>
+      <div class="plus">
+        <b>Что даёт реальная зависимость</b>
+        Ловит неверный SQL, миграции, права, формат сообщений, таймауты и ретраи. Именно
+        эти ошибки чаще всего доезжают до продакшена.
+      </div>
+    </div>
+
+    <h3>Как организовать</h3>
+    <ol>
+      <li><strong>Поднять зависимости рядом с тестами.</strong> `docker-compose` с Postgres,
+      Kafka (или лёгкой заменой вроде Redpanda) и приложением.</li>
+      <li><strong>Отдельная тестовая база.</strong> Не общая dev-база: иначе тесты мешают друг
+      другу и зависят от порядка запуска.</li>
+      <li><strong>Изоляция данных.</strong> Каждый тест — в транзакции с откатом либо с очисткой
+      таблиц перед стартом. Тест должен проходить и в одиночку, и в наборе.</li>
+      <li><strong>Ждать событие, а не спать.</strong> Вместо `sleep(2)` — цикл с таймаутом,
+      который проверяет, появилось ли сообщение.</li>
+      <li><strong>Отдельная группа в CI.</strong> Unit — на каждый коммит, integration — на
+      каждый MR, тяжёлые сценарии — по расписанию.</li>
+    </ol>
+
+<pre class="cmd">services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: app_test
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports: ["5433:5432"]
+
+  kafka:
+    image: redpandadata/redpanda:latest
+    command: >
+      redpanda start --overprovisioned --smp 1
+      --memory 512M --reserve-memory 0M --node-id 0
+      --check=false --kafka-addr PLAINTEXT://0.0.0.0:9092
+      --advertise-kafka-addr PLAINTEXT://kafka:9092</pre>
+
+    <h3>Пример integration-теста на PHP</h3>
+
+<pre class="cmd">final class SubscriptionRepositoryTest extends TestCase
+{
+    private PDO $pdo;
+
+    protected function setUp(): void
+    {
+        $this->pdo = new PDO(getenv('TEST_DATABASE_URL'));
+        $this->pdo->beginTransaction();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->pdo->rollBack();   // тест не оставляет данных
+    }
+
+    public function test_activates_subscription(): void
+    {
+        $repo = new SubscriptionRepository($this->pdo);
+        $repo->activate(userId: 42, plan: 'premium');
+
+        $row = $this->pdo
+            ->query('SELECT plan FROM subscriptions WHERE user_id = 42')
+            ->fetch();
+
+        self::assertSame('premium', $row['plan']);
+    }
+}</pre>
+
+    <h3>Ожидание события в Kafka</h3>
+    <p>Асинхронность — главная причина «мигающих» тестов. Правильный приём — короткий опрос
+    с общим таймаутом: как только сообщение появилось, идём дальше; если не появилось за
+    несколько секунд, тест падает с понятной ошибкой.</p>
+
+<pre class="cmd">$consumer = new RdKafka\KafkaConsumer($config);
+$consumer->subscribe(['video.events']);
+
+$deadline = microtime(true) + 5.0;
+$message  = null;
+
+while (microtime(true) &lt; $deadline) {
+    $msg = $consumer->consume(200);
+    if ($msg->err === RD_KAFKA_RESP_ERR_NO_ERROR) {
+        $message = json_decode($msg->payload, true);
+        break;
+    }
+}
+
+self::assertNotNull($message, 'Событие не пришло за 5 секунд');
+self::assertSame('video.published', $message['type']);</pre>
+
+    <div class="callout warn">
+      <strong>Частая ловушка.</strong> Тесты зелёные локально и красные в CI, потому что
+      версии Postgres или Kafka разные. Фиксируй образы по тегу (`postgres:16`), а не
+      `latest`, и держи конфигурацию тестов в репозитории.
+    </div>
+  </div>
+</section>
+
+<section id="perf">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Тестирование производительности автотестами</h2>
+
+    <p>«Кажется, стало медленнее» — не аргумент на ревью и не аргумент на интервью.
+    Нагрузочный тест превращает ощущение в <strong>воспроизводимый замер</strong>:
+    одинаковый сценарий, одинаковая нагрузка, одинаковые метрики до и после изменения.</p>
+
+    <h3>Какие метрики смотреть</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Метрика</th><th>Что означает</th><th>Зачем нужна</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Throughput / RPS</strong></td><td>Сколько запросов в секунду обрабатывает сервис</td><td>Понять потолок и запас</td></tr>
+          <tr><td><strong>Latency p95 / p99</strong></td><td>95% и 99% запросов быстрее этого времени</td><td>Пользователи чувствуют хвост, а не среднее</td></tr>
+          <tr><td><strong>Error rate</strong></td><td>Доля ответов 5xx и таймаутов</td><td>Скорость без ошибок не считается</td></tr>
+          <tr><td><strong>CPU / RAM / I/O</strong></td><td>Насыщение ресурсов</td><td>Понять, что упрётся первым</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Среднее время ответа обманывает.</strong> Девять запросов по 100 мс и один на
+      10 секунд дают среднее около 1,1 с — но пользователь с медленным запросом всё равно
+      страдает. Поэтому смотрят p95 и p99.
+    </div>
+
+    <h3>JMeter или Gatling</h3>
+    <div class="grid">
+      <div class="card">
+        <h3>JMeter</h3>
+        <ul>
+          <li>Графический интерфейс — быстро начать</li>
+          <li>Много плагинов и готовых отчётов</li>
+          <li>Сценарий хранится в XML — диффы в git читать тяжело</li>
+          <li>Сам по себе прожорлив: для больших нагрузок нужен распределённый запуск</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Gatling</h3>
+        <ul>
+          <li>Сценарий — код (Scala/Java/Kotlin), живёт в репозитории как обычный файл</li>
+          <li>Красивый HTML-отчёт из коробки</li>
+          <li>Экономнее по ресурсам</li>
+          <li>Нужно уметь читать код и DSL</li>
+        </ul>
+      </div>
+    </div>
+    <p>Для проверки идеи подойдёт любой. Если нагрузочные тесты должны жить в CI и
+    ревьюиться как код — Gatling или k6 удобнее. Если нужен быстрый разовый замер —
+    JMeter с GUI.</p>
+
+    <h3>Как построить тест: пять шагов</h3>
+    <ol>
+      <li><strong>Сценарий пользователя.</strong> Не «дёрнуть все эндпоинты», а реальный путь:
+      получить список видео → открыть карточку → начать просмотр.</li>
+      <li><strong>Прод-подобный стенд.</strong> Те же версии БД и брокера, сопоставимые ресурсы.
+      Замер на ноутбуке по Wi-Fi показывает скорость Wi-Fi, а не сервиса.</li>
+      <li><strong>Прогрев.</strong> Первые запросы медленные: кэши пустые, соединения
+      устанавливаются. Их не считают.</li>
+      <li><strong>Ступени нагрузки.</strong> Smoke — 1 пользователь, проверяем что вообще
+      работает. Load — ожидаемая нагрузка. Stress — до отказа, ищем потолок. Soak —
+      несколько часов, ищем утечки памяти.</li>
+      <li><strong>Порог и анализ.</strong> До запуска договорись, что считается успехом:
+      например, p95 ниже 300 мс и ошибок меньше 1%.</li>
+    </ol>
+
+<pre class="cmd">class VideoApiSimulation extends Simulation {
+  val httpProtocol = http.baseUrl("http://staging.internal:8080")
+
+  val browse = scenario("Смотреть видео")
+    .exec(http("Список видео").get("/videos").check(status.is(200)))
+    .pause(1)
+    .exec(http("Карточка видео").get("/videos/42").check(status.is(200)))
+
+  setUp(
+    browse.inject(rampUsers(200).during(60))
+  ).protocols(httpProtocol)
+   .assertions(
+     global.responseTime.percentile(95).lt(300),
+     global.failedRequests.percent.lt(1)
+   )
+}</pre>
+
+    <div class="callout warn">
+      <strong>Нагрузочные тесты редко гоняют на каждый MR.</strong> Они долгие и занимают
+      стенд. Разумная схема: smoke — на каждый MR, полный профиль — перед релизом или
+      ночью по расписанию. Порог при этом остаётся тем же.
+    </div>
+  </div>
+</section>
+
+<section id="static">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Статический анализ: SonarQube и Coverity</h2>
+
+    <p>Статический анализ читает код, <strong>не запуская его</strong>. Это рентген перед
+    выездом: он видит трещины, которые не видны на ходу, но ничего не говорит о том, как
+    машина едет. Поэтому он дополняет тесты, а не заменяет их.</p>
+
+    <h3>Кто что делает</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Инструмент</th><th>Сильные стороны</th><th>Где применяют</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>PHPStan / Psalm</strong></td><td>Типы, несуществующие методы, неверные аргументы; очень быстрый</td><td>Ежедневно, в IDE и в CI</td></tr>
+          <tr><td><strong>SonarQube</strong></td><td>Баги, уязвимости, код-смеллы, дублирование, покрытие, технический долг</td><td>Сервер на команду или проект</td></tr>
+          <tr><td><strong>Coverity</strong></td><td>Глубокий анализ потоков данных, сложные дефекты</td><td>Крупные проекты, часто C/C++ и Java</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>В PHP-микросервисе рабочая связка выглядит так: PHPStan ловит ошибки типов ещё в IDE,
+    SonarQube считает качество и технический долг, а линтеры следят за стилем. Всё это
+    запускается в CI и не требует отдельного человека.</p>
+
+    <h3>Quality Gate</h3>
+    <p><strong>Quality Gate</strong> — это набор условий, ниже которых изменение не проходит.
+    Не «оценка качества вообще», а конкретный фильтр на merge. Главный принцип:
+    <strong>требования применяют к новому и изменённому коду</strong>, а не ко всему
+    legacy-репозиторию. Иначе команда утонет в старом долге и отключит проверки.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Условие</th><th>Пример порога</th><th>Почему так</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Покрытие нового кода</td><td>≥ 80%</td><td>Новый код приходит с проверками</td></tr>
+          <tr><td>Новые блокирующие замечания</td><td>0</td><td>Не накапливать баги и уязвимости</td></tr>
+          <tr><td>Дублирование нового кода</td><td>&lt; 3%</td><td>Копипаста — будущая рассинхронизация</td></tr>
+          <tr><td>Технический долг</td><td>Не растёт</td><td>Долг можно гасить постепенно, но не увеличивать</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Quality Gate — это турникет на входе, а не оценка в конце года. Он пропускает только
+      те изменения, которые не ухудшают планку. Старый код можно улучшать постепенно —
+      по принципу «оставь место чище, чем было».
+    </div>
+
+    <h3>Ложные срабатывания</h3>
+    <p>Иногда анализатор ошибается. Правильная реакция — подавить конкретное замечание
+    с комментарием, почему это безопасно. Неправильная — отключить правило для всего
+    проекта: через месяц оно перестанет ловить настоящую проблему.</p>
+
+    <div class="callout">
+      <strong>Что сказать на интервью:</strong> статический анализ дешёвый и быстрый, поэтому
+      стоит первым в пайплайне. Он не заменяет ревью и тесты: инструмент видит паттерны,
+      а человек — смысл. Quality Gate должен блокировать merge, иначе он превращается
+      в рекомендацию.
+    </div>
+  </div>
+</section>
+
+<section id="refactor">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Рефакторинг</h2>
+
+    <p><strong>Рефакторинг</strong> — изменение внутреннего устройства кода <strong>без
+    изменения поведения</strong>. Это ремонт кухни, когда меню остаётся тем же: гости не
+    замечают разницы, а готовить становится удобнее. Если после «рефакторинга» изменился
+    ответ API — это уже не рефакторинг, а изменение функциональности.</p>
+
+    <h3>Когда он нужен</h3>
+    <ul>
+      <li><strong>Перед новой фичей</strong> — сначала упростить место, потом добавлять
+      поведение. Классика: «сделай изменение простым, потом сделай простое изменение».</li>
+      <li><strong>При дублировании</strong> — одна и та же логика в трёх местах рано или
+      поздно разойдётся, и баг придётся чинить трижды.</li>
+      <li><strong>При непонятном имени</strong> — если приходится читать тело метода, чтобы
+      понять название, имя плохое.</li>
+      <li><strong>Рядом с багом</strong> — чинишь ошибку, заодно приводишь в порядок участок,
+      который её породил.</li>
+    </ul>
+
+    <h3>Как делать безопасно</h3>
+    <ol>
+      <li><strong>Сначала страховка.</strong> Нет тестов на этот участок — напиши
+      characterization-тесты: зафиксируй текущее поведение, даже странное.</li>
+      <li><strong>Маленькие шаги.</strong> Один приём за раз: переименовал — прогнал тесты;
+      выделил метод — прогнал тесты.</li>
+      <li><strong>Частые коммиты.</strong> Так проще откатить один шаг, а не всю работу.</li>
+      <li><strong>Не смешивать с фичей.</strong> Отдельный MR на рефакторинг, отдельный —
+      на новое поведение. Ревьюер скажет спасибо.</li>
+      <li><strong>Проверить в CI.</strong> Тесты, статический анализ и линтер должны быть
+      зелёными после каждого шага.</li>
+    </ol>
+
+    <h3>Простые приёмы</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Приём</th><th>Что делает</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Extract method</strong></td><td>Выносит кусок длинного метода в отдельный с понятным именем</td></tr>
+          <tr><td><strong>Rename</strong></td><td>Заменяет имя на честное: `data2` → `pendingPayments`</td></tr>
+          <tr><td><strong>Replace magic number</strong></td><td>Превращает `3600` в `SESSION_TTL`</td></tr>
+          <tr><td><strong>Introduce parameter object</strong></td><td>Пять аргументов, которые всегда ходят вместе, становятся одним объектом</td></tr>
+          <tr><td><strong>Split class</strong></td><td>Класс, который делает всё, делится по ответственностям</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Запахи, которые видно без инструментов</h3>
+    <ul>
+      <li><strong>Длинный метод</strong> — не помещается на экран и требует комментариев-разделителей.</li>
+      <li><strong>God class</strong> — класс знает про всё: авторизацию, БД, Kafka и письма.</li>
+      <li><strong>Feature envy</strong> — метод больше работает с чужими данными, чем со своими.</li>
+      <li><strong>Primitive obsession</strong> — деньги, email и ID гуляют строками без валидации.</li>
+      <li><strong>Копипаста</strong> — два похожих блока, которые меняют вместе, но забывают один.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Когда не надо.</strong> За день до релиза. Без тестов на критичный legacy-код.
+      И «заодно», в MR с фичей. Рефакторинг — управляемая работа, а не порыв.
+    </div>
+  </div>
+</section>
+
+<section id="ci">
+  <div class="wrap">
+    <h2><span class="badge">7</span> CI/CD и контроль качества процесса</h2>
+
+    <p>CI — это конвейер, который на каждом изменении прогоняет проверки в одном и том же
+    порядке. Смысл не в «галочке», а в том, что <strong>плохое изменение не доезжает до
+    основной ветки</strong>. Чем раньше поймали, тем дешевле починить.</p>
+
+    <div class="flow">
+      <span class="node">lint</span><span class="arrow">→</span>
+      <span class="node">static</span><span class="arrow">→</span>
+      <span class="node">unit</span><span class="arrow">→</span>
+      <span class="node">integration</span><span class="arrow">→</span>
+      <span class="node">build</span><span class="arrow">→</span>
+      <span class="node">staging + smoke</span><span class="arrow">→</span>
+      <span class="node key">prod</span>
+    </div>
+    <p class="flow-note">Быстрые проверки — первыми: линтер за секунды, интеграция за минуты.
+    Нет смысла запускать тяжёлые тесты, если код не компилируется.</p>
+
+    <h3>Правила хорошего пайплайна</h3>
+    <ul>
+      <li><strong>Fail fast.</strong> Самая дешёвая проверка стоит первой.</li>
+      <li><strong>Параллельность.</strong> Независимые стадии идут одновременно: unit и
+      статический анализ не должны ждать друг друга.</li>
+      <li><strong>Кэш и фиксированные образы.</strong> Одинаковое окружение локально и в CI,
+      иначе «у меня работает».</li>
+      <li><strong>Артефакты.</strong> Отчёты тестов, покрытие, HTML-отчёт Gatling сохраняются,
+      а не теряются в логе.</li>
+      <li><strong>Один результат.</strong> Merge разрешён только при зелёном пайплайне и
+      одобрениях.</li>
+    </ul>
+
+<pre class="cmd">stages: [lint, test, quality, build]
+
+static:
+  stage: lint
+  script:
+    - composer phpstan
+    - composer cs-check
+
+unit:
+  stage: test
+  script: [vendor/bin/phpunit --testsuite unit]
+
+integration:
+  stage: test
+  services:
+    - name: postgres:16
+      alias: postgres
+  variables:
+    TEST_DATABASE_URL: "pgsql://app:app@postgres:5432/app_test"
+  script: [vendor/bin/phpunit --testsuite integration]
+
+sonar:
+  stage: quality
+  script: [sonar-scanner]
+  allow_failure: false</pre>
+
+    <h3>Что блокирует merge</h3>
+    <ol>
+      <li>Красный пайплайн: упавшие тесты, линтер, статический анализ.</li>
+      <li>Quality Gate не пройден: покрытие нового кода ниже порога, есть блокирующие замечания.</li>
+      <li>Нет обязательных approvals в MR.</li>
+      <li>Конфликты с целевой веткой.</li>
+    </ol>
+
+    <h3>Контроль качества процесса</h3>
+    <p>Качество — это не только код, но и то, как команда работает. Полезно смотреть на
+    несколько чисел, а не на ощущения:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Метрика</th><th>О чём говорит</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Deployment frequency</strong></td><td>Как часто доставляем изменения</td></tr>
+          <tr><td><strong>Lead time</strong></td><td>Сколько времени от коммита до продакшена</td></tr>
+          <tr><td><strong>Change failure rate</strong></td><td>Доля релизов, после которых были инциденты</td></tr>
+          <tr><td><strong>MTTR</strong></td><td>Как быстро восстанавливаемся после сбоя</td></tr>
+          <tr><td><strong>Flaky rate</strong></td><td>Доля тестов, которые падают без изменения кода</td></tr>
+          <tr><td><strong>Escaped defects</strong></td><td>Баги, найденные в проде, а не до релиза</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Первые четыре называют метриками DORA. Они не про «скорость ради скорости»:
+    команда, которая часто и мелко релизит, обычно и восстанавливается быстрее.
+    Flaky-тесты — отдельная боль: их либо чинят, либо удаляют, но не «перезапускают,
+    пока не станет зелёным».</p>
+
+    <div class="idea">
+      <span class="lbl">Definition of Done</span>
+      Код написан · тесты добавлены · статический анализ зелёный · документация обновлена ·
+      MR одобрен · фича проверена в staging. Если пункт не выполнен, задача не закрыта,
+      даже если «работает локально».
+    </div>
+
+    <div class="callout">
+      <strong>Качество — не стадия в конце.</strong> Это свойство процесса: короткие ветки,
+      маленькие MR, автоматические проверки, разбор инцидентов без поиска виноватых
+      и регулярное возвращение к долгу. Тогда релиз перестаёт быть событием.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">8</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем integration-тест отличается от unit и почему моков недостаточно?</span></div>
+      <p class="a">«Unit проверяет одну единицу в изоляции, integration — взаимодействие
+      с реальной инфраструктурой: Postgres, Kafka, HTTP. Мок возвращает то, что мы сами
+      в него заложили, поэтому не ловит неверный SQL, отсутствие топика, права и формат
+      сообщений. Именно эти ошибки чаще всего доезжают до продакшена, поэтому ключевые
+      интеграции проверяют на настоящих зависимостях».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Unit — проверить деталь на стенде, integration — состыковать её с двигателем.
+        Мок — это наша фантазия о том, как работает чужая деталь, а не сама деталь.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Как построить нагрузочный тест и какие метрики смотреть?</span></div>
+      <p class="a">«Беру реальный пользовательский сценарий, поднимаю прод-подобный стенд,
+      делаю прогрев и ступени: smoke, load, stress, soak. Смотрю throughput, latency p95
+      и p99, долю ошибок и насыщение CPU, памяти и I/O. Среднее время ответа не показательно:
+      оно скрывает медленный хвост. До запуска фиксирую порог, например p95 ниже 300 мс
+      и ошибок меньше процента, и проверяю его в CI или перед релизом».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это замер, а не ощущение. Одинаковый сценарий и стенд, повторяемый результат.
+        Главное — сколько запросов держим, сколько ждёт пользователь и сколько при этом ошибок.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Зачем Quality Gate и какие условия ты бы поставил?</span></div>
+      <p class="a">«Quality Gate не даёт ухудшать качество при merge. Условия ставлю на новом
+      коде: покрытие не ниже 80%, ноль новых блокирующих замечаний, дублирование меньше 3%,
+      технический долг не растёт. Требовать то же от всего legacy бессмысленно — команда
+      просто отключит проверки. Ложные срабатывания подавляю точечно, с комментарием,
+      а не отключением правила».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это турникет на входе, а не оценка в конце года. Он не пропускает изменение,
+        которое делает код хуже, но не требует переписать весь старый проект.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как делать рефакторинг безопасно?</span></div>
+      <p class="a">«Сначала тесты, фиксирующие текущее поведение. Потом маленькие шаги:
+      один приём, прогон тестов, коммит. Отдельный MR без смешивания с фичей. После каждого
+      шага зелёный CI. В критичном legacy без тестов начинаю с characterization-тестов,
+      а не с переписывания».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это ремонт кухни без изменения меню: гости не видят разницы, а готовить удобнее.
+        Страховка — тесты, движение — маленькими шагами.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что должно быть в CI перед merge?</span></div>
+      <p class="a">«Линтер и статический анализ, unit-тесты, integration-тесты с реальными
+      зависимостями, сборка, Quality Gate и обязательные approvals. На staging — smoke
+      и ключевые e2e. Merge разрешён только при зелёном пайплайне. Быстрые стадии идут
+      первыми и параллельно, где возможно, отчёты сохраняются как артефакты».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Конвейер от дешёвого к дорогому. Если код не прошёл линтер, нет смысла ждать
+        десять минут интеграционных тестов.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как контролировать качество процесса, а не только кода?</span></div>
+      <p class="a">«Смотрю deployment frequency, lead time, change failure rate и MTTR,
+      плюс долю flaky-тестов и багов, ушедших в прод. Регулярно разбираю инциденты без
+      поиска виноватых, веду ретро и постепенно гашу технический долг. Качество процесса —
+      это короткие ветки, маленькие MR, автоматические проверки и Definition of Done,
+      а не героический тестировщик в конце спринта».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Если релизы редкие и страшные, а тесты мигают — проблемы в процессе, а не в
+        отдельных разработчиках. Метрики нужны, чтобы это увидеть, а не чтобы кого-то наказать.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="qa1" data-id="qa1"><label for="qa1">Объясни разницу unit, integration и e2e на примере своего сервиса</label></li>
+      <li><input type="checkbox" class="check-item" id="qa2" data-id="qa2"><label for="qa2">Почему integration-тест с реальной БД и Kafka надёжнее мока?</label></li>
+      <li><input type="checkbox" class="check-item" id="qa3" data-id="qa3"><label for="qa3">Какие метрики нагрузочного теста важнее среднего времени ответа и почему?</label></li>
+      <li><input type="checkbox" class="check-item" id="qa4" data-id="qa4"><label for="qa4">Какие условия Quality Gate ты поставишь на новом коде?</label></li>
+      <li><input type="checkbox" class="check-item" id="qa5" data-id="qa5"><label for="qa5">Как связаны рефакторинг, тесты и CI?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> качество — это система проверок на разных уровнях,
+      встроенная в CI. Тесты ловят поведение, статический анализ — дефекты, нагрузочные
+      тесты — деградацию, а метрики процесса показывают, работает ли всё это вместе.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Обеспечение качества» ·
+    <a href="TechDocumentation.html">Техническая документация</a> ·
+    <a href="GitLabWorkflow.html">GitLab: CI и MR approvals</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>
