@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Распределённые системы, LB, sidecar, 2PC — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Архитектура · неделя 7</p>
+    <h1>Распределённые системы: LB, sidecar и транзакции</h1>
+    <p class="lead">
+      Почему сеть нельзя считать надёжной, как балансировщик выбирает инстанс,
+      зачем нужен sidecar и почему two-phase commit плохо дружит с микросервисами.
+      С разделением запросов по типам данных и примерами для видео-платформы.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#lb">Балансировка</a></li>
+      <li><a href="#sidecar">Sidecar</a></li>
+      <li><a href="#transactions">Транзакции</a></li>
+      <li><a href="#split">Разделение</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Что меняется в распределённой системе</h2>
+
+    <p>В монолите вызов метода почти всегда успешен и быстрый. В распределённой системе
+    <strong>сеть ненадёжна</strong>, <strong>задержка не нулевая</strong>,
+    <strong>топология меняется</strong>, а <strong>частичный отказ</strong> — норма:
+    один сервис ответил, другой нет, третий ответил дважды.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Монолит — один цех: передал деталь соседу через стол. Микросервисы — сеть заводов:
+      деталь может потеряться в дороге, приехать дважды или застрять на таможне.
+      Проектировать нужно с учётом дороги, а не только станка.
+    </div>
+
+    <p>Отсюда все сложности: таймауты, повторы, идемпотентность, согласованность,
+    наблюдаемость. На интервью Senior ждут, что ты <strong>не будешь делать вид,
+    что сеть идеальна</strong>.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Распределённая система — это набор независимых
+      отказов. Задача архитектуры — ограничить их влияние и сделать поведение
+      предсказуемым.
+    </div>
+  </div>
+</section>
+
+<section id="lb">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Балансировщики и прокси</h2>
+
+    <h3>L4 и L7</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Тип</th><th>Что видит</th><th>Что умеет</th><th>Когда</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>L4</strong></td><td>IP и порт</td><td>Быстро распределяет TCP/UDP, не смотрит в HTTP</td><td>Высокая нагрузка, простые правила</td></tr>
+          <tr><td><strong>L7</strong></td><td>HTTP-заголовки, путь, cookie</td><td>Маршрутизация по пути, TLS-терминация, ретраи, лимиты</td><td>API gateway, канареечные релизы</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Алгоритмы</h3>
+    <ul>
+      <li><strong>Round robin</strong> — по кругу. Просто, но не учитывает нагрузку.</li>
+      <li><strong>Least connections</strong> — на инстанс с меньшим числом соединений.
+      Лучше для разной длительности запросов.</li>
+      <li><strong>Consistent hashing</strong> — один и тот же ключ идёт на тот же узел.
+      Полезно для кэшей и шардирования.</li>
+      <li><strong>Random / weighted</strong> — случайно или с весами под разную мощность
+      машин.</li>
+    </ul>
+
+    <h3>Health checks и draining</h3>
+    <p>Балансировщик должен знать, что инстанс жив. <strong>Readiness</strong> отвечает,
+    готов ли он принимать трафик; <strong>liveness</strong> — не завис ли процесс.
+    При остановке инстанс сначала перестаёт получать новые запросы
+    (<strong>draining</strong>), затем завершает текущие.</p>
+
+    <div class="callout warn">
+      <strong>Sticky sessions — не решение состояния.</strong> Привязка пользователя к
+      инстансу помогает с локальным кэшем, но ломается при масштабировании и падении
+      пода. Состояние лучше выносить в Redis или БД.
+    </div>
+
+    <h3>Прямой и обратный прокси</h3>
+    <p><strong>Forward proxy</strong> стоит перед клиентом и ходит в интернет от его имени.
+    <strong>Reverse proxy</strong> стоит перед серверами: принимает запросы, терминирует
+    TLS, маршрутизирует и кэширует. Nginx и Envoy чаще всего работают как reverse proxy
+    и API gateway.</p>
+  </div>
+</section>
+
+<section id="sidecar">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Sidecar и service mesh</h2>
+
+    <p><strong>Sidecar</strong> — отдельный процесс рядом с приложением, который берёт на
+    себя сетевые задачи: mTLS, ретраи, таймауты, метрики, трассировку. Приложение
+    занимается бизнес-логикой, а не инфраструктурой.</p>
+
+    <div class="flow">
+      <span class="node">app</span><span class="arrow">⇄ localhost</span>
+      <span class="node key">sidecar proxy</span><span class="arrow">⇄ mTLS</span>
+      <span class="node">другой сервис</span>
+    </div>
+    <p class="flow-note">Прокси перехватывает входящий и исходящий трафик. Приложение
+    может даже не знать, что соединение шифруется.</p>
+
+    <div class="two">
+      <div class="plus">
+        <b>Плюсы</b>
+        Единые политики для всех сервисов, mTLS без правок кода, телеметрия из коробки,
+        управляемые ретраи и канареечный трафик.
+      </div>
+      <div class="minus">
+        <b>Минусы</b>
+        Дополнительный hop и задержка, больше движущихся частей, сложная отладка,
+        нужна зрелая команда эксплуатации.
+      </div>
+    </div>
+
+    <p><strong>Service mesh</strong> (Istio, Linkerd) — это слой из sidecar-прокси с
+    централизованным управлением. Он оправдан, когда сервисов много и нужны единые
+    политики безопасности и трафика. Для трёх сервисов чаще достаточно ingress и
+    обычной библиотеки.</p>
+
+    <div class="callout warn">
+      <strong>Не ставь mesh «на всякий случай».</strong> Он добавляет задержку и требует
+      эксплуатации. Начинай с простого: ingress, таймауты, метрики. Mesh — когда
+      сложность оправдана.
+    </div>
+  </div>
+</section>
+
+<section id="transactions">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Транзакции: 2PC против Saga</h2>
+
+    <p><strong>Two-phase commit</strong> — протокол атомарного завершения: координатор
+    просит участников подготовиться, затем все подтверждают. Гарантия сильная, но
+    ресурсы заблокированы, а падение координатора останавливает процесс.</p>
+
+    <p><strong>Saga</strong> — последовательность локальных транзакций с компенсациями.
+    Не блокирует глобально, но допускает промежуточные состояния и требует идемпотентных
+    компенсаций.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Критерий</th><th>2PC</th><th>Saga</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Атомарность</td><td>Строгая</td><td>Итоговая, через компенсации</td></tr>
+          <tr><td>Блокировки</td><td>Да, на время протокола</td><td>Нет глобальных</td></tr>
+          <tr><td>Отказ координатора</td><td>Критичен</td><td>Обрабатывается шагами</td></tr>
+          <tr><td>Микросервисы</td><td>Плохо масштабируется</td><td>Обычный выбор</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>CAP</strong> напоминает: при сетевом разделении приходится выбирать между
+    согласованностью и доступностью. <strong>PACELC</strong> добавляет: даже без разделения
+    есть выбор между задержкой и согласованностью. Это не «одна теорема на всё», а язык
+    для обсуждения компромиссов.</p>
+
+    <div class="callout">
+      <strong>Ответ для интервью.</strong> «В микросервисах избегаю распределённых
+      транзакций: использую Saga с идемпотентными компенсациями и outbox. 2PC оставляю
+      для случаев, где участники поддерживают протокол и допустимы блокировки».
+    </div>
+  </div>
+</section>
+
+<section id="split">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Разделение запросов по типам данных</h2>
+
+    <p>Не все запросы одинаковы. Одни меняют состояние и требуют строгих правил, другие
+    читают и требуют скорости. Их полезно вести разными путями.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Тип</th><th>Пример</th><th>Что важно</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Команды</strong></td><td>Оформить подписку, опубликовать видео</td><td>Инварианты, транзакция, идемпотентность</td></tr>
+          <tr><td><strong>Запросы</strong></td><td>Каталог, карточка, рекомендации</td><td>Скорость, денормализация, кэш</td></tr>
+          <tr><td><strong>Потоковые</strong></td><td>Прогресс транскодинга, чат</td><td>Доставка, порядок, backpressure</td></tr>
+          <tr><td><strong>Аналитические</strong></td><td>Отчёты, агрегаты</td><td>Полнота, отсутствие нагрузки на прод</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>На практике это выглядит как <strong>CQRS в разной степени</strong>: от разделения
+    классов команд и запросов до отдельных read-моделей и аналитического хранилища.
+    Ключевое — не тащить тяжёлый отчёт в тот же пул соединений, что и оплату.</p>
+
+    <div class="callout warn">
+      <strong>Разделение — не бесплатно.</strong> Появляются синхронизация, задержка и
+      больше кода. Начинай с разделения пулов и маршрутов, а отдельные модели вводи
+      при реальной нагрузке.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: маршрут запроса в видео-платформе</h2>
+
+    <div class="flow">
+      <span class="node">пользователь</span><span class="arrow">→</span>
+      <span class="node">CDN / edge</span><span class="arrow">→</span>
+      <span class="node">L7 gateway</span><span class="arrow">→</span>
+      <span class="node key">playback</span><span class="arrow">→</span>
+      <span class="node">catalog / DRM</span>
+    </div>
+
+    <ul>
+      <li><strong>CDN</strong> отдаёт сегменты видео и снимает нагрузку с origin.</li>
+      <li><strong>L7 gateway</strong> терминирует TLS, проверяет токен, ограничивает
+      частоту и маршрутизирует по пути.</li>
+      <li><strong>Playback</strong> работает stateless; сессии — в Redis, чтобы любой
+      инстанс мог обслужить запрос.</li>
+      <li><strong>Sidecar</strong> добавляет mTLS и метрики между сервисами, если mesh
+      уже есть.</li>
+      <li><strong>Оплата и подписка</strong> — Saga: платёж, активация, письмо, с
+      компенсациями.</li>
+      <li><strong>Аналитика</strong> — отдельный поток событий, чтобы отчёты не тормозили
+      воспроизведение.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Нарисуй путь запроса и на каждом шаге
+      назови тип балансировки, состояние и вид отказа. Это демонстрирует системное
+      мышление лучше, чем перечисление технологий.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем L4-балансировщик отличается от L7?</span></div>
+      <p class="a">«L4 работает с TCP/UDP: IP и порт, без разбора HTTP. Он быстрее и
+      проще, подходит для высокой нагрузки. L7 смотрит на HTTP: путь, заголовки, cookie,
+      умеет маршрутизировать по API, терминировать TLS, делать ретраи и лимиты. Для
+      API gateway обычно выбирают L7».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>L4 видит только адрес, L7 — ещё и что именно просят.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Зачем нужны health checks и draining?</span></div>
+      <p class="a">«Readiness говорит, готов ли инстанс принимать трафик; liveness — жив
+      ли процесс. Без них балансировщик шлёт запросы в упавший или ещё не прогретый
+      инстанс. Draining при остановке сначала снимает новые запросы, даёт завершить
+      текущие и только потом гасит процесс».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Нельзя выдёргивать вилку, пока человек ещё ест. Сначала перестаём сажать
+        новых, потом ждём текущих.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Зачем sidecar и когда он вредит?</span></div>
+      <p class="a">«Sidecar берёт на себя mTLS, ретраи, таймауты и телеметрию, не требуя
+      правок приложения. Он полезен, когда сервисов много и нужны единые политики.
+      Вредит, когда добавляет лишний hop, задержку и сложность без зрелой эксплуатации.
+      Для нескольких сервисов проще ingress и библиотека».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это личный помощник у каждого сервиса. Полезен в большой команде, избыточен
+        в маленькой.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Почему 2PC плохо подходит микросервисам?</span></div>
+      <p class="a">«2PC блокирует ресурсы на время протокола и зависит от координатора.
+      В распределённой системе падение координатора или медленный участник останавливает
+      всех, а блокировки снижают доступность. Поэтому чаще используют Saga с локальными
+      транзакциями и компенсациями, принимая промежуточные состояния».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Все держат дверь закрытой и ждут одного. Если он пропал — все застряли.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что значит «разделять запросы по типам данных»?</span></div>
+      <p class="a">«Вести команды, чтение, потоковые и аналитические запросы разными
+      путями. Команды требуют инвариантов и транзакций, чтение — скорости и кэша,
+      потоковые — доставки и backpressure, аналитика — полноты без нагрузки на прод.
+      На практике это отдельные пулы, маршруты, а при необходимости read-модели и
+      хранилище отчётов».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Оплату и отчёт не стоит ставить в одну очередь: отчёт съест ресурсы, и оплата
+        опоздает.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Что такое CAP и PACELC простыми словами?</span></div>
+      <p class="a">«CAP: при сетевом разделении выбираем между согласованностью и
+      доступностью. PACELC добавляет: даже без разделения есть выбор между задержкой и
+      согласованностью. Это не догма, а способ объяснить компромисс: сильная
+      согласованность стоит задержки и доступности».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Нельзя одновременно быть всегда доступным, всегда правильным и быстрым.
+        Что-то выбираем.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="dist1" data-id="dist1"><label for="dist1">Чем L4 отличается от L7 и что выбрать для API gateway?</label></li>
+      <li><input type="checkbox" class="check-item" id="dist2" data-id="dist2"><label for="dist2">Зачем readiness, liveness и draining?</label></li>
+      <li><input type="checkbox" class="check-item" id="dist3" data-id="dist3"><label for="dist3">Какую задачу решает sidecar и когда он избыточен?</label></li>
+      <li><input type="checkbox" class="check-item" id="dist4" data-id="dist4"><label for="dist4">Почему 2PC редко выбирают в микросервисах?</label></li>
+      <li><input type="checkbox" class="check-item" id="dist5" data-id="dist5"><label for="dist5">Как разделить запросы по типам данных в своём сервисе?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> в распределённой системе отказ — норма.
+      Балансировка, изоляция и явные границы транзакций делают отказ управляемым.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Архитектура» ·
+    <a href="DistributedDebugging.html">Отладка распределённых систем</a> ·
+    <a href="ArchitectureDocs.html">Документирование архитектуры</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

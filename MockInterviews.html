@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock-интервью и финальная подготовка — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Неделя 12 · Mock-интервью</p>
+    <h1>Mock-интервью и финальная подготовка</h1>
+    <p class="lead">
+      Как прогнать интервью целиком до настоящего: теория, system design, code review
+      и поведенческая часть. Со scorecard, разбором топ-3 пробелов и планом последней
+      недели.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#format">Формат</a></li>
+      <li><a href="#theory">Теория</a></li>
+      <li><a href="#system-design">System design</a></li>
+      <li><a href="#code-review">Code review</a></li>
+      <li><a href="#behavioral">Поведение</a></li>
+      <li><a href="#scorecard">Scorecard</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем нужны mock-интервью</h2>
+
+    <p>Читать и отвечать про себя — разные навыки. На интервью нужно <strong>думать
+    вслух, держать структуру и выдерживать уточняющие вопросы</strong>. Mock тренирует
+    именно это: выявление слепых зон и привычку формулировать под давлением.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Генеральная репетиция перед спектаклем. Текст выучен, но только на сцене видно,
+      где забываешь слова и куда смотреть.
+    </div>
+
+    <p>Идеально — 1–2 прогона с коллегой уровня senior. Самопроверка не ловит слепые
+    зоны: то, что кажется понятным, разваливается на первом «а почему так?».
+    Если коллеги нет — запись на диктофон и разбор по чек-листу.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Mock — не экзамен, а обратная связь. Цель —
+      найти три пробела, закрыть их и повторить.
+    </div>
+  </div>
+</section>
+
+<section id="format">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Формат прогона</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Блок</th><th>Время</th><th>Что проверяем</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Знакомство</strong></td><td>5 мин</td><td>Опыт, стек, короткий рассказ о себе</td></tr>
+          <tr><td><strong>Теория</strong></td><td>20–25 мин</td><td>10 компетенций, точность и структура</td></tr>
+          <tr><td><strong>System design</strong></td><td>25 мин</td><td>Требования, схема, компромиссы</td></tr>
+          <tr><td><strong>Code review</strong></td><td>15 мин</td><td>Чужой PR, риски, приоритеты</td></tr>
+          <tr><td><strong>Поведенческая часть</strong></td><td>15 мин</td><td>STAR, конфликты, ownership</td></tr>
+          <tr><td><strong>Обратная связь</strong></td><td>10 мин</td><td>Scorecard и топ-3 пробела</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Проведи <strong>три прогона</strong> с интервалом: первый — диагностика, второй —
+    после закрытия пробелов, третий — полная имитация на 60–90 минут. Между прогонами
+    не читай всё подряд, а закрывай конкретные дыры.</p>
+
+    <div class="callout warn">
+      <strong>Не готовь ответы наизусть.</strong> Заученный текст слышно сразу. Нужна
+      структура и примеры, а формулировки — свои.
+    </div>
+  </div>
+</section>
+
+<section id="theory">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Теория: как отвечать</h2>
+
+    <p>Хороший ответ на уровне 3 занимает 45–90 секунд и имеет структуру:
+    <strong>определение → как работает → компромиссы → пример из своего стека</strong>.</p>
+
+    <ol>
+      <li><strong>Определение.</strong> Одно предложение, без воды.</li>
+      <li><strong>Механизм.</strong> Как это устроено, что происходит внутри.</li>
+      <li><strong>Цена и альтернативы.</strong> Когда применять, когда нет.</li>
+      <li><strong>Пример.</strong> Где ты это использовал и что получилось.</li>
+    </ol>
+
+    <h3>Как тренировать</h3>
+    <ul>
+      <li><strong>30 вопросов на таймер.</strong> 60–90 секунд на ответ, без подглядывания.</li>
+      <li><strong>Запись.</strong> Слушаешь себя: есть ли структура, нет ли воды.</li>
+      <li><strong>Вопрос «почему».</strong> После каждого ответа задай себе ещё два
+      уточняющих.</li>
+      <li><strong>Пробелы — в список.</strong> Не пытайся закрыть всё сразу.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Правило «не знаю».</strong> Лучше сказать «точно не помню, но рассуждал бы
+      так» и показать ход мысли, чем выдумывать. Интервьюер оценивает мышление,
+      а не энциклопедию.
+    </div>
+  </div>
+</section>
+
+<section id="system-design">
+  <div class="wrap">
+    <h2><span class="badge">4</span> System design: каркас ответа</h2>
+
+    <ol>
+      <li><strong>Уточнить требования.</strong> Функциональные и нефункциональные:
+      сколько пользователей, какая задержка, какой SLA, какие данные.</li>
+      <li><strong>Оценить масштаб.</strong> RPS, объём, трафик, число соединений.</li>
+      <li><strong>API.</strong> Основные операции и контракты.</li>
+      <li><strong>Модель данных.</strong> Сущности, ключи, индексы, хранение.</li>
+      <li><strong>Высокоуровневая схема.</strong> Клиенты, gateway, сервисы, БД, кэш,
+      брокер, CDN.</li>
+      <li><strong>Углубиться в 1–2 узла.</strong> Например, транскодинг или лента.</li>
+      <li><strong>Отказы и деградация.</strong> Что упадёт, что закэшируем, что отключим.</li>
+      <li><strong>Компромиссы.</strong> Что выбрал и чем заплатил.</li>
+    </ol>
+
+    <h3>Пример: live-трансляция на миллион зрителей</h3>
+    <div class="flow">
+      <span class="node">ingest</span><span class="arrow">→</span>
+      <span class="node">transcode</span><span class="arrow">→</span>
+      <span class="node">package</span><span class="arrow">→</span>
+      <span class="node key">CDN</span><span class="arrow">→</span>
+      <span class="node">players</span>
+    </div>
+
+    <ul>
+      <li><strong>Ingest:</strong> RTMP/SRT, несколько регионов, проверка потока.</li>
+      <li><strong>Transcode:</strong> несколько качеств, GPU-пул, очередь, autoscaling.</li>
+      <li><strong>Package:</strong> HLS/DASH, сегменты, манифесты.</li>
+      <li><strong>CDN:</strong> edge, origin shield, multi-CDN failover.</li>
+      <li><strong>Chat:</strong> WebSocket, отдельный сервис, rate limiting.</li>
+      <li><strong>Метрики:</strong> время до первого кадра, rebuffering, ошибки, зрители.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Частая ошибка.</strong> Сразу рисовать Kafka и Kubernetes, не спросив
+      требования. Сначала уточни масштаб и SLA — потом выбирай компоненты.
+    </div>
+  </div>
+</section>
+
+<section id="code-review">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Code review: что искать</h2>
+
+    <ol>
+      <li><strong>Корректность.</strong> Крайние случаи, пустые значения, ошибки.</li>
+      <li><strong>Безопасность.</strong> SQLi, права, секреты, PII в логах.</li>
+      <li><strong>Производительность.</strong> N+1, запросы в цикле, отсутствие индекса.</li>
+      <li><strong>Конкурентность.</strong> Гонки, повторные вызовы, идемпотентность.</li>
+      <li><strong>Тесты.</strong> Покрыты ли новые ветки и негативные сценарии.</li>
+      <li><strong>Читаемость.</strong> Имена, размер методов, дублирование.</li>
+    </ol>
+
+    <p>На mock важно <strong>проговаривать приоритет</strong>: «это блокер, это
+    замечание, это вкусовое». И отделять «код работает» от «код поддерживаемый».
+    Не трать время на пробелы, если есть риск потери данных.</p>
+
+    <div class="callout">
+      <strong>Хороший комментарий</strong> объясняет риск и предлагает исправление:
+      «здесь N+1 на 100 видео — предлагаю eager loading». Плохой — «так не пишут».
+    </div>
+  </div>
+</section>
+
+<section id="behavioral">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Поведенческая часть: STAR</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Буква</th><th>Что рассказать</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>S</strong> — Situation</td><td>Контекст: проект, масштаб, ограничения</td></tr>
+          <tr><td><strong>T</strong> — Task</td><td>Твоя задача и ответственность</td></tr>
+          <tr><td><strong>A</strong> — Action</td><td>Что именно сделал ты, а не команда</td></tr>
+          <tr><td><strong>R</strong> — Result</td><td>Результат в числах и вывод</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Подготовь шесть историй</h3>
+    <ul>
+      <li>Конфликт с коллегой или заказчиком.</li>
+      <li>Провал или инцидент и что исправил.</li>
+      <li>Жёсткий дедлайн и приоритизация.</li>
+      <li>Неоднозначная задача, где сам нашёл требования.</li>
+      <li>Улучшение, которое сделал без просьбы.</li>
+      <li>Наставничество или помощь коллеге.</li>
+    </ul>
+
+    <p>В каждой истории — <strong>конкретика и цифры</strong>: «сократил p95 с 900 до
+    250 мс», «снизил число инцидентов с 4 до 1 в месяц». И честность: провал без
+    вывода хуже, чем провал с исправлением.</p>
+
+    <div class="callout warn">
+      <strong>Не говори «мы».</strong> Интервьюер не понимает, что сделал именно ты.
+      После «мы» уточняй: «я отвечал за…», «моя часть была…».
+    </div>
+  </div>
+</section>
+
+<section id="scorecard">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Scorecard и финальная неделя</h2>
+
+    <p>Оценивай каждую из 10 компетенций по шкале 1–4. Цель — <strong>3 по всем</strong>
+    и 30 баллов. Оценка 1–2 — пробел, 4 — не требуется.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Балл</th><th>Что означает</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td>Не могу объяснить, путаюсь в базовых понятиях</td></tr>
+          <tr><td><strong>2</strong></td><td>Знаю определение, но не могу применить и назвать компромиссы</td></tr>
+          <tr><td><strong>3</strong></td><td>Уверенно объясняю, привожу пример и вижу цену решения</td></tr>
+          <tr><td><strong>4</strong></td><td>Уровень Staff: стратегия, влияние на организацию</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>После каждого прогона</h3>
+    <ol>
+      <li>Выпиши <strong>топ-3 пробела</strong> — не больше.</li>
+      <li>Для каждого: один материал, один устный ответ, один пример из практики.</li>
+      <li>Через 2–3 дня — повторный прогон только по этим темам.</li>
+      <li>Третий прогон — полный, с таймером и незнакомыми вопросами.</li>
+    </ol>
+
+    <h3>Последняя неделя</h3>
+    <ul>
+      <li>Лёгкое повторение, без новой теории и зубрёжки.</li>
+      <li>Сон, логистика, проверка связи и камеры.</li>
+      <li>Подготовь 3–4 вопроса интервьюеру о команде и задачах.</li>
+      <li>План на случай, если вопрос незнаком: уточнить, рассуждать вслух, признать границу.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Финальный критерий.</strong> Ты можешь без подглядывания за 60–90 секунд
+      объяснить любую тему из 10 компетенций, привести пример из своего стека и назвать
+      цену решения. Этого достаточно для уровня 3.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">8</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Зачем проводить mock-интервью и как его организовать?</span></div>
+      <p class="a">«Чтобы тренировать мышление вслух и найти слепые зоны. Формат 60–90
+      минут: знакомство, теория, system design, code review, поведенческая часть,
+      обратная связь. Лучше с коллегой уровня senior. Три прогона: диагностика,
+      после закрытия пробелов и полная имитация».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это репетиция перед выступлением: текст знаешь, но на сцене всё иначе.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Как отвечать на теоретический вопрос?</span></div>
+      <p class="a">«Структурно: определение, как работает, компромиссы, пример из своего
+      стека. 45–90 секунд. Если не знаю точно — говорю об этом и рассуждаю вслух.
+      После ответа готов к уточняющим вопросам „почему“ и „а если“».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Не заученный текст, а короткий ответ с примером и честной границей знаний.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Как вести system design?</span></div>
+      <p class="a">«Сначала уточняю функциональные и нефункциональные требования, оцениваю
+      масштаб, затем API, модель данных и высокоуровневую схему. Углубляюсь в один-два
+      узла, обсуждаю отказы и деградацию, в конце называю компромиссы. Не начинаю
+      с технологий, пока не понятны требования».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сначала «что и сколько», потом «из чего», и обязательно «чем платим».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Что искать в code review на интервью?</span></div>
+      <p class="a">«Корректность и крайние случаи, безопасность, N+1 и лишние запросы,
+      конкурентность, тесты, читаемость. Приоритизирую: блокер, замечание, вкусовое.
+      Комментарий объясняет риск и предлагает исправление, а не просто говорит „плохо“».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сначала то, что может сломать прод или данные, потом стиль.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Как строить поведенческий ответ?</span></div>
+      <p class="a">«По STAR: ситуация, задача, мои действия, результат. Конкретика и
+      цифры, акцент на своей роли, а не на команде. Подготовить шесть историй: конфликт,
+      провал, дедлайн, неоднозначность, инициатива, наставничество. В провале важен
+      вывод и исправление».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>История с началом, моими действиями и измеримым результатом.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как работать со scorecard?</span></div>
+      <p class="a">«Оцениваю 10 компетенций по шкале 1–4, цель — 3 по всем. После прогона
+      выбираю топ-3 пробела, на каждый — материал, устный ответ и пример. Через 2–3 дня
+      повторяю только эти темы, затем полный прогон. Последняя неделя — лёгкое повторение
+      и логистика».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Не «учить всё», а закрыть три конкретные дыры и проверить ещё раз.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="mock1" data-id="mock1"><label for="mock1">Собери формат прогона на 60–90 минут</label></li>
+      <li><input type="checkbox" class="check-item" id="mock2" data-id="mock2"><label for="mock2">Ответь на 30 вопросов на таймер без подглядывания</label></li>
+      <li><input type="checkbox" class="check-item" id="mock3" data-id="mock3"><label for="mock3">Проведи system design по каркасу из восьми шагов</label></li>
+      <li><input type="checkbox" class="check-item" id="mock4" data-id="mock4"><label for="mock4">Разбери чужой PR по чек-листу и расставь приоритеты</label></li>
+      <li><input type="checkbox" class="check-item" id="mock5" data-id="mock5"><label for="mock5">Заполни scorecard и выбери топ-3 пробела</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> mock нужен, чтобы найти три пробела и закрыть
+      их. Уверенность на интервью — результат повторения, а не удачи.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Неделя 12 · Mock-интервью ·
+    <a href="planSenjor.html#mocks">План прогонов</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

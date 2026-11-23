@@ -34,7 +34,22 @@
     ddd: ['ddd1', 'ddd2', 'ddd3', 'ddd4', 'ddd5'],
     archstyles: ['style1', 'style2', 'style3', 'style4', 'style5'],
     resilience: ['res1', 'res2', 'res3', 'res4', 'res5'],
-    observability: ['obs1', 'obs2', 'obs3', 'obs4', 'obs5']
+    observability: ['obs1', 'obs2', 'obs3', 'obs4', 'obs5'],
+    archdocs: ['archdoc1', 'archdoc2', 'archdoc3', 'archdoc4', 'archdoc5'],
+    distsys: ['dist1', 'dist2', 'dist3', 'dist4', 'dist5'],
+    distdebug: ['dbg1', 'dbg2', 'dbg3', 'dbg4', 'dbg5'],
+    cdn: ['cdn1', 'cdn2', 'cdn3', 'cdn4', 'cdn5'],
+    k8s: ['k8s1', 'k8s2', 'k8s3', 'k8s4', 'k8s5'],
+    kafka: ['kafka1', 'kafka2', 'kafka3', 'kafka4', 'kafka5'],
+    apiproto: ['proto1', 'proto2', 'proto3', 'proto4', 'proto5'],
+    apirel: ['apirel1', 'apirel2', 'apirel3', 'apirel4', 'apirel5'],
+    auth: ['auth1', 'auth2', 'auth3', 'auth4', 'auth5'],
+    websec: ['sec1', 'sec2', 'sec3', 'sec4', 'sec5'],
+    dbtx: ['dbtx1', 'dbtx2', 'dbtx3', 'dbtx4', 'dbtx5'],
+    dbs: ['dbs1', 'dbs2', 'dbs3', 'dbs4', 'dbs5'],
+    mock: ['mock1', 'mock2', 'mock3', 'mock4', 'mock5'],
+    postgres: ['pg1', 'pg2', 'pg3', 'pg4', 'pg5'],
+    events: ['evt1', 'evt2', 'evt3', 'evt4', 'evt5']
   };
 
   var groups = [

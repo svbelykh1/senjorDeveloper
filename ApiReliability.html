@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Идемпотентность, дубли и пулинг соединений — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Протоколы и API · неделя 9</p>
+    <h1>Идемпотентность, дубли и пулинг соединений</h1>
+    <p class="lead">
+      Как сделать повторный запрос безопасным, почему дубли — норма, а не баг,
+      и как пул соединений в PHP-FPM может положить базу. Плюс whitelist/blacklist
+      и защита API на входе.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#idempotency">Идемпотентность</a></li>
+      <li><a href="#duplicates">Дубли</a></li>
+      <li><a href="#pooling">Пулинг</a></li>
+      <li><a href="#access">Доступ</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Почему повтор — это норма</h2>
+
+    <p>Клиент не получил ответ и повторил запрос. Балансировщик повторил вызов при
+    таймауте. Kafka доставила событие дважды. Пользователь дважды нажал «Оплатить».
+    В распределённой системе <strong>повтор случается всегда</strong>, и задача API —
+    сделать его безопасным.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Вы отправили письмо и не получили подтверждение. Отправили ещё раз. Хороший
+      получатель понимает, что это то же письмо, а не второе. Плохой — обрабатывает
+      дважды.
+    </div>
+
+    <p>На интервью Senior проверяют: понимаешь ли ты разницу между <strong>транспортным
+    повтором</strong> и <strong>бизнес-дублем</strong>, умеешь ли реализовать
+    идемпотентность и не устроить переполнение пула соединений.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Надёжность строится не на «запрос придёт один раз»,
+      а на «повторный запрос не изменит результат».
+    </div>
+  </div>
+</section>
+
+<section id="idempotency">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Идемпотентность</h2>
+
+    <p><strong>Идемпотентная операция</strong> при повторе даёт тот же результат, что
+    и при первом вызове. `GET` идемпотентен по смыслу. `POST /payment` — нет, поэтому
+    ему нужен <strong>Idempotency-Key</strong>.</p>
+
+    <h3>Как это работает</h3>
+    <ol>
+      <li>Клиент генерирует ключ и передаёт его в заголовке.</li>
+      <li>Сервер ищет ключ в хранилище. Если есть — возвращает сохранённый ответ.</li>
+      <li>Если нет — фиксирует ключ, выполняет операцию, сохраняет результат.</li>
+      <li>Повтор с тем же ключом не выполняет операцию заново.</li>
+      <li>Тот же ключ с другим телом — ошибка `409` или `422`.</li>
+    </ol>
+
+<pre class="cmd">CREATE TABLE idempotency_keys (
+  user_id      bigint      NOT NULL,
+  key          text        NOT NULL,
+  request_hash text        NOT NULL,
+  status       text        NOT NULL,  -- processing | done | failed
+  response     jsonb,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, key)
+);</pre>
+
+    <p>Уникальный ключ в базе — главный механизм. Даже если два запроса пришли
+    одновременно, один вставит запись, второй получит конфликт и подождёт результат.
+    Запись ключа и бизнес-операция должны быть согласованы: либо одна транзакция,
+    либо статус `processing` и повторная проверка.</p>
+
+    <div class="callout warn">
+      <strong>Срок жизни ключа.</strong> Хранить вечно дорого. Обычно 24 часа или
+      столько, сколько клиент может повторять. После TTL повтор будет воспринят как
+      новая операция — это нужно понимать.
+    </div>
+  </div>
+</section>
+
+<section id="duplicates">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Дубли и дедупликация</h2>
+
+    <h3>Откуда берутся дубли</h3>
+    <ul>
+      <li>Клиент повторил запрос после таймаута.</li>
+      <li>Балансировщик повторил вызов.</li>
+      <li>Продюсер Kafka повторил отправку.</li>
+      <li>Consumer упал после обработки, но до коммита offset.</li>
+      <li>Пользователь нажал кнопку дважды.</li>
+    </ul>
+
+    <h3>Как защититься</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Уровень</th><th>Приём</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>HTTP</strong></td><td>Idempotency-Key, повтор с тем же ключом</td></tr>
+          <tr><td><strong>База</strong></td><td>Unique constraint, `INSERT ... ON CONFLICT DO NOTHING`</td></tr>
+          <tr><td><strong>Consumer</strong></td><td>Проверка `event_id` в таблице обработки</td></tr>
+          <tr><td><strong>Бизнес</strong></td><td>Проверка состояния: платёж уже проведён, подписка уже активна</td></tr>
+          <tr><td><strong>UI</strong></td><td>Блокировка кнопки, но не как единственная защита</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Идемпотентный consumer обычно хранит `event_id` и результат обработки в одной
+    транзакции с бизнес-изменением. Тогда повторная доставка видит запись и сразу
+    выходит.</p>
+
+    <div class="callout">
+      <strong>Exactly-once на практике.</strong> Внешние системы не участвуют в
+      транзакции Kafka, поэтому «ровно один раз» end-to-end не гарантируется.
+      Гарантируют at-least-once и делают обработку идемпотентной.
+    </div>
+  </div>
+</section>
+
+<section id="pooling">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Пулинг соединений</h2>
+
+    <p>Соединение с БД или Redis — дорогой ресурс. Открывать его на каждый запрос
+    накладно, держать бесконечно — опасно. <strong>Пул</strong> переиспользует
+    соединения и ограничивает их число.</p>
+
+    <h3>PHP-FPM</h3>
+    <p>Каждый worker PHP-FPM держит своё соединение с Postgres. Если `pm.max_children`
+    = 50 и каждый worker открывает по соединению, базе нужно минимум 50 слотов.
+    Несколько сервисов легко превышают `max_connections`, и новые подключения
+    начинают падать.</p>
+
+    <ul>
+      <li><strong>PgBouncer</strong> в transaction mode снижает число реальных
+      соединений.</li>
+      <li><strong>Persistent connections</strong> экономят время, но занимают слот
+      навсегда.</li>
+      <li><strong>Таймауты</strong> обязательны: соединение без таймаута висит и
+      блокирует воркер.</li>
+      <li><strong>Мониторинг</strong> занятости пула и очереди на подключение.</li>
+    </ul>
+
+    <h3>HTTP и gRPC</h3>
+    <p>HTTP keep-alive переиспользует TCP-соединения; пул на клиенте ограничивает
+    параллелизм. gRPC использует один канал с мультиплексированием — не нужно открывать
+    соединение на каждый вызов. Главное — не создавать клиент в цикле.</p>
+
+    <div class="callout warn">
+      <strong>Ошибка масштабирования.</strong> Увеличили число pod'ов, каждый под
+      поднял пул — база получила в N раз больше соединений. Пул нужно считать на весь
+      кластер, а не на один экземпляр.
+    </div>
+  </div>
+</section>
+
+<section id="access">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Whitelist и blacklist</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Подход</th><th>Принцип</th><th>Плюс</th><th>Минус</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Blacklist</strong></td><td>Запрещаем известных нарушителей</td><td>Просто, не мешает остальным</td><td>Обходится новым IP или доменом</td></tr>
+          <tr><td><strong>Whitelist</strong></td><td>Разрешаем только известных</td><td>Безопасно по умолчанию</td><td>Требует сопровождения списка</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Blacklist удобен для быстрых блокировок, но <strong>не является защитой</strong>:
+    атакующий меняет адрес. Whitelist надёжнее для админки, внутренних API и партнёрских
+    интеграций. На практике их сочетают с rate limiting, API-ключами и WAF.</p>
+
+    <h3>Правила на gateway</h3>
+    <ul>
+      <li>Аутентификация до бизнес-логики.</li>
+      <li>Лимит по пользователю, IP и эндпоинту.</li>
+      <li>Whitelist для административных маршрутов.</li>
+      <li>Blacklist для подтверждённых злоупотреблений.</li>
+      <li>Логирование отказов и алерты на всплеск.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>CORS — не контроль доступа.</strong> Он ограничивает браузер, но не
+      защищает API от прямых запросов. Авторизация должна быть на сервере.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: платёжный эндпоинт</h2>
+
+<pre class="cmd">POST /payments
+Idempotency-Key: 3f9c1a2e-...
+Content-Type: application/json
+
+{ "order_id": 42, "amount": 1490, "currency": "RUB" }</pre>
+
+    <ol>
+      <li>Проверить ключ и хэш тела. Если ключ есть и хэш совпадает — вернуть
+      сохранённый ответ.</li>
+      <li>Если ключ есть, а тело другое — `409 Conflict`.</li>
+      <li>Вставить запись `processing` с уникальным ключом.</li>
+      <li>Провести платёж и записать результат в ту же запись.</li>
+      <li>При повторе вернуть тот же ответ, не вызывая провайдера снова.</li>
+      <li>Хранить ключи 24 часа, затем удалять по расписанию.</li>
+    </ol>
+
+    <p>Дополнительно: unique constraint на `order_id`, чтобы даже при потере ключа
+    не создать второй платёж. И статус платежа, по которому можно проверить, не
+    проведён ли он уже.</p>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> «Idempotency-Key + unique constraint
+      в БД, сохранение ответа, проверка хэша тела и TTL. Для consumer — таблица
+      обработанных event_id. Для пула — PgBouncer и расчёт на весь кластер, а не на
+      один pod».
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как реализовать идемпотентность для `POST /payment`?</span></div>
+      <p class="a">«Клиент передаёт Idempotency-Key. Сервер хранит ключ, хэш тела и
+      результат в таблице с уникальным индексом. Первый запрос выполняет платёж и
+      сохраняет ответ; повтор с тем же ключом возвращает сохранённый ответ. Тот же
+      ключ с другим телом — ошибка. Плюс unique constraint на `order_id` как вторая
+      линия защиты».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Запоминаем номер операции: второй раз с тем же номером просто отдаём
+        прошлый результат.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Откуда берутся дубли и как от них защититься?</span></div>
+      <p class="a">«Из повторов клиента, балансировщика, продюсера и consumer'а после
+      сбоя. Защита на разных уровнях: Idempotency-Key в HTTP, unique constraint в БД,
+      проверка `event_id` в consumer'е, проверка бизнес-состояния. UI-блокировка кнопки
+      полезна, но не заменяет серверную защиту».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Повтор — не исключение, а правило. Значит, операция должна быть безопасной
+        при повторе.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Почему exactly-once трудно достичь?</span></div>
+      <p class="a">«Kafka-транзакция может гарантировать exactly-once внутри Kafka, но
+      не покрывает запись в Postgres, вызов платёжного провайдера и отправку письма.
+      Эти системы не участвуют в одной транзакции. Поэтому на практике — at-least-once
+      и идемпотентная обработка».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Можно гарантировать один раз внутри одного шкафа, но не во всём городе.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как пул соединений в PHP-FPM может положить базу?</span></div>
+      <p class="a">«Каждый worker держит соединение. При `max_children` = 50 и нескольких
+      сервисах число соединений превышает `max_connections` Postgres, и новые подключения
+      падают. Решение — PgBouncer в transaction mode, расчёт пула на весь кластер,
+      таймауты и мониторинг занятости. При масштабировании pod'ов пул умножается».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Каждый официант держит свой телефон, и коммутатор не выдерживает. Нужен
+        общий пул.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Чем whitelist отличается от blacklist и почему одного мало?</span></div>
+      <p class="a">«Blacklist запрещает известных нарушителей, но обходится новым IP.
+      Whitelist разрешает только известных и безопасен по умолчанию, но требует
+      сопровождения. На практике сочетают: whitelist для админки и партнёров,
+      blacklist для подтверждённых атак, плюс rate limiting и WAF».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Чёрный список — «этим нельзя», белый — «только этим можно». Второй надёжнее,
+        но список надо вести.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как проверить, что защита работает?</span></div>
+      <p class="a">«Повторным запросом с тем же ключом, конкурентными запросами,
+      повторной доставкой события, тестом на другой хэш тела и тестом на истечение TTL.
+      Плюс метрики: доля повторов, конфликты ключей, занятость пула, ошибки подключения.
+      Без нагрузки защита может выглядеть рабочей, но не быть ею».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Надо специально нажать дважды и отправить событие повторно — иначе не узнать.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="apirel1" data-id="apirel1"><label for="apirel1">Как реализовать Idempotency-Key для платежа?</label></li>
+      <li><input type="checkbox" class="check-item" id="apirel2" data-id="apirel2"><label for="apirel2">Откуда берутся дубли и где их ловить?</label></li>
+      <li><input type="checkbox" class="check-item" id="apirel3" data-id="apirel3"><label for="apirel3">Почему exactly-once не гарантируется end-to-end?</label></li>
+      <li><input type="checkbox" class="check-item" id="apirel4" data-id="apirel4"><label for="apirel4">Как посчитать пул соединений на весь кластер?</label></li>
+      <li><input type="checkbox" class="check-item" id="apirel5" data-id="apirel5"><label for="apirel5">Whitelist, blacklist и rate limiting: что выбрать?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> повторяемость — свойство системы, а не
+      ошибка клиента. Делай операции идемпотентными, а пулы — ограниченными.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Протоколы и API» ·
+    <a href="ApiProtocols.html">HTTP/2, WebSocket, SSE</a> ·
+    <a href="Resilience.html">Отказоустойчивость</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

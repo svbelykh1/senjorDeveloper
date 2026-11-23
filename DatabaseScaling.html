@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Индексы, репликация и шардирование — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 10 · Базы данных · неделя 11</p>
+    <h1>Индексы, масштабирование и шардирование</h1>
+    <p class="lead">
+      Как индекс ускоряет чтение и замедляет запись, чем репликация отличается
+      от шардирования и партиционирования, как выбрать ключ шарда и не получить
+      горячую партицию.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#indexes">Индексы</a></li>
+      <li><a href="#nosql">NoSQL</a></li>
+      <li><a href="#scaling">Масштабирование</a></li>
+      <li><a href="#partitioning">Репликация и шарды</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Почему база становится узким местом</h2>
+
+    <p>Приложение масштабируется горизонтально легко: добавили pod'ы. База — сложнее:
+    данные нужно согласовывать, а запросы ускоряются не количеством серверов, а
+    <strong>схемой, индексами и правильным доступом</strong>.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Индекс — это алфавитный указатель в книге. Без него поиск главы — перелистывание
+      всей книги. С ним — сразу нужная страница. Но каждая вставка требует обновить
+      и указатель.
+    </div>
+
+    <p>На интервью Senior проверяют понимание <strong>цены</strong>: индекс ускоряет
+    чтение, но занимает место и замедляет запись. Реплика даёт чтение, но лагает.
+    Шард даёт масштаб, но усложняет запросы и транзакции.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Сначала измерь и оптимизируй запрос, потом добавляй
+      индекс, и только потом думай о партициях и шардах.
+    </div>
+  </div>
+</section>
+
+<section id="indexes">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Индексы</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Тип</th><th>Для чего</th><th>Пример</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>B-tree</strong></td><td>Равенство, диапазоны, сортировка</td><td>`(video_id, created_at DESC)`</td></tr>
+          <tr><td><strong>Составной</strong></td><td>Несколько колонок; важен порядок</td><td>`(status, created_at)`</td></tr>
+          <tr><td><strong>Покрывающий</strong></td><td>Запрос отвечает из индекса без таблицы</td><td>`INCLUDE (title)`</td></tr>
+          <tr><td><strong>Частичный</strong></td><td>Индексируем только нужное подмножество</td><td>`WHERE status = 'active'`</td></tr>
+          <tr><td><strong>GIN</strong></td><td>JSONB, массивы, полнотекстовый поиск</td><td>`USING gin (tags)`</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Правила</h3>
+    <ul>
+      <li><strong>Порядок колонок.</strong> Для `(a, b)` индекс работает по `a` и по
+      `(a, b)`, но не по одному `b`.</li>
+      <li><strong>Селективность.</strong> Индекс по полу бесполезен, по `user_id` —
+      полезен.</li>
+      <li><strong>Цена записи.</strong> Каждый индекс обновляется при вставке и удалении.</li>
+      <li><strong>Неиспользуемые индексы</strong> — лишний вес; их стоит удалять.</li>
+      <li><strong>Функция в условии</strong> может отключить индекс: `lower(email)` нужен
+      функциональный индекс.</li>
+    </ul>
+
+<pre class="cmd">-- История просмотров конкретного видео
+CREATE INDEX idx_views_video_time
+  ON video_views (video_id, created_at DESC);
+
+-- Только активные видео
+CREATE INDEX idx_videos_active
+  ON videos (created_at DESC)
+  WHERE status = 'published';</pre>
+
+    <div class="callout warn">
+      <strong>Индекс не спасёт от плохого запроса.</strong> `SELECT *` с сортировкой
+      по выражению, неверные типы и отсутствие статистики могут свести пользу к нулю.
+      Сначала `EXPLAIN ANALYZE`, потом индекс.
+    </div>
+  </div>
+</section>
+
+<section id="nosql">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Индексация и оптимизация в NoSQL</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Тип</th><th>Примеры</th><th>Сильная сторона</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Документная</strong></td><td>MongoDB</td><td>Гибкая схема, вложенные документы</td></tr>
+          <tr><td><strong>Ключ-значение</strong></td><td>Redis, DynamoDB</td><td>Очень быстрый доступ по ключу</td></tr>
+          <tr><td><strong>Широкие колонки</strong></td><td>Cassandra, ScyllaDB</td><td>Запись и масштаб</td></tr>
+          <tr><td><strong>Поиск</strong></td><td>Elasticsearch</td><td>Полнотекстовый поиск и агрегации</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>В NoSQL схему проектируют <strong>от запросов</strong>, а не от сущностей.
+    Часто данные дублируют, чтобы не делать `JOIN`. Это нормально, но требует
+    продуманной синхронизации.</p>
+
+    <ul>
+      <li><strong>Ключ доступа.</strong> В DynamoDB partition key и sort key определяют
+      запросы; без них — scan.</li>
+      <li><strong>Индекс по запросу.</strong> MongoDB: составной индекс под фильтр и
+      сортировку, порядок важен.</li>
+      <li><strong>Денормализация.</strong> Копируем имя автора в документ видео, чтобы
+      не ходить в другую коллекцию.</li>
+      <li><strong>Согласованность.</strong> Часто eventual: после записи чтение с
+      реплики может не увидеть изменение.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>NoSQL не «быстрее вообще».</strong> Он быстрее на заранее известных
+      запросах по ключу. Произвольные аналитические запросы могут быть дороже, чем
+      в SQL, или требовать отдельного хранилища.
+    </div>
+  </div>
+</section>
+
+<section id="scaling">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Масштабирование</h2>
+
+    <h3>Вертикальное и горизонтальное</h3>
+    <p><strong>Вертикальное</strong> — больше CPU, памяти, диска на одном сервере.
+    Просто, но есть потолок и цена. <strong>Горизонтальное</strong> — больше серверов
+    или узлов; сложнее, но масштабируется дальше.</p>
+
+    <h3>Что делать по порядку</h3>
+    <ol>
+      <li><strong>Оптимизировать запросы и индексы.</strong> Самый дешёвый шаг.</li>
+      <li><strong>Добавить кэш</strong> для горячих чтений.</li>
+      <li><strong>Пул соединений.</strong> Часто проблема не в базе, а в тысяче
+      соединений от pod'ов.</li>
+      <li><strong>Read replicas.</strong> Разгрузить чтение.</li>
+      <li><strong>Партиционирование.</strong> Уменьшить объём сканирования и упростить
+      архивирование.</li>
+      <li><strong>Шардирование.</strong> Когда один узел уже не тянет запись и объём.</li>
+    </ol>
+
+    <h3>Горячие ключи</h3>
+    <p>Один популярный пользователь или видео может перегрузить один шард. Лечится
+    составным ключом с солью, отдельным кэшем или выносом горячих данных. Выбор ключа
+    шарда — самое важное решение: его трудно изменить.</p>
+
+    <div class="callout">
+      <strong>Consistent hashing.</strong> При добавлении узла перераспределяется
+      небольшая часть ключей, а не всё. Виртуальные узлы выравнивают нагрузку.
+      Используется в кэшах и шардировании.
+    </div>
+  </div>
+</section>
+
+<section id="partitioning">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Репликация, партиционирование, шардирование</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Механизм</th><th>Что делает</th><th>Решает</th><th>Цена</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Репликация</strong></td><td>Копии данных на других узлах</td><td>Отказоустойчивость, чтение</td><td>Лаг, конфликты, failover</td></tr>
+          <tr><td><strong>Партиционирование</strong></td><td>Одна таблица делится на части внутри БД</td><td>Объём, архивирование, pruning</td><td>Ограничения запросов, управление</td></tr>
+          <tr><td><strong>Шардирование</strong></td><td>Данные делятся между разными БД/узлами</td><td>Масштаб записи и объёма</td><td>Кросс-шардовые запросы, реsharding</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Репликация</h3>
+    <p><strong>Синхронная</strong> — коммит ждёт реплику; надёжнее, но медленнее.
+    <strong>Асинхронная</strong> — быстрее, но возможен лаг и потеря последних
+    транзакций при аварии. Чтение с реплики может не увидеть только что записанное
+    (read-your-writes problem).</p>
+
+    <h3>Партиционирование</h3>
+    <p>Например, `video_views` по месяцам. Запрос с фильтром по дате читает только
+    нужные партиции — <strong>partition pruning</strong>. Старые партиции можно
+    отсоединить и архивировать. В Postgres партиционирование декларативное.</p>
+
+    <h3>Шардирование</h3>
+    <p>Выбирают <strong>shard key</strong>: `user_id`, `tenant_id`, `video_id`.
+    Хороший ключ распределяет нагрузку равномерно и позволяет большинству запросов
+    обойтись одним шардом. Плохой — создаёт горячие точки и кросс-шардовые join'ы.</p>
+
+    <div class="callout warn">
+      <strong>Шардирование — последний шаг.</strong> Оно усложняет транзакции,
+      миграции и аналитику. Сначала исчерпай индексы, кэш, реплики и партиции.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: история просмотров</h2>
+
+<pre class="cmd">-- Партиция на месяц
+CREATE TABLE video_views_2026_03
+  PARTITION OF video_views
+  FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+
+-- Запрос читает только нужную партицию
+SELECT count(*)
+FROM video_views
+WHERE created_at &gt;= '2026-03-01'
+  AND created_at &lt;  '2026-04-01';</pre>
+
+    <ul>
+      <li><strong>10 млн строк</strong> — хватает индексов и одной базы.</li>
+      <li><strong>100 млн</strong> — партиционирование по дате, архивирование старых
+      месяцев.</li>
+      <li><strong>Миллиарды</strong> — шардирование по `user_id`, отдельное аналитическое
+      хранилище.</li>
+      <li><strong>Чтение топов</strong> — материализованный агрегат или кэш, а не
+      `count(*)` на каждый запрос.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Схему, индексы, план запроса, решение
+      по партициям и критерий, при котором перейдёшь к шардированию. Назови цену
+      каждого шага.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как выбрать индекс для запроса?</span></div>
+      <p class="a">«Смотрю фильтр, сортировку и соединения. Для равенства и диапазона —
+      B-tree, порядок колонок под запрос. Для JSONB или массива — GIN. Если нужен
+      только узкий набор полей, делаю покрывающий индекс. Проверяю `EXPLAIN ANALYZE`
+      до и после и помню, что индекс замедляет запись».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Индекс строится под конкретный вопрос, а не «на всякий случай».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Чем партиционирование отличается от шардирования?</span></div>
+      <p class="a">«Партиционирование делит одну таблицу на части внутри одной БД:
+      удобно для объёма и архивирования, запросы идут через один узел. Шардирование
+      делит данные между разными базами или узлами: масштабирует запись и объём,
+      но появляются кросс-шардовые запросы, распределённые транзакции и реsharding».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Партиции — полки в одном шкафу. Шарды — разные шкафы в разных комнатах.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Какую проблему создаёт асинхронная репликация?</span></div>
+      <p class="a">«Реплика отстаёт, поэтому чтение с неё может не увидеть только что
+      записанные данные. Для критичных сценариев читаю с primary или использую
+      sticky-маршрутизацию после записи. При аварии возможна потеря последних
+      транзакций, если они не доехали до реплики».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Копия догоняет с задержкой: вы уже сохранили, а она ещё нет.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как выбрать ключ шарда?</span></div>
+      <p class="a">«Ключ должен равномерно распределять нагрузку и позволять большинству
+      запросов работать в одном шарде. Часто это `user_id` или `tenant_id`. Проверяю
+      горячие точки, размеры шардов и кросс-шардовые сценарии. Помню, что менять ключ
+      потом дорого».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Ключ — это адрес, по которому всегда ищем. Если адреса нет, придётся обойти
+        все комнаты.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Когда шардирование действительно нужно?</span></div>
+      <p class="a">«Когда один узел уже не справляется с записью или объёмом, а индексы,
+      кэш, реплики и партиционирование исчерпаны. Если проблема только в чтении —
+      хватает реплик и кэша. Шардирование добавляет распределённые транзакции и
+      сложность эксплуатации, поэтому это последний шаг».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Шардирование — не первый инструмент, а крайняя мера, когда один шкаф
+        физически не вмещает.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как оптимизировать запрос в NoSQL?</span></div>
+      <p class="a">«Проектировать от запросов: ключи и индексы под конкретный доступ.
+      Денормализовать данные, чтобы не делать join. Избегать scan по большой коллекции.
+      Для DynamoDB — partition key и sort key, для MongoDB — составной индекс в порядке
+      фильтра и сортировки. Помнить про eventual consistency и стоимость записи».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сначала решаем, как будем искать, потом раскладываем данные под этот поиск.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="dbs1" data-id="dbs1"><label for="dbs1">Как выбрать индекс под запрос и в чём цена?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbs2" data-id="dbs2"><label for="dbs2">Чем партиционирование отличается от шардирования?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbs3" data-id="dbs3"><label for="dbs3">Какую проблему создаёт лаг репликации?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbs4" data-id="dbs4"><label for="dbs4">Как выбрать ключ шарда и что такое горячая точка?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbs5" data-id="dbs5"><label for="dbs5">Когда пора шардировать, а когда хватит реплик и кэша?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> сначала запрос и индекс, потом кэш и реплики,
+      затем партиции, и только в конце шарды.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Базы данных» ·
+    <a href="DatabaseTransactions.html">Транзакции и изоляция</a> ·
+    <a href="KafkaCaching.html">Kafka и кэширование</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

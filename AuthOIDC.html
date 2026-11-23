@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OAuth 2.0, OIDC, PKCE и доступ — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 9 · Безопасность · неделя 10</p>
+    <h1>OAuth 2.0, OIDC, PKCE и управление доступом</h1>
+    <p class="lead">
+      Чем авторизация отличается от аутентификации, как работает Authorization Code
+      с PKCE, зачем нужны access, ID и refresh токены, где их хранить и как выбирать
+      между ACL, RBAC и ABAC.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#oauth">OAuth</a></li>
+      <li><a href="#oidc">OIDC</a></li>
+      <li><a href="#jwt">JWT</a></li>
+      <li><a href="#access">Доступ</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Аутентификация и авторизация</h2>
+
+    <p><strong>Аутентификация</strong> отвечает на вопрос «кто ты». <strong>Авторизация</strong> —
+    «что тебе можно». Это разные задачи, и путать их опасно: успешный логин не означает
+    право на любое действие.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Паспорт подтверждает, кто вы. Пропуск на этаж говорит, куда можно пройти.
+      Паспорт без пропуска не открывает серверную.
+    </div>
+
+    <p><strong>OAuth 2.0</strong> — про <strong>делегированный доступ</strong>: пользователь
+    разрешает приложению действовать от своего имени, не передавая пароль.
+    <strong>OIDC</strong> (OpenID Connect) — надстройка над OAuth, которая добавляет
+    <strong>аутентификацию и профиль</strong>: кто пользователь и какие у него базовые данные.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> OAuth — это не «логин через Google». Это протокол
+      выдачи токенов доступа. OIDC добавляет к нему личность.
+    </div>
+  </div>
+</section>
+
+<section id="oauth">
+  <div class="wrap">
+    <h2><span class="badge">2</span> OAuth 2.0: роли и Authorization Code + PKCE</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Роль</th><th>Кто это</th><th>Пример</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Resource owner</strong></td><td>Владелец данных</td><td>Пользователь</td></tr>
+          <tr><td><strong>Client</strong></td><td>Приложение, которому дают доступ</td><td>Веб- или мобильный клиент</td></tr>
+          <tr><td><strong>Authorization server</strong></td><td>Выдаёт токены</td><td>Keycloak, Auth0, корпоративный SSO</td></tr>
+          <tr><td><strong>Resource server</strong></td><td>API, который проверяет токен</td><td>Playback API</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Authorization Code + PKCE</h3>
+    <ol>
+      <li>Клиент генерирует `code_verifier` и `code_challenge = SHA256(verifier)`.</li>
+      <li>Отправляет пользователя на authorization server с `challenge`, `client_id`,
+      `redirect_uri` и `scope`.</li>
+      <li>Пользователь входит и подтверждает доступ.</li>
+      <li>Сервер возвращает `code` на зарегистрированный `redirect_uri`.</li>
+      <li>Клиент меняет `code` + `verifier` на токены.</li>
+      <li>Сервер проверяет, что хэш совпадает, и выдаёт access/refresh/ID токены.</li>
+    </ol>
+
+    <p><strong>Зачем PKCE.</strong> Код авторизации может перехватить вредоносное
+    приложение на устройстве. Без `verifier` украденный код бесполезен: обменять его
+    на токен не получится. PKCE обязателен для публичных клиентов (SPA, мобильные)
+    и рекомендуется для всех.</p>
+
+    <div class="callout warn">
+      <strong>Implicit flow устарел.</strong> Он отдаёт access token прямо в URL и плохо
+      защищён. Современный выбор — Authorization Code + PKCE. Для машин без пользователя —
+      client credentials.
+    </div>
+  </div>
+</section>
+
+<section id="oidc">
+  <div class="wrap">
+    <h2><span class="badge">3</span> OIDC: три токена и их роли</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Токен</th><th>Для чего</th><th>Кому</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Access token</strong></td><td>Доступ к API</td><td>Resource server</td></tr>
+          <tr><td><strong>ID token</strong></td><td>Кто пользователь, базовый профиль</td><td>Клиенту, не для API</td></tr>
+          <tr><td><strong>Refresh token</strong></td><td>Получить новый access token</td><td>Клиенту, хранить максимально защищённо</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>ID token</strong> — это JWT с claims: `sub`, `iss`, `aud`, `exp`, `email`,
+    `name`. Его проверяет клиент, чтобы понять, кто вошёл. <strong>Access token</strong>
+    проверяет API; он может быть JWT или непрозрачной строкой, тогда API спрашивает
+    introspection у authorization server.</p>
+
+    <h3>Где хранить</h3>
+    <ul>
+      <li><strong>Refresh token</strong> — в `httpOnly`, `Secure`, `SameSite` cookie
+      или в защищённом хранилище ОС. Не в `localStorage`, если можно иначе.</li>
+      <li><strong>Access token</strong> — в памяти вкладки, короткий TTL.</li>
+      <li><strong>Никогда</strong> — в URL, логах, аналитике и репозитории.</li>
+    </ul>
+
+    <p>Refresh-токены стоит <strong>ротировать</strong>: при каждом использовании выдавать
+    новый, а старый помечать использованным. Если старый пришёл повторно — это признак
+    кражи, всю цепочку отзывают.</p>
+
+    <div class="callout">
+      <strong>OIDC discovery.</strong> Сервер публикует `.well-known/openid-configuration`
+      с адресами эндпоинтов и JWKS. Клиенту не нужно хардкодить ключи: он забирает
+      публичные ключи и проверяет подпись.
+    </div>
+  </div>
+</section>
+
+<section id="jwt">
+  <div class="wrap">
+    <h2><span class="badge">4</span> JWT: что проверять</h2>
+
+    <p><strong>JWT</strong> — подписанный набор claims. Он <strong>подписан</strong>, но
+    <strong>не зашифрован</strong>: любой может прочитать содержимое. Секреты и лишние
+    персональные данные в payload не кладут.</p>
+
+    <h3>Обязательные проверки</h3>
+    <ul>
+      <li><strong>Подпись</strong> по ключу из JWKS; алгоритм — из allowlist, а не из
+      заголовка токена.</li>
+      <li><strong>iss</strong> — ожидаемый issuer.</li>
+      <li><strong>aud</strong> — этот API, а не другой.</li>
+      <li><strong>exp / nbf / iat</strong> — срок действия и допустимый разброс.</li>
+      <li><strong>scope / roles</strong> — достаточно ли прав для операции.</li>
+    </ul>
+
+<pre class="cmd">// Псевдокод проверки
+$payload = Jwt::decode($token, $publicKey, ['RS256']);
+
+if ($payload-&gt;iss !== 'https://sso.example.com') throw new Unauthorized();
+if ($payload-&gt;aud !== 'playback-api')             throw new Unauthorized();
+if ($payload-&gt;exp &lt; time())                       throw new Unauthorized();</pre>
+
+    <div class="callout warn">
+      <strong>Не принимай `alg: none`.</strong> И не позволяй клиенту выбирать алгоритм.
+      Иначе токен можно подделать. Всегда фиксируй допустимые алгоритмы на сервере.
+    </div>
+  </div>
+</section>
+
+<section id="access">
+  <div class="wrap">
+    <h2><span class="badge">5</span> ACL, RBAC и ABAC</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Модель</th><th>Идея</th><th>Когда</th><th>Минус</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>ACL</strong></td><td>Права на конкретный объект</td><td>Файлы, документы, видео</td><td>Много записей, сложно администрировать</td></tr>
+          <tr><td><strong>RBAC</strong></td><td>Права через роли</td><td>Команды, админка, типовые роли</td><td>Роли разрастаются, нет контекста</td></tr>
+          <tr><td><strong>ABAC</strong></td><td>Правила по атрибутам</td><td>Мультитенантность, регион, тариф</td><td>Сложно тестировать и объяснять</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Пример для видео: <strong>RBAC</strong> — роль `editor` может публиковать видео.
+    <strong>ABAC</strong> — редактор может публиковать только в своём регионе и только
+    для своего тарифа. <strong>ACL</strong> — конкретному пользователю выдан доступ
+    к конкретному приватному видео.</p>
+
+    <p>Проверка прав должна быть <strong>на сервере</strong>, в одном месте, до выполнения
+    операции. Скрытая кнопка в интерфейсе — это UX, а не защита.</p>
+
+    <div class="callout">
+      <strong>Принцип наименьших привилегий.</strong> По умолчанию запрещено, разрешение
+      выдаётся явно. Для сервисных аккаунтов — только нужные scopes, а не «всё».
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: auth-flow видео-сервиса</h2>
+
+    <ol>
+      <li><strong>Вход.</strong> Веб-клиент идёт в OIDC-провайдер по Authorization Code + PKCE.</li>
+      <li><strong>Токены.</strong> Access — 15 минут, ID — для профиля, refresh — 30 дней
+      с ротацией.</li>
+      <li><strong>Хранение.</strong> Refresh в `httpOnly` cookie, access в памяти.</li>
+      <li><strong>API.</strong> Playback проверяет JWT: подпись, iss, aud, exp, scope.</li>
+      <li><strong>Права.</strong> RBAC для ролей, ABAC для региона и тарифа, ACL для
+      приватных видео.</li>
+      <li><strong>Сервис-сервис.</strong> Client credentials с узкими scopes, без
+      пользовательского контекста.</li>
+      <li><strong>Отзыв.</strong> Короткий TTL, ротация refresh, denylist по `jti` для
+      критичных случаев.</li>
+    </ol>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Нарисуй поток кодом обмена, назови три
+      токена и их назначение, объясни PKCE и проверки JWT. Затем добавь модель доступа
+      и принцип наименьших привилегий.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем OAuth 2.0 отличается от OIDC?</span></div>
+      <p class="a">«OAuth 2.0 — про делегированный доступ: выдаёт токены, чтобы приложение
+      могло вызывать API от имени пользователя. OIDC — надстройка, которая добавляет
+      аутентификацию: ID token с данными пользователя и стандартные эндпоинты.
+      OAuth отвечает «что можно», OIDC — ещё и «кто ты»».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>OAuth даёт ключ от комнаты, OIDC ещё и говорит, чей это ключ.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Зачем нужен PKCE в Authorization Code flow?</span></div>
+      <p class="a">«PKCE защищает код авторизации от перехвата. Клиент создаёт случайный
+      `verifier`, отправляет его хэш в запросе, а при обмене кода предъявляет сам
+      `verifier`. Украденный код без него не обменять на токен. Особенно важно для
+      публичных клиентов: SPA и мобильных приложений, где секрет клиента не сохранить».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Код бесполезен без второй половинки, которая осталась у клиента.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Чем access, ID и refresh токены отличаются?</span></div>
+      <p class="a">«Access token — для вызова API, его проверяет resource server.
+      ID token — для клиента, чтобы узнать пользователя; в API его не отправляют.
+      Refresh token — чтобы получить новый access без повторного логина, хранится
+      максимально защищённо и ротируется. Сроки: access короткий, refresh длинный».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Access — пропуск в зал, ID — бейдж с именем, refresh — право получить новый
+        пропуск.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Где хранить токены в браузере?</span></div>
+      <p class="a">«Refresh — в `httpOnly`, `Secure`, `SameSite` cookie, чтобы JavaScript
+      не мог прочитать. Access — в памяти вкладки с коротким TTL. `localStorage` удобен,
+      но доступен XSS, поэтому для долгоживущих токенов нежелателен. В URL и логах
+      токены не хранят никогда».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Долгий ключ — в закрытом ящике, короткий — в руке, и никогда на видном месте.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что проверять в JWT на стороне API?</span></div>
+      <p class="a">«Подпись по публичному ключу из JWKS, алгоритм из allowlist, `iss`,
+      `aud`, `exp`, `nbf`, `iat`, а также scope или роли. JWT только подписан, не
+      зашифрован, поэтому секреты и лишние PII в него не кладу. При критичных действиях
+      учитываю отзыв через `jti` и короткий TTL».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Проверяем печать, срок, кому выдан и что разрешено. Читать токен может каждый,
+        поэтому секретов там нет.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>RBAC или ABAC: что выбрать?</span></div>
+      <p class="a">«RBAC — когда права определяются ролью: админ, редактор, зритель.
+      ABAC — когда важен контекст: регион, тариф, владелец, время. Часто совмещают:
+      роль даёт базовые права, атрибуты сужают их. ACL — для прав на конкретный объект.
+      Проверка всегда на сервере, по принципу наименьших привилегий».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>RBAC — «кто ты по должности», ABAC — «что разрешено в этой ситуации».</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="auth1" data-id="auth1"><label for="auth1">Чем OAuth отличается от OIDC?</label></li>
+      <li><input type="checkbox" class="check-item" id="auth2" data-id="auth2"><label for="auth2">Опиши Authorization Code + PKCE по шагам</label></li>
+      <li><input type="checkbox" class="check-item" id="auth3" data-id="auth3"><label for="auth3">Зачем access, ID и refresh токены и где их хранить?</label></li>
+      <li><input type="checkbox" class="check-item" id="auth4" data-id="auth4"><label for="auth4">Какие проверки JWT обязательны?</label></li>
+      <li><input type="checkbox" class="check-item" id="auth5" data-id="auth5"><label for="auth5">RBAC, ABAC и ACL: что выберешь для видео-сервиса?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> OAuth выдаёт доступ, OIDC подтверждает
+      личность. Проверка прав — на сервере, токены — короткие и защищённые.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Безопасность» ·
+    <a href="WebSecurity.html">OWASP, hashing, CORS</a> ·
+    <a href="PrivacyGDPR.html">GDPR и приватность</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

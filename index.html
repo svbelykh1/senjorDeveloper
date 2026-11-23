@@ -25,7 +25,7 @@
       <div class="stat"><span class="num">12</span><span class="lbl">недель до цели</span></div>
       <div class="stat"><span class="num">96</span><span class="lbl">часов, по 8 в неделю</span></div>
       <div class="stat"><span class="num">10</span><span class="lbl">компетенций до уровня 3</span></div>
-      <div class="stat"><span class="num">17</span><span class="lbl">готовых разборов</span></div>
+      <div class="stat"><span class="num">32</span><span class="lbl">готовых разборов</span></div>
     </div>
   </div>
 </header>
@@ -60,7 +60,7 @@
         <span class="kicker">Всего отмечено</span>
         <div class="overall-row">
           <span class="overall-num" id="overallPercent">0%</span>
-          <span class="overall-sub" id="overallCount">0 из 111 пунктов</span>
+          <span class="overall-sub" id="overallCount">0 из 186 пунктов</span>
         </div>
         <div class="dash-bar" id="overallBar"><i></i></div>
 
@@ -72,7 +72,7 @@
         <div class="prow" data-group="materials">
           <span class="lbl">Материалы</span>
           <span class="track"><i></i></span>
-          <span class="val">0 / 86</span>
+          <span class="val">0 / 161</span>
         </div>
         <div class="prow" data-group="skip">
           <span class="lbl">Что не учить</span>
@@ -162,8 +162,8 @@
   <div class="wrap">
     <h2><span class="badge">3</span> Материалы</h2>
     <p class="sub">
-      Готовые разборы: недели 1–6. Сначала простыми словами, потом вопросы для интервью
-      и чекбоксы для самопроверки.
+      Все 12 недель плюс две дополнительные темы: PostgreSQL изнутри и event-driven
+      на Kafka. Сначала простыми словами, потом вопросы и чекбоксы.
     </p>
 
     <div class="search-row">
@@ -479,15 +479,284 @@
         </div>
       </article>
 
+      <article class="mat-card" data-key="archdocs">
+        <div class="top">
+          <div>
+            <h3>Документирование архитектуры</h3>
+            <span class="file">ArchitectureDocs.html</span>
+          </div>
+        </div>
+        <p>Модель C4, ADR, diagrams-as-code, процесс поддержки и типичные ошибки.</p>
+        <div class="tags">
+          <span class="tag">C4</span><span class="tag">ADR</span><span class="tag">диаграммы</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="ArchitectureDocs.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="distsys">
+        <div class="top">
+          <div>
+            <h3>Распределённые системы и LB</h3>
+            <span class="file">DistributedSystems.html</span>
+          </div>
+        </div>
+        <p>L4/L7, алгоритмы балансировки, sidecar, 2PC против Saga, разделение запросов.</p>
+        <div class="tags">
+          <span class="tag">LB</span><span class="tag">sidecar</span><span class="tag">2PC</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="DistributedSystems.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="distdebug">
+        <div class="top">
+          <div>
+            <h3>Отладка распределённых систем</h3>
+            <span class="file">DistributedDebugging.html</span>
+          </div>
+        </div>
+        <p>Трейсы, correlation id, clock skew, порядок сужения области, безопасная отладка в проде.</p>
+        <div class="tags">
+          <span class="tag">трейсы</span><span class="tag">отладка</span><span class="tag">инциденты</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="DistributedDebugging.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="cdn">
+        <div class="top">
+          <div>
+            <h3>CDN и edge computing</h3>
+            <span class="file">CDNEdge.html</span>
+          </div>
+        </div>
+        <p>Content routing, origin shield, TTL и инвалидация, edge-задачи, доставка HLS/DASH.</p>
+        <div class="tags">
+          <span class="tag">CDN</span><span class="tag">edge</span><span class="tag">видео</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="CDNEdge.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="k8s">
+        <div class="top">
+          <div>
+            <h3>Docker и Kubernetes</h3>
+            <span class="file">ContainersKubernetes.html</span>
+          </div>
+        </div>
+        <p>Multi-stage образы, объекты K8s, probes, requests/limits, HPA, релизы и откат.</p>
+        <div class="tags">
+          <span class="tag">Docker</span><span class="tag">Kubernetes</span><span class="tag">HPA</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="ContainersKubernetes.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="kafka">
+        <div class="top">
+          <div>
+            <h3>Kafka и кэширование</h3>
+            <span class="file">KafkaCaching.html</span>
+          </div>
+        </div>
+        <p>Партиции и consumer groups, at-least-once, DLQ, Cache-Aside, Write-Through, stampede.</p>
+        <div class="tags">
+          <span class="tag">Kafka</span><span class="tag">кэш</span><span class="tag">Redis</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="KafkaCaching.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="apiproto">
+        <div class="top">
+          <div>
+            <h3>HTTP/2, WebSocket, SSE</h3>
+            <span class="file">ApiProtocols.html</span>
+          </div>
+        </div>
+        <p>Версии HTTP, стриминг, REST vs gRPC vs GraphQL, выбор протокола под сценарий.</p>
+        <div class="tags">
+          <span class="tag">HTTP/2</span><span class="tag">WebSocket</span><span class="tag">gRPC</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="ApiProtocols.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="apirel">
+        <div class="top">
+          <div>
+            <h3>Идемпотентность и пулинг</h3>
+            <span class="file">ApiReliability.html</span>
+          </div>
+        </div>
+        <p>Idempotency-Key, дубли, exactly-once, пул соединений в PHP-FPM, whitelist и blacklist.</p>
+        <div class="tags">
+          <span class="tag">idempotency</span><span class="tag">пулинг</span><span class="tag">дубли</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="ApiReliability.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="auth">
+        <div class="top">
+          <div>
+            <h3>OAuth 2.0, OIDC, PKCE</h3>
+            <span class="file">AuthOIDC.html</span>
+          </div>
+        </div>
+        <p>Authorization Code + PKCE, access/ID/refresh токены, JWT, ACL/RBAC/ABAC.</p>
+        <div class="tags">
+          <span class="tag">OAuth</span><span class="tag">OIDC</span><span class="tag">JWT</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="AuthOIDC.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="websec">
+        <div class="top">
+          <div>
+            <h3>OWASP, хеши, CORS</h3>
+            <span class="file">WebSecurity.html</span>
+          </div>
+        </div>
+        <p>SQLi, XSS, CSRF, SSRF, хеширование паролей, SAST/DAST и CORS.</p>
+        <div class="tags">
+          <span class="tag">OWASP</span><span class="tag">SAST</span><span class="tag">CORS</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="WebSecurity.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="dbtx">
+        <div class="top">
+          <div>
+            <h3>Транзакции и изоляция</h3>
+            <span class="file">DatabaseTransactions.html</span>
+          </div>
+        </div>
+        <p>Уровни изоляции и аномалии, дедлоки, сложный SQL, EXPLAIN, процедуры.</p>
+        <div class="tags">
+          <span class="tag">ACID</span><span class="tag">SQL</span><span class="tag">Postgres</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="DatabaseTransactions.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="dbs">
+        <div class="top">
+          <div>
+            <h3>Индексы и шардирование</h3>
+            <span class="file">DatabaseScaling.html</span>
+          </div>
+        </div>
+        <p>Индексы, NoSQL, масштабирование, репликация, партиционирование и шарды.</p>
+        <div class="tags">
+          <span class="tag">индексы</span><span class="tag">реплики</span><span class="tag">шарды</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="DatabaseScaling.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="mock">
+        <div class="top">
+          <div>
+            <h3>Mock-интервью</h3>
+            <span class="file">MockInterviews.html</span>
+          </div>
+        </div>
+        <p>Формат прогона, system design, code review, STAR и scorecard.</p>
+        <div class="tags">
+          <span class="tag">mock</span><span class="tag">system design</span><span class="tag">STAR</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="MockInterviews.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="postgres">
+        <div class="top">
+          <div>
+            <h3>PostgreSQL изнутри</h3>
+            <span class="file">PostgresInternals.html</span>
+          </div>
+        </div>
+        <p>MVCC и версии строк, vacuum и bloat, блокировки, планы, PgBouncer, WAL и репликация.</p>
+        <div class="tags">
+          <span class="tag">PostgreSQL</span><span class="tag">MVCC</span><span class="tag">vacuum</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="PostgresInternals.html">Открыть</a>
+        </div>
+      </article>
+
+      <article class="mat-card" data-key="events">
+        <div class="top">
+          <div>
+            <h3>Event-driven и Kafka</h3>
+            <span class="file">EventDrivenKafka.html</span>
+          </div>
+        </div>
+        <p>События и команды, outbox, контракты и версии, идемпотентный consumer, DLQ, Streams.</p>
+        <div class="tags">
+          <span class="tag">event-driven</span><span class="tag">outbox</span><span class="tag">Kafka</span>
+        </div>
+        <div class="bottom">
+          <span class="track"><i></i></span>
+          <span class="val">0 / 5</span>
+          <a class="open" href="EventDrivenKafka.html">Открыть</a>
+        </div>
+      </article>
+
     </div>
 
     <div class="empty" id="materialsEmpty">Ничего не найдено. Попробуй другое слово или посмотри план — тема может быть в другой неделе.</div>
 
     <div class="callout">
-      <strong>Материалы будут пополняться.</strong> Сейчас готовы недели 1–6: жизненный
-      цикл, качество, ИИ и приватность, алгоритмы, паттерны, архитектура. Следующие темы —
-      документирование архитектуры, распределённые системы, Kafka, API, безопасность
-      и базы данных.
+      <strong>Все 12 недель и две дополнительные темы собраны.</strong> Осталось пройти
+      их: читать разборы, отвечать вслух и отмечать чекбоксы. Когда все 186 пунктов
+      закрыты — пора на mock-интервью и к финальному повторению.
     </div>
   </div>
 </section>

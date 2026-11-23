@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP/2, WebSocket, SSE и выбор API — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Протоколы и API · неделя 9</p>
+    <h1>HTTP/2, WebSocket, SSE и выбор API</h1>
+    <p class="lead">
+      Чем HTTP/2 и HTTP/3 лучше HTTP/1.1, когда нужен WebSocket, а когда хватит SSE,
+      и как выбрать между REST, gRPC, GraphQL и событиями. С примерами для видео-платформы.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#http">HTTP</a></li>
+      <li><a href="#streaming">Стриминг</a></li>
+      <li><a href="#styles">Стили API</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#mistakes">Ошибки</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Почему протокол — архитектурное решение</h2>
+
+    <p>Протокол определяет задержку, стоимость соединений, поддержку стриминга и
+    сложность инфраструктуры. WebSocket за прокси с буферизацией не работает, gRPC
+    из браузера требует grpc-web, а HTTP/2 может ускорить сотни мелких запросов
+    без изменения кода.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Протокол — это вид транспорта. Письмо, курьер и видеозвонок решают разные задачи.
+      Выбирать «самый современный» бессмысленно, если нужно просто передать документ.
+    </div>
+
+    <p>На интервью Senior ждут не перечисления версий, а ответа: <strong>какая задача</strong>,
+    <strong>какой транспорт</strong> и <strong>что с инфраструктурой</strong> — прокси,
+    таймауты, балансировка, наблюдаемость.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Сначала сценарий общения, потом протокол.
+      Для запрос-ответ обычно хватает HTTP, для потока событий — SSE или WebSocket.
+    </div>
+  </div>
+</section>
+
+<section id="http">
+  <div class="wrap">
+    <h2><span class="badge">2</span> HTTP/1.1, HTTP/2 и HTTP/3</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Версия</th><th>Что изменилось</th><th>Ограничение</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>HTTP/1.1</strong></td><td>Keep-alive, текстовый формат</td><td>Один запрос за раз на соединение, head-of-line blocking</td></tr>
+          <tr><td><strong>HTTP/2</strong></td><td>Бинарный формат, мультиплексирование, HPACK</td><td>Потери пакета блокируют все потоки на TCP</td></tr>
+          <tr><td><strong>HTTP/3</strong></td><td>QUIC поверх UDP, независимые потоки</td><td>Новая инфраструктура, не везде поддерживается</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Мультиплексирование</h3>
+    <p>В HTTP/1.1 браузер открывает несколько соединений, чтобы параллелить запросы.
+    В HTTP/2 один запрос — один поток внутри соединения: сотни запросов идут
+    одновременно, заголовки сжимаются. Это уменьшает задержку и число соединений.</p>
+
+    <h3>HTTP/3 и QUIC</h3>
+    <p>QUIC переносит потоки в UDP и делает потери пакета локальными для потока, а не
+    для всего соединения. Плюс быстрее установка соединения. Минус — поддержка на
+    стороне клиентов, балансировщиков и наблюдаемости.</p>
+
+    <div class="callout warn">
+      <strong>HTTP/2 не отменяет таймауты и лимиты.</strong> Он ускоряет транспорт, но
+      медленный запрос всё равно медленный. И один поток не должен блокировать остальные
+      на уровне приложения.
+    </div>
+  </div>
+</section>
+
+<section id="streaming">
+  <div class="wrap">
+    <h2><span class="badge">3</span> WebSocket, SSE, long polling и сокеты</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Технология</th><th>Направление</th><th>Когда</th><th>Минусы</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Long polling</strong></td><td>Клиент → сервер, ответ задерживается</td><td>Простой fallback</td><td>Лишние соединения и задержка</td></tr>
+          <tr><td><strong>SSE</strong></td><td>Сервер → клиент, текст</td><td>Прогресс, уведомления, лента</td><td>Только одно направление</td></tr>
+          <tr><td><strong>WebSocket</strong></td><td>Двустороннее</td><td>Чат, игры, совместная работа</td><td>Состояние, масштабирование, прокси</td></tr>
+          <tr><td><strong>Raw sockets</strong></td><td>Любое</td><td>Специальные протоколы</td><td>Своя безопасность, обход прокси</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>SSE</h3>
+    <p><strong>Server-Sent Events</strong> — обычный HTTP-ответ с `Content-Type:
+    text/event-stream`, который не закрывается. Сервер шлёт события, клиент
+    автоматически переподключается и передаёт `Last-Event-ID`. Хорошо работает через
+    HTTP/2 и большинство прокси, если не включена буферизация.</p>
+
+<pre class="cmd">event: progress
+id: 17
+data: {"transcode": 42, "percent": 65}
+
+event: done
+id: 18
+data: {"transcode": 42, "url": "/streams/42/master.m3u8"}</pre>
+
+    <h3>WebSocket</h3>
+    <p><strong>WebSocket</strong> начинается с HTTP-upgrade и дальше работает
+    двусторонне. Нужен для чата и интерактивных сценариев. Требует heartbeat,
+    переподключения и хранения состояния соединений. За балансировщиком нужна
+    поддержка upgrade и sticky-маршрутизация либо общий pub-sub для рассылки.</p>
+
+    <div class="callout">
+      <strong>Правило выбора.</strong> Нужен только поток от сервера — SSE. Нужен
+      двусторонний обмен — WebSocket. Нужен редкий опрос — обычный HTTP.
+    </div>
+  </div>
+</section>
+
+<section id="styles">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Выбор архитектуры API</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Стиль</th><th>Сильные стороны</th><th>Слабости</th><th>Когда</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>REST</strong></td><td>Простота, HTTP-кэш, широкая поддержка</td><td>Овер- и under-fetching, много round trip</td><td>Публичное API, CRUD</td></tr>
+          <tr><td><strong>gRPC</strong></td><td>Контракт, бинарный формат, стриминг, HTTP/2</td><td>Браузер требует grpc-web, сложнее отладка</td><td>Внутренние сервисы, высокая нагрузка</td></tr>
+          <tr><td><strong>GraphQL</strong></td><td>Клиент выбирает поля, один эндпоинт</td><td>Сложность кэша, N+1, лимиты</td><td>Много разных клиентов и экранов</td></tr>
+          <tr><td><strong>События</strong></td><td>Асинхронность, слабая связность</td><td>Нет ответа сразу, дубли и порядок</td><td>Интеграция и фоновые процессы</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Стили не исключают друг друга. Внутри можно иметь REST для клиентов, gRPC между
+    сервисами и события для фоновых процессов. Главное — явные контракты и версионирование.</p>
+
+    <div class="callout warn">
+      <strong>GraphQL ≠ бесплатная оптимизация.</strong> Он переносит сложность на сервер:
+      глубина запроса, N+1, авторизация на уровне полей, кэширование. Без лимитов
+      сложности и батчинга он легко становится узким местом.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Практика: протоколы в видео-платформе</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Сценарий</th><th>Протокол</th><th>Почему</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Каталог и карточки</td><td>REST + HTTP/2</td><td>Просто, кэшируется, много клиентов</td></tr>
+          <tr><td>Внутренние вызовы playback → catalog</td><td>gRPC</td><td>Контракт, скорость, стриминг</td></tr>
+          <tr><td>Прогресс транскодинга</td><td>SSE</td><td>Односторонний поток, автопереподключение</td></tr>
+          <tr><td>Чат во время трансляции</td><td>WebSocket</td><td>Двусторонний обмен в реальном времени</td></tr>
+          <tr><td>События публикации</td><td>Kafka</td><td>Асинхронная интеграция и буферизация</td></tr>
+          <tr><td>Мобильное приложение</td><td>REST или gRPC</td><td>Зависит от платформы и требований</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Между сервисами HTTP/2 даёт мультиплексирование и меньше соединений. Публичное
+    API остаётся REST, потому что его проще кэшировать и поддерживать разными клиентами.
+    Внутреннее — gRPC, где важен контракт.</p>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Скажи, что протокол выбирается под
+      сценарий: запрос-ответ, поток, двусторонний обмен. И назови ограничения
+      инфраструктуры: прокси, таймауты, балансировка, наблюдаемость.
+    </div>
+  </div>
+</section>
+
+<section id="mistakes">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Частые ошибки</h2>
+
+    <ul>
+      <li><strong>WebSocket для обычного запрос-ответа.</strong> Лишняя сложность и
+      состояние без пользы.</li>
+      <li><strong>SSE через буферизующий прокси.</strong> События копятся и приходят
+      пачкой или не приходят вовсе.</li>
+      <li><strong>gRPC из браузера без grpc-web.</strong> Браузер не умеет нативный
+      gRPC.</li>
+      <li><strong>GraphQL без лимита сложности.</strong> Один запрос может положить
+      сервис.</li>
+      <li><strong>Игнорировать таймауты и heartbeat.</strong> «Мёртвые» соединения
+      висят и съедают ресурсы.</li>
+      <li><strong>Забыть про версионирование контракта.</strong> Клиенты ломаются при
+      изменении схемы.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Проверка инфраструктуры:</strong> поддерживает ли прокси upgrade, не
+      буферизует ли SSE, какой idle timeout, как балансируется WebSocket, видно ли
+      протокол в метриках и трейсах.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем HTTP/2 лучше HTTP/1.1?</span></div>
+      <p class="a">«HTTP/2 мультиплексирует запросы в одном TCP-соединении, сжимает
+      заголовки и убирает ограничение «один запрос за раз». Это уменьшает задержку и
+      число соединений. Но потери пакета на TCP блокируют все потоки — это лечит
+      HTTP/3 на QUIC».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Вместо одной полосы — многополосная дорога в одном тоннеле.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Когда WebSocket, когда SSE, когда polling?</span></div>
+      <p class="a">«SSE — когда нужен поток от сервера: прогресс, уведомления, лента.
+      WebSocket — когда нужен двусторонний обмен: чат, игры, совместная работа.
+      Polling — когда события редкие и простота важнее задержки. Long polling —
+      fallback, если стриминг недоступен».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>SSE — радио, WebSocket — телефон, polling — «перезвоните мне позже».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Почему SSE иногда не работает через прокси?</span></div>
+      <p class="a">«Прокси или CDN могут буферизовать ответ и ждать закрытия соединения.
+      Тогда события не доходят по одному. Нужно отключить буферизацию, передавать
+      `Content-Type: text/event-stream`, не сжимать поток агрессивно и проверить idle
+      timeout. Иногда помогает HTTP/2 или обход конкретного слоя».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Прокси держит события в кармане, вместо того чтобы отдавать по одному.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>REST или gRPC для внутренних сервисов?</span></div>
+      <p class="a">«Для внутренних вызовов часто gRPC: строгий контракт, бинарный формат,
+      HTTP/2 и стриминг, меньше накладных расходов. REST проще отлаживать и кэшировать,
+      лучше подходит для публичного API. Часто совмещают: REST снаружи, gRPC внутри».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Снаружи — понятный язык для всех, внутри — быстрый контракт между своими.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Когда GraphQL оправдан и чем опасен?</span></div>
+      <p class="a">«Оправдан, когда много клиентов с разными экранами и нужен выбор полей
+      без множества эндпоинтов. Опасен N+1, запросами большой глубины, сложным
+      кэшированием и авторизацией на уровне полей. Нужны лимиты сложности, батчинг и
+      явные правила».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Клиент заказывает блюдо по ингредиентам. Удобно, но кухня должна выдержать
+        любой заказ.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Что проверить в инфраструктуре перед выбором протокола?</span></div>
+      <p class="a">«Поддержку upgrade для WebSocket, буферизацию для SSE, idle timeout,
+      балансировку долгих соединений, TLS-терминацию, лимиты и наблюдаемость. Плюс
+      совместимость клиентов и прокси. Протокол, который не проходит через инфраструктуру,
+      бесполезен».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Даже лучший транспорт не поедет по дороге, где нет моста.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="proto1" data-id="proto1"><label for="proto1">Чем HTTP/2 и HTTP/3 отличаются от HTTP/1.1?</label></li>
+      <li><input type="checkbox" class="check-item" id="proto2" data-id="proto2"><label for="proto2">Когда выбрать SSE, а когда WebSocket?</label></li>
+      <li><input type="checkbox" class="check-item" id="proto3" data-id="proto3"><label for="proto3">Почему SSE может не работать через прокси?</label></li>
+      <li><input type="checkbox" class="check-item" id="proto4" data-id="proto4"><label for="proto4">REST, gRPC, GraphQL или события: что и почему?</label></li>
+      <li><input type="checkbox" class="check-item" id="proto5" data-id="proto5"><label for="proto5">Что проверить в инфраструктуре перед выбором протокола?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> протокол выбирают под сценарий общения и
+      проверяют, проходит ли он через вашу инфраструктуру.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Протоколы и API» ·
+    <a href="ApiReliability.html">Идемпотентность и пулинг</a> ·
+    <a href="KafkaCaching.html">Kafka и кэширование</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

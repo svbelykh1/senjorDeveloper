@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PostgreSQL изнутри: MVCC, vacuum, блокировки — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Дополнительная тема · Базы данных</p>
+    <h1>PostgreSQL изнутри: MVCC, vacuum и блокировки</h1>
+    <p class="lead">
+      Почему UPDATE создаёт новую версию строки, зачем нужен vacuum и что будет
+      без него, как найти виновника блокировки и когда PgBouncer спасает, а когда
+      ломает prepared statements.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#mvcc">MVCC</a></li>
+      <li><a href="#vacuum">Vacuum</a></li>
+      <li><a href="#locks">Блокировки</a></li>
+      <li><a href="#plans">Планы</a></li>
+      <li><a href="#pool">PgBouncer</a></li>
+      <li><a href="#replication">Репликация</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем знать внутренности</h2>
+
+    <p>PostgreSQL кажется простым: подключился, написал SQL, получил результат.
+    Проблемы начинаются на объёме: таблица «раздулась», запрос вдруг перестал
+    использовать индекс, а ночью всё встало из-за блокировки. Понимание внутренностей
+    позволяет <strong>объяснить причину</strong>, а не перезапускать базу.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      База — это склад с журналом изменений. Старые коробки не исчезают мгновенно:
+      их помечают и потом убирают. Если уборщик не приходит, склад заполняется
+      мусором, и новые коробки некуда ставить.
+    </div>
+
+    <p>На Senior-интервью любят вопросы: «почему таблица занимает больше, чем данные»,
+    «кто держит блокировку», «почему план изменился после ANALYZE». Это проверка
+    не заучивания, а понимания модели.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Postgres не изменяет строки на месте. Он создаёт
+      версии, а старые убирает vacuum. Почти все странности поведения растут отсюда.
+    </div>
+  </div>
+</section>
+
+<section id="mvcc">
+  <div class="wrap">
+    <h2><span class="badge">2</span> MVCC: версии строк и снимки</h2>
+
+    <p><strong>MVCC</strong> (Multi-Version Concurrency Control) позволяет читателям
+    не блокировать писателей. Каждая версия строки хранит служебные поля:
+    <strong>xmin</strong> — кто создал, <strong>xmax</strong> — кто удалил или обновил.
+    Транзакция видит только те версии, которые попадают в её <strong>снимок</strong>.</p>
+
+    <p><strong>UPDATE</strong> не меняет строку на месте: создаётся новая версия,
+    а старая помечается удалённой. <strong>DELETE</strong> тоже не стирает физически,
+    а ставит отметку. Освобождает место vacuum.</p>
+
+<pre class="cmd">UPDATE videos
+SET title = 'Новое название'
+WHERE id = 42;
+
+-- физически: новая версия строки + старая помечена dead
+-- место освободит autovacuum</pre>
+
+    <h3>HOT-обновления</h3>
+    <p>Если обновляемые колонки не входят в индексы и в странице есть место,
+    Postgres делает <strong>HOT update</strong>: новая версия остаётся в той же
+    странице, индексы не трогаются. Поэтому обновление «тяжёлых» индексированных
+    полей дороже.</p>
+
+    <div class="callout">
+      <strong>Почему читатель не блокирует писателя.</strong> Читатель работает со
+      снимком и не ждёт коммита. Плата — старые версии живут, пока их не уберут.
+    </div>
+  </div>
+</section>
+
+<section id="vacuum">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Vacuum, bloat и заморозка</h2>
+
+    <p><strong>Vacuum</strong> удаляет мёртвые версии и освобождает место для повторного
+    использования. <strong>Autovacuum</strong> делает это автоматически, но не всегда
+    успевает: на больших таблицах порог срабатывает поздно, а длинная транзакция
+    мешает уборке.</p>
+
+    <h3>Как найти проблему</h3>
+
+<pre class="cmd">SELECT relname,
+       n_live_tup,
+       n_dead_tup,
+       last_autovacuum,
+       last_autoanalyze
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC
+LIMIT 10;</pre>
+
+    <p>Много `n_dead_tup` и старый `last_autovacuum` — признак раздувания.
+    <strong>Bloat</strong> — это пространство, занятое мёртвыми версиями и пустотами.
+    Таблица растёт, а полезных данных столько же.</p>
+
+    <h3>Что делать</h3>
+    <ul>
+      <li><strong>Настроить autovacuum</strong> для больших таблиц: ниже scale factor,
+      выше cost limit.</li>
+      <li><strong>Не держать длинные транзакции:</strong> они мешают срезать старые
+      версии.</li>
+      <li><strong>`VACUUM FULL`</strong> переписывает таблицу и берёт тяжёлую блокировку.
+      На проде чаще используют <strong>pg_repack</strong>.</li>
+      <li><strong>Следить за freeze.</strong> Postgres замораживает старые транзакции,
+      чтобы избежать переполнения счётчика XID. Если freeze отстаёт — база может
+      уйти в защитный режим.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>`VACUUM` не возвращает место ОС</strong> (кроме отдельных случаев) —
+      он делает его доступным для новых версий. Если нужно уменьшить файл на диске,
+      это уже `VACUUM FULL` или pg_repack, с соответствующей ценой.
+    </div>
+  </div>
+</section>
+
+<section id="locks">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Блокировки и дедлоки</h2>
+
+    <p>Postgres блокирует на уровне строк и таблиц. `UPDATE` берёт блокировку строки,
+    `ALTER TABLE` — блокировку таблицы. Читатели обычно не блокируются благодаря MVCC,
+    но `SELECT FOR UPDATE` блокирует явно.</p>
+
+    <h3>Кто кого ждёт</h3>
+
+<pre class="cmd">SELECT pid,
+       pg_blocking_pids(pid) AS blockers,
+       state,
+       wait_event_type,
+       left(query, 80) AS query
+FROM pg_stat_activity
+WHERE cardinality(pg_blocking_pids(pid)) &gt; 0;</pre>
+
+    <p>Так видно цепочку ожидания. Если запрос висит, сначала смотри не на него,
+    а на того, кто его блокирует.</p>
+
+    <h3>Профилактика</h3>
+    <ul>
+      <li><strong>Короткие транзакции.</strong> Не держи открытой, пока идёт HTTP-вызов.</li>
+      <li><strong>Единый порядок обновлений.</strong> Всегда блокируй строки в одном
+      порядке.</li>
+      <li><strong>Индексы.</strong> Без индекса `UPDATE` может блокировать больше строк,
+      чем нужно.</li>
+      <li><strong>Advisory locks</strong> — для координации на уровне приложения,
+      но с осторожностью: они не связаны со строками.</li>
+      <li><strong>Retry при deadlock.</strong> База откатывает одну транзакцию,
+      приложение повторяет.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Дедлок — это не баг Postgres, а сигнал.</strong> Две транзакции захватили
+      ресурсы в разном порядке. Лечится порядком и короткими транзакциями, а не
+      увеличением `deadlock_timeout`.
+    </div>
+  </div>
+</section>
+
+<section id="plans">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Планировщик и почему индекс не используется</h2>
+
+    <p>Планировщик выбирает план по <strong>статистике</strong>: сколько строк, насколько
+    селективен фильтр, сколько стоит чтение страницы. Статистику собирает
+    <strong>ANALYZE</strong> (обычно вместе с autovacuum).</p>
+
+    <h3>Частые причины отказа от индекса</h3>
+    <ul>
+      <li><strong>Устаревшая статистика.</strong> Таблица выросла, а planner думает
+      по-старому.</li>
+      <li><strong>Функция над колонкой.</strong> `WHERE lower(email) = ...` не использует
+      обычный индекс.</li>
+      <li><strong>Несовпадение типов.</strong> `varchar` против `bigint` может привести
+      к приведению и потере индекса.</li>
+      <li><strong>Слишком широкая выборка.</strong> Если подходит 40% строк, Seq Scan
+      честно дешевле.</li>
+      <li><strong>Generic plan.</strong> Prepared statement может закэшировать план,
+      неудачный для конкретных параметров.</li>
+    </ul>
+
+<pre class="cmd">EXPLAIN (ANALYZE, BUFFERS)
+SELECT *
+FROM video_views
+WHERE video_id = 42
+ORDER BY created_at DESC
+LIMIT 20;</pre>
+
+    <p>Смотри на фактическое число строк, loops, buffers и разницу с ожидаемым.
+    Если ожидали 10 строк, а получили 100 000 — проблема в статистике.</p>
+
+    <div class="callout">
+      <strong>Generic plan.</strong> Для нестабильных данных можно переключить
+      `plan_cache_mode = force_custom_plan` или добавить `ANALYZE`. Но чаще достаточно
+      обновить статистику и проверить индексы.
+    </div>
+  </div>
+</section>
+
+<section id="pool">
+  <div class="wrap">
+    <h2><span class="badge">6</span> PgBouncer и пул соединений</h2>
+
+    <p>Postgres создаёт отдельный процесс на соединение. Тысяча соединений — тысяча
+    процессов, память и переключения контекста. <strong>PgBouncer</strong> держит
+    небольшой пул реальных соединений и мультиплексирует клиентов.</p>
+
+<pre class="cmd">[pgbouncer]
+pool_mode = transaction
+max_client_conn = 1000
+default_pool_size = 25
+reserve_pool_size = 5</pre>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Режим</th><th>Что делает</th><th>Ограничение</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Session</strong></td><td>Соединение на весь сеанс клиента</td><td>Почти нет выигрыша</td></tr>
+          <tr><td><strong>Transaction</strong></td><td>Соединение на транзакцию</td><td>Не поддерживает session state</td></tr>
+          <tr><td><strong>Statement</strong></td><td>Соединение на запрос</td><td>Нельзя транзакции</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>В transaction mode нельзя рассчитывать на `SET`, временные таблицы, advisory locks
+    и некоторые prepared statements между транзакциями. Зато это самый частый режим
+    для веб-приложений.</p>
+
+    <div class="callout warn">
+      <strong>Считай пул на весь кластер.</strong> 20 pod'ов × 25 соединений = 500.
+      Если `max_connections` меньше — половина получит отказ. Пул задаётся не «на pod»,
+      а на общую ёмкость базы.
+    </div>
+  </div>
+</section>
+
+<section id="replication">
+  <div class="wrap">
+    <h2><span class="badge">7</span> WAL, репликация и лаг</h2>
+
+    <p><strong>WAL</strong> (Write-Ahead Log) — журнал изменений. Сначала запись идёт
+    в WAL, потом в файлы данных. Это даёт долговечность и возможность передавать
+    изменения на реплики.</p>
+
+    <ul>
+      <li><strong>Streaming replication</strong> — физическая копия кластера, реплика
+      применяет WAL. Подходит для failover и чтения.</li>
+      <li><strong>Logical replication</strong> — передаются логические изменения таблиц.
+      Гибче: можно реплицировать часть таблиц, между разными версиями.</li>
+      <li><strong>Синхронная</strong> — коммит ждёт подтверждения реплики. Надёжнее,
+      но медленнее.</li>
+      <li><strong>Асинхронная</strong> — быстрее, но есть лаг и риск потери последних
+      транзакций при аварии.</li>
+    </ul>
+
+<pre class="cmd">SELECT client_addr,
+       state,
+       sent_lsn,
+       replay_lsn,
+       pg_wal_lsn_diff(sent_lsn, replay_lsn) AS lag_bytes
+FROM pg_stat_replication;</pre>
+
+    <p>Лаг измеряют в байтах WAL и во времени. Если реплика отстаёт, чтение с неё
+    может вернуть устаревшие данные. Для критичных сценариев читают с primary или
+    используют sticky-маршрутизацию после записи.</p>
+
+    <div class="callout">
+      <strong>Реплика — не бэкап.</strong> Она повторяет ошибки: `DELETE` без `WHERE`
+      доедет и до неё. Нужны отдельные резервные копии и проверка восстановления.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">8</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как работает MVCC и почему UPDATE создаёт новую версию?</span></div>
+      <p class="a">«Каждая версия строки хранит xmin и xmax, а транзакция видит только
+      версии из своего снимка. UPDATE создаёт новую версию и помечает старую удалённой,
+      поэтому читатели не блокируют писателей. Старые версии убирает vacuum. Плата —
+      раздувание таблиц и необходимость autovacuum».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Вместо стирания строки Postgres пишет новую копию и ставит на старой
+        пометку «удалено». Уборщик потом вынесет.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Зачем нужен vacuum и что будет без него?</span></div>
+      <p class="a">«Vacuum удаляет мёртвые версии, освобождает место для повторного
+      использования и замораживает старые транзакции, чтобы не переполнить XID.
+      Без него таблицы раздуваются, растёт I/O, а в пределе база уходит в защитный
+      режим из-за wraparound. Autovacuum нужно мониторить и настраивать на больших
+      таблицах».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это уборка склада: без неё новые коробки ставить некуда, а проходы
+        завалены старьём.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Как найти, кто блокирует запрос?</span></div>
+      <p class="a">«Смотрю `pg_stat_activity` и `pg_blocking_pids(pid)`: он показывает
+      цепочку блокирующих процессов. Затем проверяю `state`, `wait_event_type` и
+      запрос блокирующего. Обычно это длинная транзакция или забытый `SELECT FOR UPDATE`».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Ищу не того, кто ждёт, а того, кого ждут.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Почему индекс не используется?</span></div>
+      <p class="a">«Чаще всего устаревшая статистика, функция над колонкой, несовпадение
+      типов или слишком широкая выборка. Проверяю `EXPLAIN (ANALYZE, BUFFERS)`:
+      сравниваю ожидаемое и фактическое число строк. Помогают `ANALYZE`, функциональный
+      индекс или переписывание условия».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Планировщик считает, что так дешевле. Надо показать ему правду статистикой
+        или изменить запрос.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Зачем PgBouncer и какой режим выбрать?</span></div>
+      <p class="a">«Postgres дорого держит много соединений, а приложение открывает
+      их на каждый воркер. PgBouncer мультиплексирует клиентов в небольшой пул.
+      Для веб-приложений обычно transaction mode; он не поддерживает session state,
+      временные таблицы и часть prepared statements между транзакциями. Пул считаю
+      на весь кластер».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это коммутатор: много клиентов, мало реальных линий, но каждой хватает
+        на время разговора.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Чем streaming replication отличается от logical?</span></div>
+      <p class="a">«Streaming — физическая копия кластера: реплика применяет WAL и
+      повторяет всё. Logical передаёт логические изменения выбранных таблиц, может
+      работать между версиями и использоваться для интеграций. Streaming проще для
+      failover, logical гибче для частичной репликации».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Streaming копирует весь диск, logical — только нужные изменения таблиц.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="pg1" data-id="pg1"><label for="pg1">Объясни MVCC и почему UPDATE создаёт новую версию</label></li>
+      <li><input type="checkbox" class="check-item" id="pg2" data-id="pg2"><label for="pg2">Зачем vacuum, что такое bloat и wraparound?</label></li>
+      <li><input type="checkbox" class="check-item" id="pg3" data-id="pg3"><label for="pg3">Как найти блокирующий процесс и что делать с дедлоком?</label></li>
+      <li><input type="checkbox" class="check-item" id="pg4" data-id="pg4"><label for="pg4">Почему индекс не используется и что смотреть в EXPLAIN?</label></li>
+      <li><input type="checkbox" class="check-item" id="pg5" data-id="pg5"><label for="pg5">Как PgBouncer спасает соединения и чем ограничен?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> Postgres хранит версии, vacuum убирает
+      мёртвые, а блокировки лечатся короткими транзакциями и порядком.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Дополнительная тема · Базы данных ·
+    <a href="DatabaseTransactions.html">Транзакции и изоляция</a> ·
+    <a href="DatabaseScaling.html">Индексы и шардирование</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

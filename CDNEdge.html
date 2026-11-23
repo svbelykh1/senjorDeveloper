@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CDN, edge computing и content routing — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Инфраструктура · неделя 8</p>
+    <h1>CDN, edge computing и content routing</h1>
+    <p class="lead">
+      Как видео доезжает до пользователя за сотни миллисекунд, чем манифест отличается
+      от сегмента, как работает кэш на краю и где edge computing помогает, а где
+      создаёт новый источник проблем.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#routing">Маршрутизация</a></li>
+      <li><a href="#caching">Кэш</a></li>
+      <li><a href="#edge">Edge</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#mistakes">Ошибки</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем нужен CDN</h2>
+
+    <p><strong>CDN</strong> (Content Delivery Network) — сеть серверов по миру, которая
+    отдаёт контент <strong>рядом с пользователем</strong>. Вместо одного origin в Москве
+    пользователь из Владивостока получает сегмент видео из локальной точки присутствия
+    (PoP). Это меньше задержки, меньше нагрузки на origin и устойчивость к пикам.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Вместо того чтобы каждый житель района ехал на центральный склад, товар раскладывают
+      по местным магазинам. Центральный склад остаётся источником, но большинство
+      покупок делается рядом.
+    </div>
+
+    <p>Для видео CDN — не оптимизация, а необходимость: один фильм в 4K может весить
+    десятки гигабайт, и отдавать его с одного сервера на тысячи зрителей невозможно.
+    На интервью проверяют понимание <strong>иерархии кэша</strong>, <strong>инвалидации</strong>
+    и <strong>безопасности ссылок</strong>.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> CDN снижает задержку и защищает origin, но
+      добавляет новую распределённую систему, которую тоже надо наблюдать и
+      инвалидировать.
+    </div>
+  </div>
+</section>
+
+<section id="routing">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Content routing: как выбирается точка</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Способ</th><th>Как работает</th><th>Особенность</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>DNS-маршрутизация</strong></td><td>DNS отдаёт IP ближайшего PoP</td><td>Просто, но кэш DNS замедляет переключение</td></tr>
+          <tr><td><strong>Anycast</strong></td><td>Один IP анонсируется из многих точек</td><td>Быстрое переключение, сложнее управлять</td></tr>
+          <tr><td><strong>HTTP-редирект</strong></td><td>Сервер отправляет на нужный PoP</td><td>Лишний round trip, зато точный выбор</td></tr>
+          <tr><td><strong>Клиентская логика</strong></td><td>Плеер сам выбирает CDN по метрикам</td><td>Гибко, но нужна поддержка в клиенте</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Origin shield</strong> — промежуточный кэш между PoP и origin. Если десять
+    PoP промахнулись, они идут не в origin, а в shield, и origin получает один запрос
+    вместо десяти. Это снижает нагрузку и риск лавины.</p>
+
+    <div class="callout">
+      <strong>Multi-CDN.</strong> Крупные сервисы используют несколько CDN и переключают
+      трафик по метрикам или вручную. Это повышает устойчивость, но усложняет
+      инвалидацию и наблюдаемость.
+    </div>
+  </div>
+</section>
+
+<section id="caching">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Кэширование на краю</h2>
+
+    <p>Кэш на edge работает по тем же принципам, что и любой другой: <strong>ключ</strong>,
+    <strong>TTL</strong>, <strong>инвалидация</strong>. Ошибка в ключе приводит к тому,
+    что пользователь видит чужой контент или устаревшую версию.</p>
+
+    <h3>Ключ кэша</h3>
+    <ul>
+      <li>Путь и query-параметры, которые действительно влияют на контент.</li>
+      <li>Заголовки из `Vary`, но осторожно: лишние значения дробят кэш.</li>
+      <li>Не включать в ключ токены и персональные данные — это ломает общий кэш.</li>
+    </ul>
+
+    <h3>TTL и инвалидация</h3>
+    <ul>
+      <li><strong>Иммутабельные файлы</strong> (сегменты с хэшем в имени) кэшируют надолго.</li>
+      <li><strong>Манифесты</strong> — короткий TTL, потому что они меняются.</li>
+      <li><strong>Purge</strong> — точечное удаление по URL или тегу; массовый purge
+      дорог и может вызвать лавину на origin.</li>
+      <li><strong>stale-while-revalidate</strong> — отдать устаревшее, пока обновляется
+      в фоне.</li>
+    </ul>
+
+<pre class="cmd"># сегмент: имя содержит хэш, можно кэшировать год
+/segments/1080p/00042-8f3a1c.m4s
+Cache-Control: public, max-age=31536000, immutable
+
+# манифест: меняется при публикации
+/streams/42/master.m3u8
+Cache-Control: public, max-age=30</pre>
+
+    <div class="callout warn">
+      <strong>Не кэшируй персонализированное как общее.</strong> Если в ответе есть
+      рекомендации или токен доступа, либо добавь `private`, либо вынеси это на
+      отдельный путь без CDN-кэша.
+    </div>
+  </div>
+</section>
+
+<section id="edge">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Edge computing</h2>
+
+    <p><strong>Edge computing</strong> — выполнение кода на PoP, а не в центре. Типичные
+    задачи: проверка токена, редирект, A/B-выбор, гео-правила, подпись URL, лёгкая
+    персонализация.</p>
+
+    <div class="two">
+      <div class="plus">
+        <b>Плюсы</b>
+        Минимальная задержка, разгрузка origin, быстрые эксперименты, защита от
+        ботов на входе.
+      </div>
+      <div class="minus">
+        <b>Минусы</b>
+        Ограниченные ресурсы и время выполнения, сложная отладка, кэш и состояние
+        распределены, нужна аккуратная раскатка.
+      </div>
+    </div>
+
+    <p>Edge подходит для <strong>коротких stateless-операций</strong>. Тяжёлую логику,
+    транзакции и работу с персональными данными лучше держать в центре, где есть
+    контроль, аудит и полноценная observability.</p>
+
+    <div class="callout warn">
+      <strong>Не переноси туда бизнес-правила.</strong> Edge-код сложнее тестировать и
+      версионировать. Если правило меняется вместе с биллингом, его место — в сервисе,
+      а не в CDN.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Практика: доставка HLS/DASH</h2>
+
+    <p>Видео отдаётся не одним файлом, а набором сегментов и манифестом. Манифест
+    описывает, какие качества доступны и где лежат сегменты.</p>
+
+    <div class="flow">
+      <span class="node">master.m3u8</span><span class="arrow">→</span>
+      <span class="node">variant playlist</span><span class="arrow">→</span>
+      <span class="node key">сегменты .m4s</span><span class="arrow">→</span>
+      <span class="node">CDN PoP</span>
+    </div>
+
+    <ul>
+      <li><strong>Манифест</strong> — короткий TTL, обновляется при публикации.</li>
+      <li><strong>Сегменты</strong> — иммутабельные, длинный TTL, хэш в имени.</li>
+      <li><strong>Origin shield</strong> — защищает origin от лавины промахов.</li>
+      <li><strong>Signed URL</strong> — подпись с TTL, чтобы ссылку нельзя было
+      использовать вечно.</li>
+      <li><strong>Multi-CDN</strong> — переключение при деградации одного провайдера.</li>
+      <li><strong>DRM</strong> — лицензия отдельно от сегментов, с собственным кэшем
+      и таймаутами.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Объясни разницу между манифестом и
+      сегментом, почему у них разный TTL, как защищены ссылки и что произойдёт при
+      промахе кэша. Этого достаточно, чтобы показать понимание CDN.
+    </div>
+  </div>
+</section>
+
+<section id="mistakes">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Частые ошибки</h2>
+
+    <ul>
+      <li><strong>Кэшировать персонализированные ответы</strong> как общие — утечка
+      данных между пользователями.</li>
+      <li><strong>Одинаковый TTL на всё</strong> — манифест устаревает, сегменты
+      перезапрашиваются зря.</li>
+      <li><strong>Массовый purge</strong> после каждого релиза — лавина на origin.</li>
+      <li><strong>Игнорировать query-параметры</strong> в ключе — разные версии
+      смешиваются.</li>
+      <li><strong>Нет origin shield</strong> — промахи PoP бьют прямо в origin.</li>
+      <li><strong>Нет наблюдаемости CDN</strong> — непонятно, где теряется время:
+      в PoP, на пути или в origin.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Метрики CDN:</strong> cache hit ratio, TTFB по регионам, доля 4xx/5xx,
+      ошибки манифеста, время до первого кадра, стоимость трафика. Без них оптимизация
+      превращается в угадывание.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Зачем нужен CDN и что он защищает?</span></div>
+      <p class="a">«CDN приближает контент к пользователю: меньше задержка и нагрузка
+      на origin. Он принимает пики трафика, отдаёт сегменты из PoP и снижает стоимость
+      доставки. Origin остаётся источником истины, но получает только промахи кэша.
+      Для видео это ещё и способ держать высокий bitrate без перегрузки сети».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это местные склады вместо одного центрального: ближе, быстрее, центральный
+        склад не захлёбывается.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Чем DNS-маршрутизация отличается от anycast?</span></div>
+      <p class="a">«DNS отдаёт IP ближайшего PoP, но кэш DNS может задерживать
+      переключение. Anycast анонсирует один IP из многих точек, и маршрутизация выбирает
+      ближайшую на сетевом уровне — переключение быстрее. HTTP-редирект точнее, но
+      добавляет round trip».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>DNS говорит адрес, anycast делает так, что один адрес ведёт в разные места.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Что такое origin shield и зачем он?</span></div>
+      <p class="a">«Промежуточный кэш между PoP и origin. Если несколько PoP промахнулись
+      по одному объекту, запросы идут в shield, а не в origin. Это снижает нагрузку,
+      риск лавины и стоимость. Особенно полезен для популярных сегментов и после
+      инвалидации».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это районный склад между магазинами и заводом: магазины не едут на завод
+        по одному.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Почему у манифеста и сегментов разный TTL?</span></div>
+      <p class="a">«Сегменты иммутабельны: имя содержит хэш, содержимое не меняется,
+      поэтому их можно кэшировать надолго. Манифест меняется при публикации, переключении
+      качества или рекламных вставках, поэтому у него короткий TTL. Если дать манифесту
+      длинный TTL, пользователь не увидит обновление».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Кирпичи не меняются — их можно хранить долго. А список кирпичей обновляется.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Когда edge computing помогает, а когда вредит?</span></div>
+      <p class="a">«Помогает для коротких stateless-операций: проверка токена, редирект,
+      A/B, гео-правила. Вредит, когда туда тащат бизнес-логику, транзакции и работу с
+      персональными данными: ограниченные ресурсы, сложная отладка и версионирование.
+      Такие правила должны жить в сервисе».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Edge — это шлагбаум и указатель, а не бухгалтерия.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Какие метрики CDN смотреть?</span></div>
+      <p class="a">«Cache hit ratio, TTFB по регионам, доля 4xx/5xx, ошибки манифеста,
+      время до первого кадра, стоимость трафика и доля промахов. Плюс сравнение PoP
+      между собой: если один регион стабильно хуже, проблема в маршрутизации или
+      провайдере».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Смотрим, попадаем ли в кэш, как быстро отвечаем и не сыплем ли ошибками.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="cdn1" data-id="cdn1"><label for="cdn1">Зачем CDN и что он защищает?</label></li>
+      <li><input type="checkbox" class="check-item" id="cdn2" data-id="cdn2"><label for="cdn2">Сравни DNS-маршрутизацию, anycast и HTTP-редирект</label></li>
+      <li><input type="checkbox" class="check-item" id="cdn3" data-id="cdn3"><label for="cdn3">Что такое origin shield и когда он нужен?</label></li>
+      <li><input type="checkbox" class="check-item" id="cdn4" data-id="cdn4"><label for="cdn4">Почему у манифеста и сегментов разный TTL?</label></li>
+      <li><input type="checkbox" class="check-item" id="cdn5" data-id="cdn5"><label for="cdn5">Какие задачи edge computing решает, а какие нет?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> CDN — это иерархия кэшей с разными правилами.
+      Ключ, TTL и инвалидация важнее, чем название провайдера.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Инфраструктура» ·
+    <a href="ContainersKubernetes.html">Docker и Kubernetes</a> ·
+    <a href="KafkaCaching.html">Kafka и кэширование</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

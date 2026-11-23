@@ -52,6 +52,21 @@ Project1/
 ├── ArchitectureStyles.html    неделя 5: MVC, CQRS, Saga, Event Sourcing
 ├── Resilience.html         неделя 6: отказоустойчивость и согласованность
 ├── Observability.html      неделя 6: метрики, логи, трейсы
+├── ArchitectureDocs.html   неделя 7: C4, ADR, диаграммы
+├── DistributedSystems.html неделя 7: LB, sidecar, 2PC
+├── DistributedDebugging.html  неделя 7: отладка распределённых систем
+├── CDNEdge.html            неделя 8: CDN и edge
+├── ContainersKubernetes.html  неделя 8: Docker и Kubernetes
+├── KafkaCaching.html       неделя 8: Kafka и кэширование
+├── ApiProtocols.html       неделя 9: HTTP/2, WebSocket, SSE, API
+├── ApiReliability.html     неделя 9: идемпотентность и пулинг
+├── AuthOIDC.html           неделя 10: OAuth, OIDC, PKCE, доступ
+├── WebSecurity.html        неделя 10: OWASP, хеши, CORS
+├── DatabaseTransactions.html  неделя 11: транзакции и SQL
+├── DatabaseScaling.html    неделя 11: индексы и шардирование
+├── MockInterviews.html     неделя 12: mock-интервью
+├── PostgresInternals.html  доп.: MVCC, vacuum, блокировки
+├── EventDrivenKafka.html   доп.: outbox, контракты, DLQ
 ├── assets/
 │   ├── site.css            общий дизайн всех страниц
 │   ├── theme.js            тема до отрисовки (без вспышки)
@@ -90,6 +105,21 @@ Project1/
 | `ArchitectureStyles.html` | Компетенция 6: MVC/MVP/MVVM, CQRS, Event Sourcing, Pub-Sub, Saga, Microkernel, сравнение стилей |
 | `Resilience.html` | Компетенция 6: timeout, retry, circuit breaker, fallback, bulkhead, конкурентность, Saga vs 2PC, видео-пайплайн |
 | `Observability.html` | Компетенция 6: метрики, логи, трейсы, golden signals, SLO, требования к логам и безопасность |
+| `ArchitectureDocs.html` | Компетенция 6: C4, ADR, diagrams-as-code, процесс поддержки документации |
+| `DistributedSystems.html` | Компетенция 6: L4/L7, алгоритмы LB, sidecar, 2PC vs Saga, разделение запросов |
+| `DistributedDebugging.html` | Компетенция 6: трейсы, correlation id, clock skew, порядок отладки, безопасность в проде |
+| `CDNEdge.html` | Компетенция 6: content routing, origin shield, TTL и инвалидация, edge computing, HLS/DASH |
+| `ContainersKubernetes.html` | Компетенция 6: Docker, объекты K8s, probes, requests/limits, HPA, релизы |
+| `KafkaCaching.html` | Компетенция 6: партиции, consumer groups, at-least-once, DLQ, стратегии кэширования |
+| `ApiProtocols.html` | Компетенция 6: HTTP/1.1–3, WebSocket, SSE, REST/gRPC/GraphQL, выбор API |
+| `ApiReliability.html` | Компетенция 6: идемпотентность, дубли, пулинг соединений, whitelist/blacklist |
+| `AuthOIDC.html` | Компетенция 9: OAuth 2.0, OIDC, PKCE, токены, JWT, ACL/RBAC/ABAC |
+| `WebSecurity.html` | Компетенция 9: OWASP Top 10, SQLi/XSS/CSRF, хеширование, SAST/DAST, CORS |
+| `DatabaseTransactions.html` | Компетенция 10: изоляция, транзакции, дедлоки, сложный SQL, процедуры |
+| `DatabaseScaling.html` | Компетенция 10: индексы, NoSQL, масштабирование, репликация, партиции, шарды |
+| `MockInterviews.html` | Неделя 12: формат прогона, system design, code review, STAR, scorecard |
+| `PostgresInternals.html` | Доп. тема: MVCC, vacuum и bloat, блокировки, планировщик, PgBouncer, WAL и репликация |
+| `EventDrivenKafka.html` | Доп. тема: события vs команды, outbox, контракты, идемпотентность, DLQ, Streams |
 | `assets/site.css` | Общая дизайн-система: палитра, каркас, компоненты страниц и главной |
 | `assets/theme.js` | Ранняя установка темы из localStorage |
 | `assets/site.js` | Переключатель темы, сохранение чекбоксов, счётчики `0 / N` |
@@ -179,7 +209,10 @@ Project1/
 ID чекбоксов уникальны по страницам: `w1…w12`, `s1…s5`, `a1…a8` в плане, `jq1…jq6`,
 `sk1…sk5`, `ds1…ds5`, `gt1…gt5`, `gl1…gl5`, `doc1…doc5`, `qa1…qa5`, `alg1…alg5`,
 `pat1…pat5`, `lg1…lg5`, `aiq1…aiq5`, `rag1…rag5`, `gdpr1…gdpr5`, `ddd1…ddd5`,
-`style1…style5`, `res1…res5`, `obs1…obs5` в материалах. Новые страницы продолжают
+`style1…style5`, `res1…res5`, `obs1…obs5`, `archdoc1…archdoc5`, `dist1…dist5`,
+`dbg1…dbg5`, `cdn1…cdn5`, `k8s1…k8s5`, `kafka1…kafka5`, `proto1…proto5`,
+`apirel1…apirel5`, `auth1…auth5`, `sec1…sec5`, `dbtx1…dbtx5`, `dbs1…dbs5`,
+`mock1…mock5`, `pg1…pg5`, `evt1…evt5` в материалах. Новые страницы продолжают
 эту схему своим префиксом.
 
 ## Правила работы
@@ -232,13 +265,13 @@ node --check assets\home.js
 > **Важно:** не переносить HTML-страницы в подпапки без необходимости. Браузерный
 > прогресс привязан к путям и источнику, а ссылки придётся править во всех файлах.
 
-## Следующие темы
+## Следующие шаги
 
-- По запросу — ветвление в команде из 8 человек: `git flow`, trunk-based, release-ветки.
-- Неделя 7 — документирование архитектуры, распределённые системы, LB и sidecar,
-  отладка распределённых систем, балансировщики и прокси.
-- Недели 8–9 — инфраструктура, Cloud, Kafka, протоколы и API.
-- Далее — недели 10–12: безопасность, базы данных, mock-интервью.
+- Пройти материалы недель 1–12: устные ответы, чекбоксы, закрытие пробелов.
+- Проработать дополнительные темы `PostgresInternals.html` и `EventDrivenKafka.html`.
+- Провести три mock-интервью по `MockInterviews.html`, заполнить scorecard.
+- Закрыть топ-3 пробела и повторить полный прогон.
+- По запросу — добавить темы вне матрицы или углубить любой раздел.
 
 ## Открытые вопросы к пользователю
 

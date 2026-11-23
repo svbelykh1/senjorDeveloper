@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Транзакции, изоляция и сложный SQL — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 10 · Базы данных · неделя 11</p>
+    <h1>Транзакции, уровни изоляции и сложный SQL</h1>
+    <p class="lead">
+      Какие аномалии допускает каждый уровень изоляции, как не поймать дедлок,
+      чем keyset-пагинация лучше OFFSET и когда хранимая процедура помогает,
+      а когда превращает базу в чёрный ящик.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#isolation">Изоляция</a></li>
+      <li><a href="#transactions">Транзакции</a></li>
+      <li><a href="#sql">SQL</a></li>
+      <li><a href="#procedures">Процедуры</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем транзакции</h2>
+
+    <p>Транзакция — это набор операций, который должен выполниться <strong>целиком
+    или не выполниться вовсе</strong>. Списать деньги, записать платёж и активировать
+    подписку нужно вместе: половина операции хуже, чем никакой.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Перевод денег — это списание и зачисление. Если между ними пропадает связь,
+      деньги не должны исчезнуть. Транзакция — это гарантия, что оба действия
+      считаются одним.
+    </div>
+
+    <p><strong>ACID</strong>: атомарность, согласованность, изолированность,
+    долговечность. На интервью Senior важно не прочитать расшифровку, а объяснить
+    <strong>границы транзакции</strong>, <strong>уровень изоляции</strong> и
+    <strong>что делать при конфликте</strong>.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Транзакция должна быть короткой и охватывать
+      только то, что действительно должно быть атомарным. Внешние вызовы внутри
+      транзакции — почти всегда плохо.
+    </div>
+  </div>
+</section>
+
+<section id="isolation">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Уровни изоляции и аномалии</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Уровень</th><th>Грязное чтение</th><th>Неповторяющееся</th><th>Фантомы</th><th>Особенность</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Read Uncommitted</strong></td><td>Да</td><td>Да</td><td>Да</td><td>В Postgres фактически Read Committed</td></tr>
+          <tr><td><strong>Read Committed</strong></td><td>Нет</td><td>Да</td><td>Да</td><td>Дефолт Postgres</td></tr>
+          <tr><td><strong>Repeatable Read</strong></td><td>Нет</td><td>Нет</td><td>Нет в Postgres</td><td>Снапшот; возможен write skew</td></tr>
+          <tr><td><strong>Serializable</strong></td><td>Нет</td><td>Нет</td><td>Нет</td><td>SSI; возможен abort и retry</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Что это значит на практике</h3>
+    <ul>
+      <li><strong>Грязное чтение</strong> — видим незакоммиченные данные другого
+      транзакции. В норме не допускается.</li>
+      <li><strong>Неповторяющееся чтение</strong> — прочитали строку, потом ещё раз,
+      а значение изменилось.</li>
+      <li><strong>Фантом</strong> — повторный запрос вернул новые строки.</li>
+      <li><strong>Потерянное обновление</strong> — два писателя перезаписали друг друга.
+      Лечится версией строки или блокировкой.</li>
+      <li><strong>Write skew</strong> — два транзакции прочитали одно состояние и обе
+      записали несовместимые изменения. Ловится Serializable или явной блокировкой.</li>
+    </ul>
+
+<pre class="cmd">BEGIN;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+-- ... операции ...
+
+COMMIT;  -- при конфликте: ERROR 40001, повторить транзакцию</pre>
+
+    <div class="callout warn">
+      <strong>Serializable — не бесплатно.</strong> Он может прерывать транзакции
+      с ошибкой сериализации. Приложение обязано повторить операцию. Без retry
+      пользователь увидит случайную ошибку.
+    </div>
+  </div>
+</section>
+
+<section id="transactions">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Транзакции и обработка ошибок</h2>
+
+    <h3>Правила</h3>
+    <ul>
+      <li><strong>Короткая транзакция.</strong> Не держи открытой, пока идёт HTTP-вызов
+      или отправка письма.</li>
+      <li><strong>Единый порядок блокировок.</strong> Всегда обновляй строки в одном
+      порядке, чтобы снизить риск дедлока.</li>
+      <li><strong>Retry при дедлоке и serialization failure.</strong> С ограниченным
+      числом попыток и backoff.</li>
+      <li><strong>Обработка исключений.</strong> При ошибке — `ROLLBACK`; не оставляй
+      соединение в незавершённой транзакции.</li>
+      <li><strong>Идемпотентность.</strong> Повтор операции не должен создавать дубль.</li>
+      <li><strong>Savepoint.</strong> Позволяет откатить часть работы, не всю транзакцию.</li>
+    </ul>
+
+<pre class="cmd">$pdo-&gt;beginTransaction();
+
+try {
+    $orders-&gt;reserve($orderId);
+    $payments-&gt;charge($orderId);
+    $pdo-&gt;commit();
+} catch (Throwable $e) {
+    $pdo-&gt;rollBack();
+    throw $e;
+}</pre>
+
+    <h3>Дедлок</h3>
+    <p>Две транзакции держат разные строки и ждут друг друга. База выбирает жертву
+    и откатывает её. Приложение должно <strong>повторить</strong> операцию. Помогает
+    единый порядок обновления и короткие транзакции.</p>
+
+    <div class="callout">
+      <strong>Не вызывай внешние сервисы внутри транзакции.</strong> Пока идёт вызов,
+      блокировки держатся, пул занят, а откатить чужой платёж нельзя. Лучше outbox:
+      записать намерение в БД и отправить после коммита.
+    </div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Сложный SQL без страха</h2>
+
+    <h3>Читать план запроса</h3>
+    <p><strong>`EXPLAIN (ANALYZE, BUFFERS)`</strong> показывает, что реально делает
+    Postgres: Seq Scan или Index Scan, сколько строк ожидалось и сколько получено,
+    где узкое место. Без плана оптимизация — угадывание.</p>
+
+    <h3>Полезные приёмы</h3>
+    <ul>
+      <li><strong>Keyset-пагинация</strong> вместо `OFFSET` на больших таблицах.</li>
+      <li><strong>Оконные функции</strong> для топ-N внутри группы.</li>
+      <li><strong>CTE</strong> для читаемости, но проверяй план: в старых версиях
+      CTE был барьером оптимизации.</li>
+      <li><strong>`EXISTS`</strong> вместо `IN` с подзапросом, где возможны `NULL`.</li>
+      <li><strong>Агрегаты заранее</strong> — материализованное поле или отдельная
+      таблица, если считать на каждый запрос дорого.</li>
+    </ul>
+
+<pre class="cmd">-- Топ-3 видео по просмотрам за последние 7 дней
+SELECT video_id, count(*) AS views
+FROM video_views
+WHERE created_at &gt;= now() - interval '7 days'
+GROUP BY video_id
+ORDER BY views DESC
+LIMIT 3;
+
+-- Оконная функция: последний просмотр на пользователя
+SELECT *
+FROM (
+  SELECT vv.*,
+         row_number() OVER (
+           PARTITION BY user_id
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM video_views vv
+) t
+WHERE rn = 1;</pre>
+
+    <p><strong>Keyset-пагинация:</strong> вместо `OFFSET 100000` используем
+    `WHERE (created_at, id) &lt; ($lastCreatedAt, $lastId) ORDER BY created_at DESC, id DESC LIMIT 20`.
+    База не пересчитывает пропущенные строки.</p>
+
+    <div class="callout warn">
+      <strong>N+1.</strong> Сто видео — сто запросов за авторами. Лечится `JOIN`,
+      eager loading или одним запросом с `IN`. Это самая частая причина «медленно»
+      в ORM-коде.
+    </div>
+  </div>
+</section>
+
+<section id="procedures">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Хранимые процедуры</h2>
+
+    <div class="two">
+      <div class="plus">
+        <b>Когда полезны</b>
+        Массовая обработка рядом с данными, batch-миграции, сложные агрегаты,
+        ограничение прямого доступа к таблицам через права.
+      </div>
+      <div class="minus">
+        <b>Чем платим</b>
+        Логика размазывается между кодом и БД, сложнее тестировать и версионировать,
+        привязка к конкретной СУБД, отладка хуже.
+      </div>
+    </div>
+
+    <p>Для бизнес-логики обычно лучше держать правила в приложении, а в БД — операции,
+    где важна близость к данным и атомарность. <strong>Триггеры</strong> применяют
+    осторожно: они скрывают поведение и усложняют миграции.</p>
+
+    <div class="callout">
+      <strong>Ответ для интервью.</strong> «Процедуры использую для тяжёлой пакетной
+      обработки и миграций, где не хочу гонять данные по сети. Бизнес-правила держу
+      в приложении: их проще тестировать и версионировать».
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: каталог и история просмотров</h2>
+
+<pre class="cmd">CREATE TABLE videos (
+  id          bigserial PRIMARY KEY,
+  title       text        NOT NULL,
+  status      text        NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE video_views (
+  id          bigserial,
+  video_id    bigint      NOT NULL,
+  user_id     bigint      NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at);
+
+CREATE INDEX ON video_views (video_id, created_at DESC);
+CREATE INDEX ON video_views (user_id, created_at DESC);</pre>
+
+    <ul>
+      <li><strong>Партиционирование по дате</strong> — старые месяцы можно архивировать
+      и удалять целиком.</li>
+      <li><strong>Составной индекс</strong> `(video_id, created_at DESC)` — для топов
+      и истории по видео.</li>
+      <li><strong>EXPLAIN ANALYZE</strong> на медленном запросе — до и после индекса.</li>
+      <li><strong>Эксперимент с изоляцией</strong> — воспроизвести lost update и
+      показать, как его лечит версия строки.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Схему, индексы, план запроса и решение
+      по партиционированию. Затем — как бы повторил транзакцию при дедлоке.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Какие уровни изоляции знаешь и какие аномалии они допускают?</span></div>
+      <p class="a">«Read Uncommitted допускает грязное чтение, но в Postgres фактически
+      работает как Read Committed. Read Committed — дефолт: нет грязного чтения, но
+      возможны неповторяющееся чтение и фантомы. Repeatable Read даёт снапшот, но
+      возможен write skew. Serializable ловит и его, но может прерывать транзакции
+      с ошибкой сериализации».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Чем строже уровень, тем меньше сюрпризов и больше конфликтов и цены.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Что такое потерянное обновление и как его предотвратить?</span></div>
+      <p class="a">«Два клиента прочитали одну версию строки и оба записали, второй затёр
+      первый. Оптимистичная блокировка: поле `version`, `UPDATE ... WHERE version = ?`;
+      если обновлено ноль строк — конфликт, повторяем. Альтернатива — `SELECT FOR UPDATE`
+      или атомарный инкремент».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Двое правили один документ и сохранили поверх друг друга. Нужна проверка
+        версии.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Что делать при дедлоке?</span></div>
+      <p class="a">«База откатывает одну транзакцию с ошибкой. Приложение ловит её и
+      повторяет операцию с ограниченным числом попыток и backoff. Для профилактики —
+      единый порядок блокировок, короткие транзакции и индексы, чтобы не блокировать
+      лишние строки».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Двое застряли в дверях. Одного разворачивают, он заходит снова — но уже
+        по правилам.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Почему OFFSET плох для больших страниц?</span></div>
+      <p class="a">«База всё равно пересчитывает и пропускает предыдущие строки, поэтому
+      чем больше offset, тем дороже запрос. Keyset-пагинация использует условие по
+      последнему ключу и индекс: `WHERE (created_at, id) &lt; (...)`. Она стабильнее и
+      быстрее, но не даёт прыгнуть на произвольную страницу».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>OFFSET перелистывает все страницы заново. Keyset начинает с того места,
+        где остановились.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Как читать EXPLAIN ANALYZE?</span></div>
+      <p class="a">«Смотрю узлы сверху вниз: тип сканирования, ожидаемое и фактическое
+      число строк, время, loops и buffers. Большое расхождение ожидаемого и фактического
+      говорит о плохой статистике. Seq Scan на большой таблице с фильтром — повод
+      проверить индекс. Главное — найти узел, который даёт основное время».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это отчёт о том, как база реально искала данные, а не как мы думали.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Когда использовать хранимые процедуры?</span></div>
+      <p class="a">«Для массовой обработки и миграций, где важно не гонять данные по
+      сети и держать атомарность рядом с БД. Для бизнес-логики чаще выбираю приложение:
+      её проще тестировать, версионировать и переносить. Триггеры — только когда без
+      них нельзя обеспечить целостность».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Процедура хороша как тяжёлый станок на складе, а не как мозг всего бизнеса.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="dbtx1" data-id="dbtx1"><label for="dbtx1">Назови уровни изоляции и их аномалии</label></li>
+      <li><input type="checkbox" class="check-item" id="dbtx2" data-id="dbtx2"><label for="dbtx2">Как предотвратить потерянное обновление?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbtx3" data-id="dbtx3"><label for="dbtx3">Что делать при дедлоке и почему важен порядок блокировок?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbtx4" data-id="dbtx4"><label for="dbtx4">Чем keyset-пагинация лучше OFFSET?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbtx5" data-id="dbtx5"><label for="dbtx5">Когда хранимые процедуры оправданы?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> транзакция — короткая, изоляция — под задачу,
+      запрос — по плану, а не по интуиции.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Базы данных» ·
+    <a href="DatabaseScaling.html">Индексы, репликация, шардирование</a> ·
+    <a href="KafkaCaching.html">Kafka и кэширование</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

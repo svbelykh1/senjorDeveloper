@@ -85,6 +85,21 @@ DDDCleanArchitecture.html  Неделя 5: DDD и Clean Architecture
 ArchitectureStyles.html    Неделя 5: MVC, CQRS, Saga, Event Sourcing
 Resilience.html        Неделя 6: отказоустойчивость и согласованность
 Observability.html     Неделя 6: метрики, логи, трейсы
+ArchitectureDocs.html  Неделя 7: C4, ADR, диаграммы
+DistributedSystems.html Неделя 7: LB, sidecar, 2PC
+DistributedDebugging.html Неделя 7: отладка распределённых систем
+CDNEdge.html           Неделя 8: CDN и edge computing
+ContainersKubernetes.html Неделя 8: Docker и Kubernetes
+KafkaCaching.html      Неделя 8: Kafka и кэширование
+ApiProtocols.html      Неделя 9: HTTP/2, WebSocket, SSE
+ApiReliability.html    Неделя 9: идемпотентность и пулинг
+AuthOIDC.html          Неделя 10: OAuth, OIDC, PKCE, доступ
+WebSecurity.html       Неделя 10: OWASP, хеши, CORS
+DatabaseTransactions.html Неделя 11: транзакции и SQL
+DatabaseScaling.html   Неделя 11: индексы и шардирование
+MockInterviews.html    Неделя 12: mock-интервью
+PostgresInternals.html Доп.: MVCC, vacuum, блокировки
+EventDrivenKafka.html  Доп.: outbox, контракты, DLQ
 assets/                Общие стили и скрипты сайта
 docs/                  Служебные файлы:
   PROJECT-NOTES.md     Справочник проекта: правила и дизайн-система

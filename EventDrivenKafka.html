@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Event-driven архитектура и Kafka — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Дополнительная тема · События и Kafka</p>
+    <h1>Event-driven архитектура и Kafka</h1>
+    <p class="lead">
+      Чем событие отличается от команды, почему нельзя просто записать в БД и отправить
+      в Kafka, как работает transactional outbox, версионирование событий, идемпотентный
+      consumer и DLQ.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#outbox">Outbox</a></li>
+      <li><a href="#contracts">Контракты</a></li>
+      <li><a href="#delivery">Доставка</a></li>
+      <li><a href="#streams">Streams</a></li>
+      <li><a href="#ops">Эксплуатация</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Событие vs команда</h2>
+
+    <p><strong>Команда</strong> — просьба что-то сделать: «опубликуй видео». Её можно
+    отклонить. <strong>Событие</strong> — свершившийся факт: «видео опубликовано».
+    Его не отменяют, на него реагируют.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Команда — телефонный звонок: вы просите и ждёте ответа. Событие — газета:
+      выходит факт, а кто и как его прочитает — дело подписчиков. Издатель не знает
+      всех читателей.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Подход</th><th>Связность</th><th>Ответ</th><th>Сложность</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Request-response</strong></td><td>Высокая: знаем получателя</td><td>Сразу</td><td>Низкая</td></tr>
+          <tr><td><strong>События</strong></td><td>Низкая: издатель не знает подписчиков</td><td>Асинхронно</td><td>Дубли, порядок, отладка</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Event-driven хорошо работает для интеграций и фоновых процессов: публикация
+    видео, обновление поиска, уведомления, аналитика. Для «пользователь нажал —
+    покажи результат» чаще проще прямой вызов.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> События снижают связность, но переносят сложность
+      в доставку, порядок и согласованность. Это не бесплатный обмен.
+    </div>
+  </div>
+</section>
+
+<section id="outbox">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Transactional outbox</h2>
+
+    <p>Классическая ошибка — <strong>dual write</strong>: сначала записать в БД,
+    потом отправить событие в Kafka. Между этими действиями нет атомарности. Если
+    процесс упадёт после коммита, событие потеряется; если отправить до коммита —
+    подписчики узнают о том, чего в БД нет.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Вы записываете заказ в журнал и отдельно звоните на склад. Если телефон
+      разрядился между действиями, журнал есть, а склад не знает. Outbox — это
+      запись «позвонить на склад» в тот же журнал, откуда её точно заберут.
+    </div>
+
+    <h3>Как это работает</h3>
+    <ol>
+      <li>В одной транзакции с бизнес-изменением пишем событие в таблицу `outbox`.</li>
+      <li>Отдельный relay читает неотправленные записи и публикует их в Kafka.</li>
+      <li>После успешной публикации помечает запись отправленной.</li>
+      <li>При сбое relay повторит публикацию — доставка at-least-once.</li>
+    </ol>
+
+<pre class="cmd">CREATE TABLE outbox (
+  id           bigserial PRIMARY KEY,
+  aggregate_id bigint      NOT NULL,
+  type         text        NOT NULL,
+  payload      jsonb       NOT NULL,
+  occurred_at  timestamptz NOT NULL DEFAULT now(),
+  published_at timestamptz
+);
+
+-- relay: забираем пачку, не мешая другим воркерам
+SELECT *
+FROM outbox
+WHERE published_at IS NULL
+ORDER BY id
+LIMIT 100
+FOR UPDATE SKIP LOCKED;</pre>
+
+    <p>Relay может быть поллером или CDC-процессом (Debezium), который читает WAL.
+    Поллер проще, CDC меньше нагружает приложение. В обоих случаях нужна
+    <strong>идемпотентная обработка</strong> на стороне consumer'а: повтор возможен.</p>
+
+    <div class="callout warn">
+      <strong>Порядок.</strong> События одного агрегата должны попадать в одну партицию:
+      ключ — `aggregate_id`. Иначе «опубликовано» может прийти раньше «создано».
+    </div>
+  </div>
+</section>
+
+<section id="contracts">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Контракты и версионирование событий</h2>
+
+    <p>Событие — публичный контракт. Потребители могут быть разными командами и
+    сервисами, поэтому менять схему «как получится» нельзя. Хороший конверт содержит
+    метаданные и версию.</p>
+
+<pre class="cmd">{
+  "event_id": "c1f4e2a8-...",
+  "type": "video.published",
+  "version": 2,
+  "occurred_at": "2026-03-01T10:15:22Z",
+  "producer": "catalog",
+  "aggregate_id": "42",
+  "trace_id": "4f1c9a7b2e",
+  "payload": {
+    "video_id": 42,
+    "title": "...",
+    "published_at": "2026-03-01T10:15:22Z"
+  }
+}</pre>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Совместимость</th><th>Что значит</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Backward</strong></td><td>Новые потребители читают старые события</td></tr>
+          <tr><td><strong>Forward</strong></td><td>Старые потребители читают новые события, игнорируя неизвестные поля</td></tr>
+          <tr><td><strong>Full</strong></td><td>И то и другое</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Правила эволюции</h3>
+    <ul>
+      <li><strong>Добавляй только опциональные поля</strong> с значением по умолчанию.</li>
+      <li><strong>Не переименовывай и не переиспользуй</strong> существующие поля.</li>
+      <li><strong>Не меняй смысл</strong> поля молча — это ломает потребителей.</li>
+      <li><strong>Крупное изменение</strong> — новый тип или мажорная версия.</li>
+      <li><strong>Schema registry</strong> проверяет совместимость до публикации.</li>
+      <li><strong>Contract-тесты</strong> ловят расхождение раньше прода.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Schema registry</strong> хранит схемы и проверяет совместимость
+      (Avro, Protobuf, JSON Schema). Продюсер не сможет опубликовать несовместимое
+      изменение, если режим совместимости задан.
+    </div>
+  </div>
+</section>
+
+<section id="delivery">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Доставка, идемпотентность и DLQ</h2>
+
+    <p>Kafka по умолчанию даёт <strong>at-least-once</strong>. Значит, consumer может
+    получить одно событие дважды: после падения, ребаланса или повторной публикации.
+    Это нормально, если обработка идемпотентна.</p>
+
+    <h3>Идемпотентный consumer</h3>
+    <ol>
+      <li>Проверить `event_id` в таблице обработанных.</li>
+      <li>Если уже есть — пропустить, не выполняя бизнес-операцию.</li>
+      <li>Если нет — выполнить операцию и записать `event_id` в одной транзакции.</li>
+      <li>Закоммитить offset после успешной обработки.</li>
+    </ol>
+
+<pre class="cmd">INSERT INTO processed_events (event_id, processed_at)
+VALUES ($1, now())
+ON CONFLICT (event_id) DO NOTHING;
+
+-- если вставлено 0 строк — событие уже обработано</pre>
+
+    <p>Коммит offset <strong>после</strong> обработки даёт at-least-once. Коммит
+    <strong>до</strong> обработки — at-most-once и риск потери. Exactly-once внутри
+    Kafka возможен через транзакции, но внешние побочные эффекты всё равно требуют
+    идемпотентности.</p>
+
+    <h3>Ядовитое сообщение</h3>
+    <p>Если событие стабильно ломает consumer, нельзя бесконечно повторять и блокировать
+    партицию. Схема: несколько retry с задержкой → DLQ с причиной и исходным сообщением →
+    алерт → ручной разбор. DLQ без разбора превращается в свалку.</p>
+
+    <div class="callout warn">
+      <strong>Ребаланс.</strong> При добавлении consumer'а партиции перераспределяются.
+      Обработка может приостановиться, а часть событий — прийти повторно. Consumer должен
+      быть к этому готов, а offset коммититься только после завершения работы.
+    </div>
+  </div>
+</section>
+
+<section id="streams">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Kafka Streams и обработка потоков</h2>
+
+    <p><strong>Kafka Streams</strong> и <strong>ksqlDB</strong> позволяют считать
+    агрегаты, соединять потоки и хранить состояние прямо в приложении. Состояние
+    хранится в local state store и подкрепляется changelog-топиком.</p>
+
+    <ul>
+      <li><strong>Окна:</strong> «сколько просмотров за последние 5 минут».</li>
+      <li><strong>Joins:</strong> обогатить событие данными каталога.</li>
+      <li><strong>Агрегации:</strong> счётчики, топы, дедупликация по окну.</li>
+      <li><strong>Exactly-once:</strong> транзакции внутри Kafka-пайплайна.</li>
+    </ul>
+
+    <p>Но это отдельный runtime и новая сложность: состояние, ребалансы, changelog,
+    мониторинг. Если задача — просто «на событие сходить в БД и отправить письмо»,
+    обычный consumer проще и надёжнее.</p>
+
+    <div class="callout">
+      <strong>Event-driven ≠ Event Sourcing.</strong> Event-driven — обмен событиями
+      между сервисами. Event Sourcing — хранение состояния как последовательности
+      событий. Можно использовать первое без второго.
+    </div>
+  </div>
+</section>
+
+<section id="ops">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Эксплуатация</h2>
+
+    <h3>Топики и партиции</h3>
+    <ul>
+      <li><strong>Один топик — один тип событий</strong> или близкое семейство.</li>
+      <li><strong>Ключ</strong> определяет партицию и порядок; выбирай по агрегату.</li>
+      <li><strong>Число партиций</strong> задаёт верхнюю границу параллелизма consumer'ов.</li>
+      <li><strong>Retention</strong> — по времени или размеру; <strong>compaction</strong> —
+      последнее значение по ключу.</li>
+      <li><strong>ACL</strong> — кто может читать и писать; не давай всем всё.</li>
+    </ul>
+
+    <h3>Мониторинг</h3>
+    <ul>
+      <li><strong>Consumer lag</strong> — главная метрика; рост означает, что не успеваем.</li>
+      <li><strong>Размер DLQ</strong> и скорость разбора.</li>
+      <li><strong>Ребалансы</strong> и время обработки.</li>
+      <li><strong>Ошибки продюсера</strong> и задержка публикации outbox.</li>
+      <li><strong>Свежесть</strong> данных в read-моделях.</li>
+    </ul>
+
+    <h3>Replay</h3>
+    <p>Kafka позволяет перечитать события с начала или с offset. Это мощно для
+    перестроения read-модели, но требует идемпотентных consumer'ов и понимания,
+    что внешние побочные эффекты повторятся.</p>
+
+    <div class="callout warn">
+      <strong>Kafka — не база данных.</strong> Она не заменяет произвольные запросы
+      и хранение актуального состояния. События — журнал, состояние — в БД или
+      read-модели.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем событие отличается от команды?</span></div>
+      <p class="a">«Команда — просьба выполнить действие, её можно отклонить: „опубликуй
+      видео“. Событие — свершившийся факт: „видео опубликовано“, его не отменяют.
+      Команда обычно имеет одного адресата и ответ, событие — многих подписчиков и
+      асинхронную реакцию».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Команда — звонок с просьбой, событие — новость о том, что уже случилось.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Почему dual write ломается и как работает outbox?</span></div>
+      <p class="a">«Запись в БД и публикация в Kafka — две разные системы, их нельзя
+      закоммитить вместе. Если процесс упадёт между ними, данные и событие разойдутся.
+      Outbox пишет событие в ту же транзакцию, что и бизнес-изменение, а отдельный
+      relay публикует его после коммита. Доставка at-least-once, consumer идемпотентен».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сначала кладём записку «отправить» в тот же ящик, что и заказ. Потом курьер
+        её забирает. Ящик не теряет записку при падении.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Как версионировать события?</span></div>
+      <p class="a">«Добавляю только опциональные поля, не переименовываю и не меняю смысл
+      существующих. Крупное изменение — новый тип или мажорная версия. Использую
+      schema registry с режимом совместимости и contract-тесты. В конверте есть
+      `event_id`, `type`, `version`, `occurred_at`, `producer`, `trace_id`».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Событие — публичный контракт. Расширять можно, ломать нельзя.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как сделать consumer идемпотентным?</span></div>
+      <p class="a">«Храню `event_id` в таблице обработанных и проверяю перед бизнес-
+      операцией. Запись `event_id` и изменение данных идут в одной транзакции.
+      Offset коммичу после успешной обработки. Для побочных эффектов использую
+      уникальные ключи или idempotency key».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Веду список уже обработанных номеров. Повторный номер просто пропускаю.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что делать с ядовитым сообщением?</span></div>
+      <p class="a">«Не блокировать партицию бесконечными повторами. Несколько retry
+      с задержкой, затем DLQ с причиной и исходным сообщением, алерт и ручной разбор.
+      После исправления — повторная публикация из DLQ. DLQ нужно мониторить, иначе
+      ошибки теряются».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Больное письмо откладываем в отдельный ящик, а не держим очередь из-за него.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Когда нужны Kafka Streams, а когда обычный consumer?</span></div>
+      <p class="a">«Streams — когда нужны окна, агрегаты, joins и состояние: метрики
+      в реальном времени, обогащение, дедупликация. Обычный consumer — когда на событие нужно сходить
+      в БД и выполнить действие. Streams добавляют runtime, state store и сложность
+      эксплуатации, поэтому выбираю по задаче».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Если нужно просто «сделать действие по событию» — consumer. Если считать
+        поток — Streams.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="evt1" data-id="evt1"><label for="evt1">Чем событие отличается от команды и когда выбирать события?</label></li>
+      <li><input type="checkbox" class="check-item" id="evt2" data-id="evt2"><label for="evt2">Почему dual write ломается и как устроен outbox?</label></li>
+      <li><input type="checkbox" class="check-item" id="evt3" data-id="evt3"><label for="evt3">Как версионировать события и что проверяет schema registry?</label></li>
+      <li><input type="checkbox" class="check-item" id="evt4" data-id="evt4"><label for="evt4">Как сделать consumer идемпотентным при повторной доставке?</label></li>
+      <li><input type="checkbox" class="check-item" id="evt5" data-id="evt5"><label for="evt5">Что делать с ядовитым сообщением и как не блокировать партицию?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> событие — публичный контракт, outbox —
+      атомарность, идемпотентность — защита от повторов, DLQ — место для того,
+      что не удалось обработать.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Дополнительная тема · События и Kafka ·
+    <a href="KafkaCaching.html">Kafka и кэширование</a> ·
+    <a href="PostgresInternals.html">PostgreSQL изнутри</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker и Kubernetes: сборка и масштабирование — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Инфраструктура · неделя 8</p>
+    <h1>Docker и Kubernetes — простыми словами</h1>
+    <p class="lead">
+      Как собрать предсказуемый образ, чем pod отличается от контейнера, зачем нужны
+      requests, limits и probes, как Kubernetes масштабирует сервис и что делать
+      со stateful-нагрузкой.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#docker">Docker</a></li>
+      <li><a href="#objects">Объекты</a></li>
+      <li><a href="#scaling">Масштабирование</a></li>
+      <li><a href="#rollout">Релизы</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем контейнеры</h2>
+
+    <p><strong>Образ</strong> — это упакованное приложение со всеми зависимостями.
+    <strong>Контейнер</strong> — запущенный экземпляр образа. Один и тот же образ
+    работает на ноутбуке, в CI и в проде, потому что внутри зафиксированы версии
+    библиотек и настройки.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Образ — это чертёж и коробка с деталями. Контейнер — собранный по чертежу
+      механизм. Можно собрать десять одинаковых механизмов из одной коробки, и они
+      будут вести себя одинаково.
+    </div>
+
+    <p><strong>Kubernetes</strong> — оркестратор: он решает, где запустить контейнеры,
+    перезапускает упавшие, распределяет трафик и масштабирует. На интервью Senior
+    проверяют понимание <strong>иммутабельности</strong>, <strong>probes</strong>,
+    <strong>requests/limits</strong> и <strong>стратегии релиза</strong>.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Контейнер не «маленькая виртуалка», а процесс
+      с изолированной файловой системой. Его нельзя лечить вручную — его заменяют
+      новым экземпляром.
+    </div>
+  </div>
+</section>
+
+<section id="docker">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Docker: предсказуемый образ</h2>
+
+    <h3>Правила хорошего Dockerfile</h3>
+    <ul>
+      <li><strong>Multi-stage.</strong> Сборка зависимостей отдельно от runtime-образа.</li>
+      <li><strong>Кэш слоёв.</strong> Сначала копируем `composer.json` и ставим зависимости,
+      потом код — так кэш не сбрасывается на каждое изменение.</li>
+      <li><strong>Не root.</strong> Создаём пользователя и запускаем процесс от него.</li>
+      <li><strong>Маленький базовый образ.</strong> Alpine или slim, без лишних пакетов.</li>
+      <li><strong>.dockerignore.</strong> Не тащим `.git`, тесты и локальные артефакты.</li>
+      <li><strong>Один процесс на контейнер.</strong> Логи — в stdout, состояние — наружу.</li>
+    </ul>
+
+<pre class="cmd">FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --prefer-dist
+
+FROM php:8.3-fpm-alpine
+RUN adduser -D -u 1000 app
+WORKDIR /app
+COPY --from=vendor /app/vendor ./vendor
+COPY . .
+USER app
+EXPOSE 9000
+CMD ["php-fpm"]</pre>
+
+    <p>Слои кэшируются: если не менялись `composer.json` и `composer.lock`, установка
+    зависимостей не повторяется. Это ускоряет CI в разы.</p>
+
+    <div class="callout warn">
+      <strong>Не храни секреты в образе.</strong> Переменные, токены и ключи передаются
+      через окружение или секрет-хранилище. В слоях образа они остаются навсегда, даже
+      если файл потом удалить.
+    </div>
+  </div>
+</section>
+
+<section id="objects">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Объекты Kubernetes</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Объект</th><th>Зачем</th><th>Особенность</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Pod</strong></td><td>Минимальная единица: один или несколько контейнеров</td><td>Смертный: упал — заменяется новым</td></tr>
+          <tr><td><strong>Deployment</strong></td><td>Держит нужное число реплик и катит версии</td><td>Управляет ReplicaSet</td></tr>
+          <tr><td><strong>Service</strong></td><td>Стабильный адрес и балансировка между pod'ами</td><td>ClusterIP, NodePort, LoadBalancer</td></tr>
+          <tr><td><strong>Ingress</strong></td><td>HTTP-маршрутизация снаружи</td><td>Нужен ingress-controller</td></tr>
+          <tr><td><strong>ConfigMap / Secret</strong></td><td>Конфигурация и секреты отдельно от образа</td><td>Secret — не шифрование «из коробки»</td></tr>
+          <tr><td><strong>HPA</strong></td><td>Автомасштабирование по метрикам</td><td>Нужны requests и metrics-server</td></tr>
+          <tr><td><strong>PDB</strong></td><td>Не убивать слишком много pod'ов сразу</td><td>Защита при drain и обновлении</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Полезные команды</h3>
+
+<pre class="cmd">kubectl get pods -n playback
+kubectl describe pod playback-7f9c -n playback
+kubectl logs -f deploy/playback -n playback
+kubectl rollout status deploy/playback -n playback
+kubectl rollout undo deploy/playback -n playback
+kubectl scale deploy/playback --replicas=5 -n playback
+kubectl top pods -n playback</pre>
+
+    <div class="callout">
+      <strong>Namespace</strong> — логическое разделение ресурсов. В проде обычно
+      отдельные namespace под команды или окружения. Это не-security-граница, но
+      помогает навигации и квотам.
+    </div>
+  </div>
+</section>
+
+<section id="scaling">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Масштабирование и здоровье</h2>
+
+    <h3>Requests и limits</h3>
+    <p><strong>Requests</strong> — сколько ресурсов гарантировано pod'у; по ним
+    планировщик выбирает узел. <strong>Limits</strong> — верхняя граница. Если памяти
+    больше лимита, контейнер убивают (OOMKilled); если CPU — throttling.</p>
+
+<pre class="cmd">resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "1"
+    memory: "512Mi"</pre>
+
+    <h3>Probes</h3>
+    <ul>
+      <li><strong>Readiness</strong> — можно ли отправлять трафик. Провал убирает pod
+      из Service.</li>
+      <li><strong>Liveness</strong> — жив ли процесс. Провал перезапускает контейнер.</li>
+      <li><strong>Startup</strong> — даёт время на медленный старт, не мешая liveness.</li>
+    </ul>
+
+    <h3>HPA</h3>
+    <p><strong>Horizontal Pod Autoscaler</strong> добавляет реплики по метрике: CPU,
+    память, RPS или кастомной. Для PHP важнее метрика очереди или RPS, чем CPU:
+    процесс может ждать БД, не нагружая процессор.</p>
+
+    <div class="callout warn">
+      <strong>Не масштабируй stateful вслепую.</strong> Реплики с локальным диском или
+      своим состоянием требуют StatefulSet, стабильных имён и аккуратной работы с
+      данными. Stateless-сервис масштабируется горизонтально, stateful — по стратегии.
+    </div>
+  </div>
+</section>
+
+<section id="rollout">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Релизы и откат</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Стратегия</th><th>Как работает</th><th>Когда</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>RollingUpdate</strong></td><td>Постепенно заменяет pod'ы</td><td>Обычный релиз stateless-сервиса</td></tr>
+          <tr><td><strong>Recreate</strong></td><td>Сначала гасит все, потом поднимает</td><td>Несовместимые версии, простой допустим</td></tr>
+          <tr><td><strong>Blue-green</strong></td><td>Два окружения, переключение трафика</td><td>Нужен мгновенный откат</td></tr>
+          <tr><td><strong>Canary</strong></td><td>Малая доля трафика на новую версию</td><td>Рискованные изменения</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Для RollingUpdate важны <strong>readinessProbe</strong> и <strong>graceful
+    shutdown</strong>: новый pod не получает трафик, пока не готов, а старый
+    дорабатывает текущие запросы. Без этого пользователь ловит 502 при релизе.</p>
+
+    <div class="callout">
+      <strong>Откат.</strong> `kubectl rollout undo` возвращает предыдущую версию.
+      Но если миграция БД несовместима, откат кода не поможет. Поэтому миграции делают
+      обратно совместимыми: сначала добавить новое, потом переключить, потом удалить
+      старое.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: PHP-сервис в Kubernetes</h2>
+
+    <ol>
+      <li><strong>Собрать образ.</strong> Multi-stage Dockerfile, non-root, логи в stdout.</li>
+      <li><strong>Описать Deployment.</strong> Реплики, requests/limits, readiness и
+      liveness, graceful shutdown.</li>
+      <li><strong>Открыть Service.</strong> ClusterIP внутри, Ingress снаружи.</li>
+      <li><strong>Вынести конфиг.</strong> ConfigMap для настроек, Secret для паролей.</li>
+      <li><strong>Добавить HPA.</strong> По RPS или длине очереди, а не только CPU.</li>
+      <li><strong>Проверить отказ.</strong> Убить pod, отключить узел, посмотреть, что
+      трафик не теряется.</li>
+    </ol>
+
+<pre class="cmd">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playback
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+  template:
+    spec:
+      containers:
+        - name: app
+          image: registry/playback:1.4.2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits:   { cpu: "1",    memory: "512Mi" }</pre>
+
+    <div class="callout">
+      <strong>Что проверить перед релизом:</strong> образ собран из тега, а не `latest`;
+      миграции совместимы; readiness отвечает; PDB не даёт убить всё сразу; HPA видит
+      метрику; алерты на ошибки и задержку включены.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Чем образ отличается от контейнера?</span></div>
+      <p class="a">«Образ — неизменяемый шаблон с приложением и зависимостями. Контейнер —
+      запущенный экземпляр образа со своим процессом и файловой системой. Из одного
+      образа можно запустить много контейнеров, и они будут одинаковыми. Контейнер
+      не лечат, а заменяют».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Образ — чертёж, контейнер — собранная по нему машина.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Зачем multi-stage сборка и кэш слоёв?</span></div>
+      <p class="a">«Multi-stage отделяет сборку зависимостей от runtime: в финальный
+      образ не попадают компиляторы и dev-пакеты. Кэш слоёв ускоряет сборку: если
+      `composer.json` не менялся, зависимости не переустанавливаются. Вместе это даёт
+      меньший и быстрее собираемый образ».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Собираем в мастерской, а в рейс берём только готовую машину без инструментов.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Чем readiness отличается от liveness?</span></div>
+      <p class="a">«Readiness говорит, готов ли pod принимать трафик: провал убирает его
+      из Service. Liveness проверяет, жив ли процесс: провал перезапускает контейнер.
+      Если перепутать, можно получить бесконечные рестарты или трафик в неготовый
+      инстанс. Startup probe даёт время на медленный старт».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Readiness — «можно входить», liveness — «я ещё жив».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Что такое requests и limits?</span></div>
+      <p class="a">«Requests — гарантированные ресурсы, по ним планировщик выбирает узел.
+      Limits — максимум. Превышение памяти приводит к OOMKilled, превышение CPU — к
+      throttling. Если requests завышены, pod не разместится; если занижены, начнёт
+      деградировать под нагрузкой».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Requests — забронированное место, limits — потолок, выше которого не пустят.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Как масштабируется stateless-сервис и что делать со stateful?</span></div>
+      <p class="a">«Stateless масштабируется горизонтально: HPA добавляет pod'ы, Service
+      распределяет трафик, состояние вынесено в Redis или БД. Stateful требует
+      StatefulSet, стабильных имён, PersistentVolume и стратегии репликации. Его не
+      масштабируют вслепую: сначала продумывают данные и консистентность».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сервис без памяти можно плодить сколько угодно. С памятью — сначала решаем,
+        где она живёт.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как безопасно выкатить новую версию?</span></div>
+      <p class="a">«RollingUpdate с readiness и graceful shutdown, обратно совместимые
+      миграции, PDB, метрики и алерт. Для рискованных изменений — canary или blue-green.
+      Откат — `rollout undo`, но он не отменяет миграцию, поэтому схема должна быть
+      совместима с обеими версиями».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Меняем по одному, проверяем здоровье и держим кнопку отката.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="k8s1" data-id="k8s1"><label for="k8s1">Чем образ отличается от контейнера?</label></li>
+      <li><input type="checkbox" class="check-item" id="k8s2" data-id="k8s2"><label for="k8s2">Зачем multi-stage и как работает кэш слоёв?</label></li>
+      <li><input type="checkbox" class="check-item" id="k8s3" data-id="k8s3"><label for="k8s3">Readiness, liveness, startup: что и когда проверяют?</label></li>
+      <li><input type="checkbox" class="check-item" id="k8s4" data-id="k8s4"><label for="k8s4">Что такое requests и limits и что будет при превышении?</label></li>
+      <li><input type="checkbox" class="check-item" id="k8s5" data-id="k8s5"><label for="k8s5">Как масштабировать stateless и stateful-сервисы?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> контейнеры неизменяемы, здоровье проверяется
+      probes, а релиз должен уметь откатываться без потери данных.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Инфраструктура» ·
+    <a href="CDNEdge.html">CDN и edge computing</a> ·
+    <a href="KafkaCaching.html">Kafka и кэширование</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

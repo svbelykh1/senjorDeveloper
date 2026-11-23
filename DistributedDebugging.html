@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отладка распределённых систем — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Архитектура · неделя 7</p>
+    <h1>Отладка распределённых систем</h1>
+    <p class="lead">
+      Как найти причину, когда запрос проходит пять сервисов и ломается только у части
+      пользователей. Трейсы, correlation id, рассинхрон часов, безопасная отладка
+      в проде и разбор инцидентов без героизма.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#tracing">Трейсы</a></li>
+      <li><a href="#clocks">Часы</a></li>
+      <li><a href="#workflow">Порядок</a></li>
+      <li><a href="#tools">Инструменты</a></li>
+      <li><a href="#patterns">Приёмы</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Почему это отдельная дисциплина</h2>
+
+    <p>В монолите отладчик показывает стек и локальные переменные. В распределённой
+    системе запрос идёт через gateway, два сервиса, БД и брокер, а ошибка проявляется
+    только на одном из них. Локально всё зелёное, в проде — 0,3% отказов.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Искать баг в распределённой системе — как искать пропавшую посылку по пути
+      между пятью складами. Нужен трек-номер, отметки времени и понимание, на каком
+      участке она застряла.
+    </div>
+
+    <p>На интервью Senior проверяют не знание кнопок Kibana, а <strong>метод</strong>:
+    как сузить область, как связать сигналы, как проверить гипотезу и как не сломать
+    прод в процессе.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Отладка — это последовательное сужение области
+      поиска, а не перебор догадок. Каждый шаг должен отсекать половину вариантов.
+    </div>
+  </div>
+</section>
+
+<section id="tracing">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Трейсы и correlation id</h2>
+
+    <p><strong>Трейс</strong> — дерево спанов одного запроса. <strong>Спан</strong> —
+    операция с началом, концом и атрибутами: вызов сервиса, SQL-запрос, публикация
+    в Kafka. Один `trace_id` связывает всё воедино.</p>
+
+<pre class="cmd">trace 4f1c9a7b2e
+├─ gateway            12 ms
+├─ playback           380 ms
+│  ├─ catalog         40 ms
+│  ├─ session          8 ms
+│  └─ drm             310 ms  ← узкое место
+└─ analytics           2 ms</pre>
+
+    <p>По такому дереву сразу видно, что 310 из 380 мс ушло в DRM, а не в каталог.
+    Без трейса пришлось бы смотреть три дашборда и гадать.</p>
+
+    <h3>Что передавать</h3>
+    <ul>
+      <li><strong>trace_id</strong> — общий для всего запроса.</li>
+      <li><strong>span_id</strong> и <strong>parent_span_id</strong> — структура дерева.</li>
+      <li><strong>request_id</strong> — идентификатор входящего запроса для логов.</li>
+      <li><strong>sampling</strong> — доля сохраняемых трейсов; ошибки и медленные
+      запросы сохраняют всегда.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Не тащи PII в атрибуты.</strong> В спаны попадают параметры вызовов.
+      Email, токены и тело запроса туда не пишем — иначе отладка создаёт новую утечку.
+    </div>
+  </div>
+</section>
+
+<section id="clocks">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Часы и порядок событий</h2>
+
+    <p>В распределённой системе у каждого узла свои часы, и они расходятся. Событие,
+    которое «началось раньше», по логам может выглядеть позже. Поэтому нельзя строить
+    причинно-следственную связь только по времени настенных часов.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Проблема</th><th>Что делать</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Clock skew</strong></td><td>NTP, допуск на расхождение, не сравнивать метки разных хостов напрямую</td></tr>
+          <tr><td><strong>Порядок событий</strong></td><td>Опираться на span-дерево и идентификаторы, а не только на `ts`</td></tr>
+          <tr><td><strong>Длительность</strong></td><td>Считать по монотонным часам внутри процесса</td></tr>
+          <tr><td><strong>Повторная доставка</strong></td><td>Использовать `event_id` и дедупликацию, а не время</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Если в логах есть `started_at` и `finished_at` с разных машин, разница может быть
+    отрицательной. Это не баг бизнес-логики, а рассинхрон часов. В трейсах длительности
+    считаются локально и переносятся как числа — это надёжнее.</p>
+
+    <div class="callout">
+      <strong>Практическое правило.</strong> Для причины используй структуру вызовов,
+      для корреляции — идентификаторы, для таймлайна — метки с одного источника.
+    </div>
+  </div>
+</section>
+
+<section id="workflow">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Порядок отладки</h2>
+
+    <ol>
+      <li><strong>Сформулировать симптом.</strong> Не «тормозит», а «p95 карточки видео
+      вырос с 180 до 900 мс после релиза 14:20».</li>
+      <li><strong>Локализовать по времени.</strong> Когда началось? Совпадает ли с
+      деплоем, конфигом, нагрузкой?</li>
+      <li><strong>Локализовать по сервису.</strong> Трейс показывает, где ушло время
+      или появилась ошибка.</li>
+      <li><strong>Сравнить с нормой.</strong> Тот же запрос до релиза, на другом инстансе,
+      в другом регионе.</li>
+      <li><strong>Проверить гипотезу.</strong> Одно изменение за раз: откат, флаг,
+      увеличение пула, индекс.</li>
+      <li><strong>Зафиксировать.</strong> Причина, исправление, что добавили в мониторинг
+      и тесты.</li>
+    </ol>
+
+    <h3>Если воспроизвести нельзя</h3>
+    <ul>
+      <li>Собрать «слепок»: trace + логи + метрики + версия + параметры запроса.</li>
+      <li>Искать по `trace_id` и `request_id`, а не по тексту ошибки.</li>
+      <li>Проверить редкие условия: регион, устройство, тариф, размер файла.</li>
+      <li>Включить временный debug-лог с ограничением объёма и TTL.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Безопасность в проде.</strong> Не подключайся к прод-БД без необходимости,
+      не выполняй тяжёлые запросы, не включай debug на всех инстансах. Используй
+      read-only доступ, ограниченный интервал и понятный план отката.
+    </div>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Инструменты</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Класс</th><th>Примеры</th><th>Что даёт</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Трейсинг</strong></td><td>Jaeger, Tempo, Zipkin, OpenTelemetry</td><td>Путь запроса и узкое место</td></tr>
+          <tr><td><strong>Логи</strong></td><td>Loki, Elasticsearch, Cloud Logging</td><td>Детали события и ошибки</td></tr>
+          <tr><td><strong>Метрики</strong></td><td>Prometheus, Grafana, VictoriaMetrics</td><td>Тренды, алерты, SLO</td></tr>
+          <tr><td><strong>Профилирование</strong></td><td>Xdebug, Blackfire, pyroscope</td><td>Где именно тратится CPU и память</td></tr>
+          <tr><td><strong>Ошибки</strong></td><td>Sentry и аналоги</td><td>Группировка исключений и контекст</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Главное — <strong>связка</strong>: из алерта перейти в трейс, из трейса в лог, из
+    лога в профиль. Если инструменты не связаны идентификаторами, они превращаются
+    в набор отдельных форумов.</p>
+
+    <div class="callout warn">
+      <strong>Не добавляй инструмент без вопроса.</strong> Каждый сбор данных стоит денег
+      и внимания. Сначала вопрос «что мы хотим узнать», потом выбор системы.
+    </div>
+  </div>
+</section>
+
+<section id="patterns">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Приёмы безопасной отладки</h2>
+
+    <ul>
+      <li><strong>Canary-анализ.</strong> Сравнить новую версию с базовой на одинаковом
+      трафике, а не «на глаз».</li>
+      <li><strong>Shadow traffic.</strong> Отправить копию запросов в новую версию и
+      сравнить ответы, не влияя на пользователей.</li>
+      <li><strong>Replay.</strong> Воспроизвести запрос по сохранённым данным в
+      изолированном окружении.</li>
+      <li><strong>Feature flag.</strong> Отключить подозрительную ветку без релиза.</li>
+      <li><strong>Bisect по версиям.</strong> Сузить диапазон деплоев, где появилась
+      проблема.</li>
+      <li><strong>Game day.</strong> Заранее проверить, как система и команда ведут себя
+      при отказе.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Ответ для интервью.</strong> «Сначала формулирую симптом и сужаю область:
+      время, сервис, версия. Смотрю трейс, затем логи по trace id, затем метрики.
+      Проверяю одну гипотезу за раз и фиксирую результат. В прод хожу только с
+      read-only доступом и планом отката».
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как найти узкое место в распределённом запросе?</span></div>
+      <p class="a">«По трейсу: смотрю дерево спанов и длительности. Самый дорогой спан
+      показывает, где ушло время. Дальше проваливаюсь в его логи и атрибуты, проверяю
+      зависимость и сравниваю с нормой. Если трейсов нет, начинаю с метрик по сервисам
+      и correlation id в логах».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Трейс — это чек с отметками времени: видно, на каком складе посылка застряла.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Зачем correlation id и чем он отличается от trace id?</span></div>
+      <p class="a">«Correlation id связывает логи одного запроса, trace id — ещё и
+      структуру спанов. На практике часто используют один идентификатор для обоих,
+      но важно, чтобы он передавался через все сервисы и попадал в каждую запись.
+      Без него логи разных сервисов не склеиваются».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это трек-номер посылки. Без него остаётся гадать, чей это лог.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Почему нельзя доверять времени в логах разных серверов?</span></div>
+      <p class="a">«Часы расходятся из-за clock skew. Событие, которое началось раньше,
+      может выглядеть позже. Поэтому причинность строю по структуре вызовов и
+      идентификаторам, длительности считаю по монотонным часам, а метки времени
+      использую как подсказку. NTP снижает проблему, но не убирает полностью».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>У каждого сервера свои часы. Сравнивать их напрямую — как сверять время
+        по разным будильникам.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Как отлаживать, если проблема не воспроизводится?</span></div>
+      <p class="a">«Собираю слепок: trace, логи, метрики, версия, параметры запроса.
+      Ищу по trace id, проверяю редкие условия — регион, устройство, тариф, размер
+      файла. Включаю временный debug-лог с ограничением объёма и TTL. Проверяю гипотезы
+      по одной и фиксирую, что изменилось».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Если нельзя повторить — надо собрать максимум улик и сузить условия.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Какие инструменты используешь и как они связаны?</span></div>
+      <p class="a">«Трейсинг — Jaeger или Tempo, логи — Loki или Elasticsearch, метрики —
+      Prometheus и Grafana, ошибки — Sentry, профилирование — Xdebug или Blackfire.
+      Связь через trace id и request id: из алерта перехожу в трейс, из трейса в лог,
+      из лога в профиль. Инструменты без общей идентификации бесполезны по отдельности».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это не пять отдельных приборов, а один маршрут от симптома к причине.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Как отлаживать в проде, не создавая новый инцидент?</span></div>
+      <p class="a">«Read-only доступ, ограниченный интервал, никаких тяжёлых запросов
+      и глобального debug. Использую feature flag, canary, shadow traffic и replay в
+      изолированной среде. План отката и наблюдаемость на время работ. Если нужно
+      подключиться к БД — только через реплику или специальный инструмент».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>В прод заходим как в чужой дом: аккуратно, с фонариком и без перестановки
+        мебели.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="dbg1" data-id="dbg1"><label for="dbg1">Как по трейсу найти узкое место запроса?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbg2" data-id="dbg2"><label for="dbg2">Зачем correlation id и trace id?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbg3" data-id="dbg3"><label for="dbg3">Почему метки времени разных серверов нельзя сравнивать напрямую?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbg4" data-id="dbg4"><label for="dbg4">Как действовать, если баг не воспроизводится?</label></li>
+      <li><input type="checkbox" class="check-item" id="dbg5" data-id="dbg5"><label for="dbg5">Какие приёмы безопасной отладки в проде знаешь?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> отладка — это сужение области по сигналам,
+      а не перебор догадок. Связка trace → log → метрика экономит часы.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Архитектура» ·
+    <a href="DistributedSystems.html">Распределённые системы</a> ·
+    <a href="Observability.html">Наблюдаемость и логи</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

@@ -208,10 +208,10 @@
             <td>Архитектура + инфраструктура</td>
             <td>
               <ol class="topics">
-                <li>Документирование архитектуры</li>
-                <li>Распределённые системы: LB, sidecar, two-phase commit, разделение запросов по типам данных</li>
-                <li>Отладка распределённых систем</li>
-                <li>Балансировщики и прокси</li>
+                <li><a class="topic noarrow" href="ArchitectureDocs.html">Документирование архитектуры</a></li>
+                <li><a class="topic noarrow" href="DistributedSystems.html">Распределённые системы: LB, sidecar, two-phase commit, разделение запросов по типам данных</a></li>
+                <li><a class="topic noarrow" href="DistributedDebugging.html">Отладка распределённых систем</a></li>
+                <li><a class="topic noarrow" href="DistributedSystems.html#lb">Балансировщики и прокси</a></li>
               </ol>
             </td>
             <td>Найти узкое место в своём сервисе через метрики. Собрать multi-stage Dockerfile</td>
@@ -222,11 +222,11 @@
             <td>Инфраструктура и Cloud + Kafka</td>
             <td>
               <ol class="topics">
-                <li>CDN: edge computing, content routing</li>
-                <li>kubectl и docker</li>
-                <li>Масштабирование в Kubernetes</li>
-                <li>Управление данными в брокере</li>
-                <li>Стратегии кеширования: Write-Through / Write-Behind / Cache-Aside</li>
+                <li><a class="topic noarrow" href="CDNEdge.html">CDN: edge computing, content routing</a></li>
+                <li><a class="topic noarrow" href="ContainersKubernetes.html#docker">kubectl и docker</a></li>
+                <li><a class="topic noarrow" href="ContainersKubernetes.html#scaling">Масштабирование в Kubernetes</a></li>
+                <li><a class="topic noarrow" href="KafkaCaching.html#kafka">Управление данными в брокере</a></li>
+                <li><a class="topic noarrow" href="KafkaCaching.html#cache">Стратегии кеширования: Write-Through / Write-Behind / Cache-Aside</a></li>
               </ol>
             </td>
             <td>K8s deployment + HPA. Kafka: партиции, consumer groups, offsets, at-least-once vs exactly-once, идемпотентный consumer, DLQ. Выбрать cache strategy для каталога</td>
@@ -237,12 +237,12 @@
             <td>Протоколы, API</td>
             <td>
               <ol class="topics">
-                <li>HTTP/2, WebSocket, SSE, сокеты</li>
-                <li>Whitelist / blacklist</li>
-                <li>Идемпотентность</li>
-                <li>Пулинг соединений</li>
-                <li>Дублирующиеся запросы</li>
-                <li>Выбор архитектуры API</li>
+                <li><a class="topic noarrow" href="ApiProtocols.html#http">HTTP/2, WebSocket, SSE, сокеты</a></li>
+                <li><a class="topic noarrow" href="ApiReliability.html#access">Whitelist / blacklist</a></li>
+                <li><a class="topic noarrow" href="ApiReliability.html#idempotency">Идемпотентность</a></li>
+                <li><a class="topic noarrow" href="ApiReliability.html#pooling">Пулинг соединений</a></li>
+                <li><a class="topic noarrow" href="ApiReliability.html#duplicates">Дублирующиеся запросы</a></li>
+                <li><a class="topic noarrow" href="ApiProtocols.html#styles">Выбор архитектуры API</a></li>
               </ol>
             </td>
             <td>REST + gRPC интеграция. Idempotency key на Postgres. Rate limiting на gateway. Разобрать пулинг в PHP-FPM</td>
@@ -253,12 +253,12 @@
             <td>Безопасность</td>
             <td>
               <ol class="topics">
-                <li>OAuth 2.0 / OIDC, PKCE</li>
-                <li>OWASP Top 10: SQLi, XSS, CSRF</li>
-                <li>ACL / RBAC / ABAC</li>
-                <li>SAST / DAST</li>
-                <li>SHA-256/512 и хеширование паролей</li>
-                <li>CORS</li>
+                <li><a class="topic noarrow" href="AuthOIDC.html#oauth">OAuth 2.0 / OIDC, PKCE</a></li>
+                <li><a class="topic noarrow" href="WebSecurity.html#owasp">OWASP Top 10: SQLi, XSS, CSRF</a></li>
+                <li><a class="topic noarrow" href="AuthOIDC.html#access">ACL / RBAC / ABAC</a></li>
+                <li><a class="topic noarrow" href="WebSecurity.html#sast">SAST / DAST</a></li>
+                <li><a class="topic noarrow" href="WebSecurity.html#hashing">SHA-256/512 и хеширование паролей</a></li>
+                <li><a class="topic noarrow" href="WebSecurity.html#cors">CORS</a></li>
               </ol>
             </td>
             <td>Auth-flow своего сервиса (OIDC + JWT + refresh). Прогнать SAST. CORS и заголовки безопасности. Threat model на одну фичу</td>
@@ -269,13 +269,13 @@
             <td>Базы данных</td>
             <td>
               <ol class="topics">
-                <li>Уровни изоляции и аномалии</li>
-                <li>Транзакции и обработка ошибок</li>
-                <li>Индексация и оптимизация в NoSQL</li>
-                <li>Масштабирование</li>
-                <li>Репликация vs шардирование vs партиционирование</li>
-                <li>Сложный SQL</li>
-                <li>Хранимые процедуры</li>
+                <li><a class="topic noarrow" href="DatabaseTransactions.html#isolation">Уровни изоляции и аномалии</a></li>
+                <li><a class="topic noarrow" href="DatabaseTransactions.html#transactions">Транзакции и обработка ошибок</a></li>
+                <li><a class="topic noarrow" href="DatabaseScaling.html#nosql">Индексация и оптимизация в NoSQL</a></li>
+                <li><a class="topic noarrow" href="DatabaseScaling.html#scaling">Масштабирование</a></li>
+                <li><a class="topic noarrow" href="DatabaseScaling.html#partitioning">Репликация vs шардирование vs партиционирование</a></li>
+                <li><a class="topic noarrow" href="DatabaseTransactions.html#sql">Сложный SQL</a></li>
+                <li><a class="topic noarrow" href="DatabaseTransactions.html#procedures">Хранимые процедуры</a></li>
               </ol>
             </td>
             <td>Схема каталога и истории просмотров в Postgres. <code>EXPLAIN ANALYZE</code> на медленном запросе. Эксперимент с isolation levels. Партиционирование по дате</td>
@@ -286,10 +286,10 @@
             <td>Mock-интервью</td>
             <td>
               <ol class="topics">
-                <li>Теория по всем 10 компетенциям</li>
-                <li>System design</li>
-                <li>Code review</li>
-                <li>Поведенческая часть</li>
+                <li><a class="topic noarrow" href="MockInterviews.html#theory">Теория по всем 10 компетенциям</a></li>
+                <li><a class="topic noarrow" href="MockInterviews.html#system-design">System design</a></li>
+                <li><a class="topic noarrow" href="MockInterviews.html#code-review">Code review</a></li>
+                <li><a class="topic noarrow" href="MockInterviews.html#behavioral">Поведенческая часть</a></li>
               </ol>
             </td>
             <td>3 полных прогона. Закрыть топ-3 пробела по итогам scorecard</td>
@@ -368,43 +368,60 @@
           <li><a class="topic noarrow" href="Resilience.html#consistency">Как обеспечиваешь согласованность при конкурентном доступе?</a></li>
           <li><a class="topic noarrow" href="Observability.html">Как построить SLO и не утонуть в алертах?</a></li>
           <li><a class="topic noarrow" href="Observability.html#logging">Как логировать, не нарушая требования безопасности?</a></li>
+          <li><a class="topic noarrow" href="ArchitectureDocs.html">Как документировать архитектуру, чтобы она не устаревала?</a></li>
+          <li><a class="topic noarrow" href="DistributedDebugging.html">Как отлаживать запрос, который проходит через пять сервисов?</a></li>
         </ul>
       </div>
 
       <div class="card">
         <h3>Инфраструктура</h3>
         <ul>
-          <li>Как устроен consumer group в Kafka? Что будет при добавлении партиции?</li>
-          <li>At-least-once vs exactly-once: что реально достижимо и какой ценой?</li>
-          <li>Cache-Aside vs Write-Through vs Write-Behind — что выберешь для каталога видео?</li>
-          <li>Как масштабируется stateless-сервис в Kubernetes? Что делать со stateful?</li>
+          <li><a class="topic noarrow" href="KafkaCaching.html#kafka">Как устроен consumer group в Kafka? Что будет при добавлении партиции?</a></li>
+          <li><a class="topic noarrow" href="KafkaCaching.html#delivery">At-least-once vs exactly-once: что реально достижимо и какой ценой?</a></li>
+          <li><a class="topic noarrow" href="KafkaCaching.html#cache">Cache-Aside vs Write-Through vs Write-Behind — что выберешь для каталога видео?</a></li>
+          <li><a class="topic noarrow" href="ContainersKubernetes.html#scaling">Как масштабируется stateless-сервис в Kubernetes? Что делать со stateful?</a></li>
+          <li><a class="topic noarrow" href="CDNEdge.html">Как устроен CDN и где кэшировать видео?</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>События</h3>
+        <ul>
+          <li><a class="topic noarrow" href="EventDrivenKafka.html#outbox">Почему dual write ломается и что такое transactional outbox?</a></li>
+          <li><a class="topic noarrow" href="EventDrivenKafka.html#contracts">Как версионировать события и что проверяет schema registry?</a></li>
+          <li><a class="topic noarrow" href="EventDrivenKafka.html">Как сделать consumer идемпотентным и что делать с DLQ?</a></li>
         </ul>
       </div>
 
       <div class="card">
         <h3>API</h3>
         <ul>
-          <li>Идемпотентность: как реализуешь для <code>POST /payment</code>?</li>
-          <li>Когда WebSocket, когда SSE, когда polling?</li>
-          <li>Как борешься с дублирующимися запросами и пулингом соединений в PHP?</li>
+          <li><a class="topic noarrow" href="ApiReliability.html#idempotency">Идемпотентность: как реализуешь для <code>POST /payment</code>?</a></li>
+          <li><a class="topic noarrow" href="ApiProtocols.html#streaming">Когда WebSocket, когда SSE, когда polling?</a></li>
+          <li><a class="topic noarrow" href="ApiReliability.html">Как борешься с дублирующимися запросами и пулингом соединений в PHP?</a></li>
+          <li><a class="topic noarrow" href="ApiProtocols.html#styles">REST, gRPC, GraphQL или события: как выбрать архитектуру API?</a></li>
         </ul>
       </div>
 
       <div class="card">
         <h3>Безопасность</h3>
         <ul>
-          <li>Authorization Code + PKCE: зачем PKCE и где хранить токены?</li>
-          <li>RBAC vs ABAC — что выберешь для мультитенантного сервиса?</li>
-          <li>Как защититься от SQLi и XSS в PHP? Чем SAST отличается от DAST?</li>
+          <li><a class="topic noarrow" href="AuthOIDC.html#oauth">Authorization Code + PKCE: зачем PKCE и где хранить токены?</a></li>
+          <li><a class="topic noarrow" href="AuthOIDC.html#access">RBAC vs ABAC — что выберешь для мультитенантного сервиса?</a></li>
+          <li><a class="topic noarrow" href="WebSecurity.html#owasp">Как защититься от SQLi и XSS в PHP? Чем SAST отличается от DAST?</a></li>
+          <li><a class="topic noarrow" href="WebSecurity.html#hashing">Почему SHA-256 не подходит для паролей?</a></li>
         </ul>
       </div>
 
       <div class="card">
         <h3>Базы данных</h3>
         <ul>
-          <li>Уровни изоляции и какие аномалии допускают. Где нужен Serializable?</li>
-          <li>Репликация vs шардирование vs партиционирование — что и когда?</li>
-          <li>Как читать <code>EXPLAIN ANALYZE</code>? Почему индекс не используется?</li>
+          <li><a class="topic noarrow" href="DatabaseTransactions.html#isolation">Уровни изоляции и какие аномалии допускают. Где нужен Serializable?</a></li>
+          <li><a class="topic noarrow" href="DatabaseScaling.html#partitioning">Репликация vs шардирование vs партиционирование — что и когда?</a></li>
+          <li><a class="topic noarrow" href="DatabaseTransactions.html#sql">Как читать <code>EXPLAIN ANALYZE</code>? Почему индекс не используется?</a></li>
+          <li><a class="topic noarrow" href="DatabaseScaling.html#scaling">Как масштабировать базу: что делать по порядку?</a></li>
+          <li><a class="topic noarrow" href="PostgresInternals.html#mvcc">Как работает MVCC и зачем нужен vacuum?</a></li>
+          <li><a class="topic noarrow" href="PostgresInternals.html#locks">Кто блокирует запрос и как это найти?</a></li>
         </ul>
       </div>
     </div>

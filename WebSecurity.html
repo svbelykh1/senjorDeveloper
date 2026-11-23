@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OWASP, хеширование и CORS — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 9 · Безопасность · неделя 10</p>
+    <h1>OWASP, хеширование, SAST/DAST и CORS</h1>
+    <p class="lead">
+      Главные атаки на веб-приложение и защита от них: SQL-инъекции, XSS, CSRF,
+      SSRF. Чем хеш отличается от шифрования, почему SHA-256 не годится для паролей
+      и как CORS не заменяет авторизацию.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#owasp">OWASP</a></li>
+      <li><a href="#hashing">Хеши</a></li>
+      <li><a href="#sast">SAST/DAST</a></li>
+      <li><a href="#cors">CORS</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Безопасность — это слои</h2>
+
+    <p>Не существует одной кнопки «включить безопасность». Защита строится слоями:
+    валидация входа, параметризованные запросы, экранирование вывода, права на сервере,
+    безопасные заголовки, сканеры в CI. Если один слой пробит, следующий снижает ущерб.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Замок, сигнализация и сейф. Каждый слой можно обойти отдельно, но вместе они
+      делают кражу дорогой и заметной. Один замок на двери — не безопасность.
+    </div>
+
+    <p>На интервью Senior не просят помнить все CVE. Проверяют <strong>модель угроз</strong>:
+    какие данные защищаем, кто атакует, где границы доверия и какие меры реально
+    применяются в коде.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Безопасность — свойство системы, а не отдельного
+      модуля. Она проверяется на входе, внутри и на выходе.
+    </div>
+  </div>
+</section>
+
+<section id="owasp">
+  <div class="wrap">
+    <h2><span class="badge">2</span> OWASP Top 10 и три главные атаки</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Категория</th><th>Суть</th><th>Защита</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Broken Access Control</strong></td><td>Пользователь делает то, что ему нельзя</td><td>Проверка прав на сервере, deny by default</td></tr>
+          <tr><td><strong>Cryptographic Failures</strong></td><td>Слабые алгоритмы, открытые секреты</td><td>Сильное шифрование, управление ключами</td></tr>
+          <tr><td><strong>Injection</strong></td><td>SQL, команды, шаблоны</td><td>Параметризация, экранирование</td></tr>
+          <tr><td><strong>Insecure Design</strong></td><td>Ошибка в модели угроз</td><td>Threat modeling, безопасные сценарии</td></tr>
+          <tr><td><strong>Security Misconfiguration</strong></td><td>Открытые порты, debug в проде</td><td>Харденинг, конфиг-ревью</td></tr>
+          <tr><td><strong>Vulnerable Components</strong></td><td>Устаревшие зависимости</td><td>SCA, обновления, lock-файлы</td></tr>
+          <tr><td><strong>Auth Failures</strong></td><td>Слабые пароли, утечка сессий</td><td>MFA, ротация, защищённые cookie</td></tr>
+          <tr><td><strong>Integrity Failures</strong></td><td>Подмена артефактов и обновлений</td><td>Подписи, проверка хэшей</td></tr>
+          <tr><td><strong>Logging Failures</strong></td><td>Атаку не видно</td><td>Аудит, алерты, retention</td></tr>
+          <tr><td><strong>SSRF</strong></td><td>Сервер ходит по чужим адресам</td><td>Allowlist исходящих, блок metadata</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>SQL-инъекция</h3>
+    <p>Строка запроса собирается из пользовательского ввода, и `' OR 1=1 --` меняет
+    смысл. Лечится <strong>параметризацией</strong>: запрос и данные идут отдельно.</p>
+
+<pre class="cmd">// Плохо: конкатенация
+$pdo-&gt;query("SELECT * FROM users WHERE email = '$email'");
+
+// Хорошо: параметр
+$stmt = $pdo-&gt;prepare('SELECT * FROM users WHERE email = ?');
+$stmt-&gt;execute([$email]);</pre>
+
+    <p>Дополнительно: минимальные права БД, никаких `DROP` для приложения, валидация
+    типов и лимиты. ORM не отменяет правила, если использовать raw-запросы.</p>
+
+    <h3>XSS</h3>
+    <p>Чужой JavaScript попадает на страницу и крадёт токены или действия пользователя.
+    Защита — <strong>контекстное экранирование</strong> вывода, CSP, `HttpOnly` cookie,
+    отказ от `innerHTML` с пользовательскими данными.</p>
+
+    <h3>CSRF</h3>
+    <p>Браузер пользователя автоматически отправляет cookie на ваш сайт с чужой страницы.
+    Защита: `SameSite=Lax/Strict`, CSRF-токен, проверка `Origin`, запрет менять состояние
+    через `GET`.</p>
+
+    <div class="callout warn">
+      <strong>Экранируй на выходе, а не только на входе.</strong> Один и тот же текст
+      в HTML, атрибуте и JavaScript экранируется по-разному. Валидация входа не заменяет
+      кодирование вывода.
+    </div>
+  </div>
+</section>
+
+<section id="hashing">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Хеши, шифрование и пароли</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Операция</th><th>Обратимость</th><th>Для чего</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Кодирование</strong> (base64)</td><td>Обратимо без ключа</td><td>Передача бинарных данных текстом</td></tr>
+          <tr><td><strong>Шифрование</strong></td><td>Обратимо с ключом</td><td>Хранить данные, которые нужны обратно</td></tr>
+          <tr><td><strong>Хеширование</strong></td><td>Необратимо</td><td>Проверка целостности и паролей</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>SHA-256/512</strong> — быстрые криптографические хеши. Они подходят для
+    контрольных сумм, подписей и идентификаторов, но <strong>не для паролей</strong>:
+    слишком быстрые, миллиарды вариантов перебираются железом.</p>
+
+<pre class="cmd">// Пароль: медленный адаптивный хеш
+$hash = password_hash($password, PASSWORD_ARGON2ID);
+$ok   = password_verify($password, $hash);
+
+// Целостность файла: быстрый SHA-256
+$sum = hash_file('sha256', '/path/to/artifact');</pre>
+
+    <p>Соль генерируется автоматически и хранится рядом с хешем. <strong>Перец</strong>
+    (pepper) — дополнительный секрет приложения, хранится отдельно. Стоимость
+    (cost/memory) настраивают так, чтобы проверка занимала десятки миллисекунд.</p>
+
+    <div class="callout warn">
+      <strong>MD5 и SHA-1 для паролей — нет.</strong> Они быстрые и давно скомпрометированы.
+      Не используй и самодельные схемы вроде «sha256(password + salt)» — только
+      `password_hash` или Argon2id через проверенную библиотеку.
+    </div>
+  </div>
+</section>
+
+<section id="sast">
+  <div class="wrap">
+    <h2><span class="badge">4</span> SAST, DAST и зависимости</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Инструмент</th><th>Что анализирует</th><th>Когда</th><th>Минус</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>SAST</strong></td><td>Исходный код без запуска</td><td>На MR, рано</td><td>Ложные срабатывания</td></tr>
+          <tr><td><strong>DAST</strong></td><td>Работающее приложение снаружи</td><td>Staging, nightly</td><td>Не видит код, медленнее</td></tr>
+          <tr><td><strong>SCA</strong></td><td>Зависимости и их CVE</td><td>На каждый lock-файл</td><td>Шум от чужих библиотек</td></tr>
+          <tr><td><strong>Secret scanning</strong></td><td>Ключи и токены в репозитории</td><td>Pre-commit и CI</td><td>Нужно реагировать быстро</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Порядок в CI: секреты и линтер → SAST → тесты → SCA → сборка → DAST на staging.
+    Дешёвые проверки первыми. Критичные находки блокируют merge, остальные уходят
+    в задачи с владельцем и сроком.</p>
+
+    <div class="callout">
+      <strong>SAST не заменяет ревью.</strong> Он видит паттерны, но не бизнес-контекст.
+      Ложные срабатывания подавляют точечно, с комментарием, а не отключением правила.
+    </div>
+  </div>
+</section>
+
+<section id="cors">
+  <div class="wrap">
+    <h2><span class="badge">5</span> CORS: что это и чем не является</h2>
+
+    <p>Браузер применяет <strong>same-origin policy</strong>: страница с одного origin
+    не может читать ответ с другого без разрешения. <strong>CORS</strong> — механизм,
+    которым сервер это разрешение выдаёт.</p>
+
+    <ul>
+      <li><strong>Простой запрос</strong> — `GET`, `POST` с обычным content-type.</li>
+      <li><strong>Preflight</strong> — `OPTIONS` перед запросом с нестандартными
+      заголовками или методами.</li>
+      <li><strong>Access-Control-Allow-Origin</strong> — точный origin или `*`.</li>
+      <li><strong>Credentials</strong> — с `*` несовместимы; нужен точный origin и
+      `Allow-Credentials: true`.</li>
+      <li><strong>Vary: Origin</strong> — чтобы прокси не смешивал ответы.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>CORS — не авторизация.</strong> Он ограничивает браузер, но не защищает
+      API от curl, мобильного клиента или чужого сервера. Токен и проверка прав нужны
+      в любом случае. Отражать любой `Origin` с credentials — типичная уязвимость.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Практика: чек-лист безопасности</h2>
+
+    <h3>Заголовки</h3>
+    <ul>
+      <li><strong>Content-Security-Policy</strong> — ограничить источники скриптов.</li>
+      <li><strong>Strict-Transport-Security</strong> — только HTTPS.</li>
+      <li><strong>X-Content-Type-Options: nosniff</strong> — не угадывать тип.</li>
+      <li><strong>Referrer-Policy</strong> — не отдавать лишние URL.</li>
+      <li><strong>frame-ancestors</strong> — защита от clickjacking.</li>
+    </ul>
+
+    <h3>Модель угроз на фичу</h3>
+    <ol>
+      <li>Какие данные и операции защищаем.</li>
+      <li>Кто может атаковать и какие у него возможности.</li>
+      <li>Где границы доверия: браузер, gateway, сервис, БД.</li>
+      <li>Какие входы недоверенные.</li>
+      <li>Какие меры применяем и как проверяем.</li>
+    </ol>
+
+<pre class="cmd">// Пример безопасной проверки выхода по URL (SSRF)
+$allowedHosts = ['cdn.example.com', 'drm.example.com'];
+$host = parse_url($url, PHP_URL_HOST);
+
+if (!in_array($host, $allowedHosts, true)) {
+    throw new DomainException('host is not allowed');
+}</pre>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Назови три атаки и их защиту, объясни
+      разницу SAST и DAST, скажи, почему SHA-256 не для паролей, и что CORS не заменяет
+      авторизацию. Этого достаточно для уверенного уровня 3.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как защититься от SQL-инъекции?</span></div>
+      <p class="a">«Параметризованные запросы: SQL и данные передаются отдельно, драйвер
+      экранирует значения. Плюс минимальные права БД, валидация типов и отказ от
+      конкатенации пользовательского ввода. ORM помогает, но raw-запросы всё равно
+      требуют параметров».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Не склеиваем команду и данные в одну строку. База должна получить их раздельно.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Чем XSS отличается от CSRF?</span></div>
+      <p class="a">«XSS — чужой JavaScript выполняется на вашей странице и действует
+      от имени пользователя. CSRF — чужая страница заставляет браузер автоматически
+      отправить запрос с cookie на ваш сайт. XSS лечится экранированием и CSP, CSRF —
+      SameSite cookie, токеном и проверкой Origin».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>XSS — враг пробрался в дом. CSRF — враг заставил вашего курьера отнести
+        посылку по чужому адресу.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Почему SHA-256 не подходит для паролей?</span></div>
+      <p class="a">«Он слишком быстрый: на видеокартах перебираются миллиарды вариантов
+      в секунду. Для паролей нужны адаптивные хеши с солью и настраиваемой стоимостью:
+      Argon2id или bcrypt через `password_hash`. SHA-256 годится для целостности
+      артефактов и подписей, но не для хранения паролей».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Замок должен открываться медленно. Быстрый хеш — это дверь без замка.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Чем SAST отличается от DAST?</span></div>
+      <p class="a">«SAST анализирует исходный код без запуска: рано, быстро, но бывают
+      ложные срабатывания. DAST тестирует работающее приложение снаружи реальными
+      запросами: видит конфигурацию и поведение, но не код и работает медленнее.
+      Их дополняют SCA для зависимостей и сканирование секретов».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>SAST читает чертёж, DAST стучится в готовый дом.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что такое CORS и почему он не заменяет авторизацию?</span></div>
+      <p class="a">«CORS — механизм браузера, который разрешает или запрещает чтение
+      ответа с другого origin. Он не защищает API от прямых запросов вне браузера.
+      Авторизация должна проверяться на сервере по токену и правам. Опасная настройка —
+      отражать любой Origin с credentials».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>CORS — это правило для браузера, а не замок на API.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Какие меры безопасности добавишь в пайплайн?</span></div>
+      <p class="a">«Secret scanning и линтер на pre-commit, SAST на MR, SCA по lock-файлу,
+      тесты, сборку, DAST на staging. Критичные находки блокируют merge, остальные —
+      задачи с владельцем. Плюс заголовки безопасности, проверка прав на сервере и
+      модель угроз на новую фичу».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Дешёвые проверки первыми, опасные — блокируют, остальные — в работу.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="sec1" data-id="sec1"><label for="sec1">Как защититься от SQLi, XSS и CSRF?</label></li>
+      <li><input type="checkbox" class="check-item" id="sec2" data-id="sec2"><label for="sec2">Чем хеш отличается от шифрования и почему пароли хешируют медленно?</label></li>
+      <li><input type="checkbox" class="check-item" id="sec3" data-id="sec3"><label for="sec3">SAST, DAST, SCA: что и когда запускать?</label></li>
+      <li><input type="checkbox" class="check-item" id="sec4" data-id="sec4"><label for="sec4">Почему CORS не является авторизацией?</label></li>
+      <li><input type="checkbox" class="check-item" id="sec5" data-id="sec5"><label for="sec5">Какие заголовки безопасности добавишь в ответ?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> валидируй вход, параметризуй запросы,
+      экранируй выход, проверяй права на сервере и автоматизируй проверки в CI.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Безопасность» ·
+    <a href="AuthOIDC.html">OAuth, OIDC, PKCE</a> ·
+    <a href="PrivacyGDPR.html">GDPR и приватность</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Документирование архитектуры — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Архитектура · неделя 7</p>
+    <h1>Документирование архитектуры — простыми словами</h1>
+    <p class="lead">
+      Модель C4, ADR, диаграммы как код и процесс, при котором документация не устаревает
+      через месяц. Кому и что показывать, что писать в решении и как проверять
+      актуальность автоматически.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#c4">C4</a></li>
+      <li><a href="#adr">ADR</a></li>
+      <li><a href="#diagrams">Диаграммы</a></li>
+      <li><a href="#process">Процесс</a></li>
+      <li><a href="#mistakes">Ошибки</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем документировать архитектуру</h2>
+
+    <p>Архитектурная документация нужна не для отчёта, а чтобы <strong>объяснить решения</strong>
+    и снять повторяющиеся вопросы: почему выбрали Kafka, где проходит граница сервиса,
+    что будет при отказе, как развернуть. Хороший документ отвечает на вопрос читателя,
+    а не пересказывает код.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Архитектурная схема — это карта города для нового жителя. На ней есть районы,
+      дороги и ориентиры, но нет каждого дерева. Если рисовать все деревья, картой
+      нельзя пользоваться.
+    </div>
+
+    <p>На интервью Senior проверяют не умение рисовать красивые прямоугольники, а
+    <strong>адресность</strong>: кому предназначен документ, какой уровень детализации,
+    как он поддерживается и чем подтверждается. И главное — <strong>какие решения</strong>
+    зафиксированы и <strong>какие альтернативы</strong> отброшены.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Документация ценна, когда по ней можно принять
+      решение или провести изменение. Всё остальное — украшение.
+    </div>
+  </div>
+</section>
+
+<section id="c4">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Модель C4: четыре уровня детализации</h2>
+
+    <p><strong>C4</strong> предлагает смотреть на систему с четырёх высот. Не нужно
+    рисовать все четыре для каждого проекта: выбирают те, которые нужны читателю.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Уровень</th><th>Что показывает</th><th>Кому</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Context</strong></td><td>Система, пользователи, внешние системы</td><td>Бизнес, новички, безопасность</td></tr>
+          <tr><td><strong>Container</strong></td><td>Сервисы, БД, брокеры, CDN и связи между ними</td><td>Разработчики, архитекторы, DevOps</td></tr>
+          <tr><td><strong>Component</strong></td><td>Крупные части внутри контейнера</td><td>Команда сервиса</td></tr>
+          <tr><td><strong>Code</strong></td><td>Классы и зависимости</td><td>Редко, точечно; обычно генерируется</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Для видео-платформы Context — пользователь, приложение, CDN, платёжный провайдер,
+    DRM. Container — API, playback, transcoding, Kafka, Postgres, Redis. Component —
+    внутри playback: сессии, лицензии, выбор качества. Code — только там, где
+    действительно нужно объяснить сложную связку.</p>
+
+    <div class="callout warn">
+      <strong>Не начинай с Code.</strong> Диаграмма классов устаревает быстрее всего и
+      мало что объясняет бизнесу. Начинай с Context и Container — они отвечают на
+      большинство вопросов.
+    </div>
+  </div>
+</section>
+
+<section id="adr">
+  <div class="wrap">
+    <h2><span class="badge">3</span> ADR: запись архитектурного решения</h2>
+
+    <p><strong>ADR</strong> (Architecture Decision Record) фиксирует одно решение:
+    контекст, варианты, выбор и последствия. Он не переписывается задним числом:
+    новое решение оформляют новым документом со ссылкой на предыдущий.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Поле</th><th>Что писать</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Название</strong></td><td>Коротко: «Хранить сессии просмотра в Redis»</td></tr>
+          <tr><td><strong>Статус</strong></td><td>Proposed, Accepted, Deprecated, Superseded</td></tr>
+          <tr><td><strong>Контекст</strong></td><td>Какая проблема, ограничения, силы</td></tr>
+          <tr><td><strong>Решение</strong></td><td>Что выбрали, одним абзацем</td></tr>
+          <tr><td><strong>Альтернативы</strong></td><td>Что рассматривали и почему отбросили</td></tr>
+          <tr><td><strong>Последствия</strong></td><td>Плюсы, минусы, риски, что придётся поддерживать</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+<pre class="cmd"># ADR-0012: Сессии просмотра в Redis
+
+Статус: Accepted
+Дата: 2026-03-01
+
+## Контекст
+Сессии нужны на всех инстансах playback, TTL 30 минут,
+данные терять при рестарте pod нельзя.
+
+## Решение
+Храним сессии в Redis с TTL и репликацией.
+
+## Альтернативы
+- Postgres: надёжно, но лишняя нагрузка на запись.
+- Локальная память: не работает между инстансами.
+
+## Последствия
++ Быстрый доступ и общий state.
+- Новая зависимость; нужен fallback при недоступности Redis.</pre>
+
+    <p>ADR полезен тем, что через год объясняет <strong>почему</strong>, а не только
+    <strong>что</strong>. Без него решение обрастает легендами, и кто-то обязательно
+    предложит «переписать на Postgres».</p>
+  </div>
+</section>
+
+<section id="diagrams">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Диаграммы как код</h2>
+
+    <p>Картинка в Confluence устаревает в тот же день. <strong>Diagrams-as-code</strong>
+    хранит схему текстом рядом с кодом: её можно ревьюить, диффить и рендерить в CI.
+    Mermaid, PlantUML и Structurizr дают такой подход.</p>
+
+<pre class="cmd">flowchart LR
+  User[Пользователь] --&gt; CDN
+  CDN --&gt; Playback[Playback API]
+  Playback --&gt; Catalog[Catalog]
+  Playback --&gt; DRM[DRM]
+  Playback --&gt; Kafka[(Kafka)]
+  Kafka --&gt; Analytics[Analytics]</pre>
+
+    <p>Плюсы: изменение схемы видно в MR, можно проверить ссылки и синтаксис, единый
+    стиль. Минусы: не все умеют читать разметку, для презентаций иногда нужен
+    редактируемый файл. Обычно совмещают: исходник в репозитории, экспорт для показа.</p>
+
+    <div class="callout">
+      <strong>Правило.</strong> У каждой диаграммы есть <strong>легенда</strong>,
+      <strong>дата</strong> и <strong>владелец</strong>. Без даты невозможно понять,
+      актуальна ли она.
+    </div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Процесс, при котором документация живёт</h2>
+
+    <ol>
+      <li><strong>Документ рядом с кодом.</strong> ADR и схемы — в репозитории сервиса,
+      а не в отдельной папке, которую никто не открывает.</li>
+      <li><strong>Обновление в том же MR.</strong> Изменил контракт или границу — поправил
+      документ. Это часть Definition of Done.</li>
+      <li><strong>Владелец.</strong> У документа есть человек или команда, отвечающая
+      за актуальность.</li>
+      <li><strong>Ревью.</strong> Документ проходит ревью как код: понятность, ссылки,
+      отсутствие противоречий.</li>
+      <li><strong>Автоматические проверки.</strong> Линтер ссылок, валидация Mermaid,
+      проверка, что упомянутые сервисы существуют.</li>
+      <li><strong>Ревизия.</strong> Раз в квартал — короткий обход: что устарело, что
+      удалить, что добавить.</li>
+    </ol>
+
+    <h3>Что кому показывать</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Читатель</th><th>Что ему нужно</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Бизнес</td><td>Context, ценность, ограничения, риски</td></tr>
+          <tr><td>Новый разработчик</td><td>Container, README, ключевые ADR</td></tr>
+          <tr><td>Команда сервиса</td><td>Component, контракты, события</td></tr>
+          <tr><td>Дежурный</td><td>Runbook, схема зависимостей, алерты</td></tr>
+          <tr><td>Безопасность</td><td>Потоки данных, границы доверия, PII</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>arc42</strong> — готовый каркас из 12 разделов: цели, ограничения, контекст,
+      решение, блоки, runtime, развёртывание, качество, риски. Можно взять не всё, а
+      нужные разделы. Главное — структура, а не объём.
+    </div>
+  </div>
+</section>
+
+<section id="mistakes">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Частые ошибки</h2>
+
+    <ul>
+      <li><strong>Документ на 40 страниц.</strong> Его никто не читает. Нужны короткие
+      адресные страницы.</li>
+      <li><strong>Нет решений, только схемы.</strong> Схема показывает «что», но не
+      объясняет «почему».</li>
+      <li><strong>Нет владельца.</strong> Через месяц никто не знает, можно ли верить
+      документу.</li>
+      <li><strong>Копия кода.</strong> Диаграмма классов, синхронизированная вручную,
+      устаревает первой.</li>
+      <li><strong>Смешение аудиторий.</strong> Бизнес и DevOps тонут в деталях друг друга.</li>
+      <li><strong>Документ в отрыве от процесса.</strong> Написали раз и забыли; при
+      изменении никто не обновляет.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Не документируй всё.</strong> Начинай с того, что чаще спрашивают: границы
+      сервисов, ключевые решения, схема развёртывания. Остальное — по мере надобности.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Зачем документировать архитектуру?</span></div>
+      <p class="a">«Чтобы объяснить решения и снять повторяющиеся вопросы: почему выбрали
+      технологию, где границы, что делать при сбое. Документация адресная: бизнесу —
+      контекст и риски, разработчикам — контейнеры и контракты, дежурным — runbook.
+      Она должна помогать принять решение, а не пересказывать код».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это карта города, а не фотография всех деревьев. Нужна, чтобы не плутать.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Что такое C4 и какие уровни он предлагает?</span></div>
+      <p class="a">«Context — система, пользователи и внешние зависимости. Container —
+      сервисы, базы, брокеры. Component — крупные части внутри контейнера. Code — классы,
+      которые обычно не рисуют вручную. Уровень выбирают по читателю: бизнесу достаточно
+      контекста, команде — контейнеров и компонентов».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Четыре высоты: город, район, дом, квартира. Не надо рисовать розетки, если
+        нужна карта города.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Что обязательно должно быть в ADR?</span></div>
+      <p class="a">«Контекст и проблема, само решение, рассмотренные альтернативы и
+      последствия: плюсы, минусы, риски. Плюс статус и дата. ADR не переписывают: новое
+      решение оформляют новым документом со ссылкой на предыдущий. Это сохраняет историю
+      мышления».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Почему так сделали, что ещё рассматривали и чем за это платим.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Зачем диаграммы как код?</span></div>
+      <p class="a">«Схема хранится текстом в репозитории: её видно в диффе, можно ревьюить
+      и рендерить в CI. Она не отрывается от кода и не теряет актуальность при изменении.
+      Минус — нужен инструмент и навык; для презентаций иногда делают экспорт».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Схема живёт рядом с кодом и меняется в том же MR, а не в чужой папке.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Как бороться с устареванием документации?</span></div>
+      <p class="a">«Держать рядом с кодом, обновлять в том же MR, включить в Definition of
+      Done, назначить владельца, проверять ссылки и синтаксис в CI, раз в квартал делать
+      ревизию. Плюс тест новичком: если он застревает, документ неполный».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Документ — часть изменения, а не отдельная задача раз в год.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Кому и что показывать?</span></div>
+      <p class="a">«Бизнесу — контекст, ценность и риски. Разработчикам — контейнеры,
+      контракты и ключевые ADR. Дежурным — runbook и схему зависимостей. Безопасности —
+      потоки данных и границы доверия. Один документ на всех не работает: у аудиторий
+      разные вопросы».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Каждому своя карта: водителю, пешеходу и грузовику нужны разные детали.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="archdoc1" data-id="archdoc1"><label for="archdoc1">Кому и зачем нужна архитектурная документация?</label></li>
+      <li><input type="checkbox" class="check-item" id="archdoc2" data-id="archdoc2"><label for="archdoc2">Назови четыре уровня C4 и объясни, когда какой нужен</label></li>
+      <li><input type="checkbox" class="check-item" id="archdoc3" data-id="archdoc3"><label for="archdoc3">Что входит в ADR и почему его не переписывают?</label></li>
+      <li><input type="checkbox" class="check-item" id="archdoc4" data-id="archdoc4"><label for="archdoc4">Почему diagrams-as-code удобнее картинки в Confluence?</label></li>
+      <li><input type="checkbox" class="check-item" id="archdoc5" data-id="archdoc5"><label for="archdoc5">Как встроить документацию в процесс, чтобы она не устаревала?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> документируй решения и границы, а не код.
+      Документ без владельца и процесса — исторический архив.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Архитектура» ·
+    <a href="DistributedSystems.html">Распределённые системы</a> ·
+    <a href="DistributedDebugging.html">Отладка распределённых систем</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

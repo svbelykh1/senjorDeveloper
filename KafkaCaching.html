@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kafka и стратегии кэширования — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Инфраструктура · неделя 8</p>
+    <h1>Kafka и стратегии кэширования</h1>
+    <p class="lead">
+      Партиции, consumer groups, offsets, retention и compaction — без магии.
+      Плюс Cache-Aside, Write-Through и Write-Behind: что выбрать для каталога видео
+      и как не устроить лавину на базу.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#kafka">Kafka</a></li>
+      <li><a href="#delivery">Доставка</a></li>
+      <li><a href="#cache">Кэш</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#mistakes">Ошибки</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Два разных инструмента</h2>
+
+    <p><strong>Kafka</strong> — распределённый журнал событий. Сообщения хранятся на диске
+    заданное время, их можно перечитать, а не только получить один раз. <strong>Кэш</strong>
+    — быстрый слой перед медленным источником: он снижает задержку и нагрузку, но не
+    является источником истины.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Kafka — архив видеонаблюдения: записи лежат, их можно пересмотреть. Кэш — записка
+      на холодильнике: быстро, удобно, но если её нет, идём в шкаф.
+    </div>
+
+    <p>На интервью Senior проверяют, понимаешь ли ты <strong>порядок</strong>,
+    <strong>дубли</strong>, <strong>перебалансировку</strong> и <strong>инвалидацию</strong>.
+    Это те места, где красивая схема ломается в проде.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Kafka даёт доставку и историю, но не «ровно один
+      раз» бесплатно. Кэш даёт скорость, но требует стратегии устаревания.
+    </div>
+  </div>
+</section>
+
+<section id="kafka">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Как устроена Kafka</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Понятие</th><th>Смысл</th><th>Что важно</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Topic</strong></td><td>Логический поток событий</td><td>Разделять по домену, а не по сервису</td></tr>
+          <tr><td><strong>Partition</strong></td><td>Единица порядка и параллелизма</td><td>Порядок гарантирован только внутри партиции</td></tr>
+          <tr><td><strong>Replication</strong></td><td>Копии партиции на разных брокерах</td><td>Фактор 3, min.insync.replicas</td></tr>
+          <tr><td><strong>Consumer group</strong></td><td>Группа потребителей одного топика</td><td>Одна партиция — один consumer в группе</td></tr>
+          <tr><td><strong>Offset</strong></td><td>Позиция consumer'а в партиции</td><td>Коммит после обработки, а не до</td></tr>
+          <tr><td><strong>Retention</strong></td><td>Срок или размер хранения</td><td>По времени или по объёму</td></tr>
+          <tr><td><strong>Compaction</strong></td><td>Хранит последнее значение по ключу</td><td>Для снапшотов состояния, не для всех событий</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Партиции и порядок</h3>
+    <p>Сообщения с одним ключом попадают в одну партицию и сохраняют порядок. Если
+    ключа нет, они распределяются по кругу, и порядок между ними не гарантирован.
+    <strong>Добавление партиции меняет маппинг ключей</strong> — старые события и новые
+    могут оказаться в разных местах. Планируй число партиций заранее.</p>
+
+    <h3>Rebalance</h3>
+    <p>Когда consumer входит или выходит из группы, партиции перераспределяются.
+    Во время rebalance обработка может приостановиться. Cooperative-sticky protocol
+    уменьшает простой, но полностью его не убирает. Поэтому consumer должен быть
+    готов к повторной обработке.</p>
+
+    <div class="callout warn">
+      <strong>Consumer lag</strong> — разница между последним сообщением и закоммиченным
+      offset. Это главная метрика здоровья: если lag растёт, потребители не успевают.
+    </div>
+  </div>
+</section>
+
+<section id="delivery">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Доставка, дубли и DLQ</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Режим</th><th>Что гарантирует</th><th>Цена</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>At-most-once</strong></td><td>Не более одного раза</td><td>Может потерять сообщение</td></tr>
+          <tr><td><strong>At-least-once</strong></td><td>Не менее одного раза</td><td>Возможны дубли</td></tr>
+          <tr><td><strong>Exactly-once</strong></td><td>Ровно один раз в рамках Kafka-транзакции</td><td>Сложно, дорого, не покрывает внешние системы</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>На практике выбирают <strong>at-least-once + идемпотентный consumer</strong>:
+    проверка `event_id` или unique constraint. Тогда повторная доставка не создаёт
+    дубль. <strong>Idempotent producer</strong> убирает дубли от ретраев продюсера, но
+    не заменяет идемпотентность бизнес-операции.</p>
+
+    <h3>DLQ и retry-топики</h3>
+    <p>Если сообщение не обработалось, его не стоит терять и не стоит блокировать
+    партицию бесконечными повторами. Используют retry-топик с задержкой и
+    <strong>DLQ</strong> (dead letter queue) для тех, что не удалось обработать после
+    нескольких попыток. DLQ нужно разбирать, иначе это свалка.</p>
+
+    <div class="callout">
+      <strong>Порядок и ретраи.</strong> Повтор в отдельном топике может обогнать
+      следующие сообщения. Если порядок критичен, либо блокируйте партицию до успеха,
+      либо проектируйте обработку так, чтобы порядок не был обязателен.
+    </div>
+  </div>
+</section>
+
+<section id="cache">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Стратегии кэширования</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Стратегия</th><th>Как работает</th><th>Плюс</th><th>Минус</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Cache-Aside</strong></td>
+            <td>Приложение читает кэш; при промахе идёт в БД и кладёт в кэш</td>
+            <td>Просто, кэшируем только нужное</td>
+            <td>Нужна инвалидация, возможен промах и лавина</td>
+          </tr>
+          <tr>
+            <td><strong>Read-Through</strong></td>
+            <td>Кэш сам загружает данные при промахе</td>
+            <td>Код приложения проще</td>
+            <td>Нужна интеграция кэша с источником</td>
+          </tr>
+          <tr>
+            <td><strong>Write-Through</strong></td>
+            <td>Пишем в кэш и в БД синхронно</td>
+            <td>Кэш всегда свежий</td>
+            <td>Запись медленнее</td>
+          </tr>
+          <tr>
+            <td><strong>Write-Behind</strong></td>
+            <td>Пишем в кэш, в БД — асинхронно</td>
+            <td>Быстрая запись</td>
+            <td>Риск потери при падении</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Инвалидация и TTL</h3>
+    <ul>
+      <li><strong>TTL</strong> — простой способ: данные устареют, но не навсегда.</li>
+      <li><strong>Инвалидация по событию</strong> — точнее: `VideoUpdated` удаляет ключ.</li>
+      <li><strong>Версионирование ключа</strong> — `video:42:v7`; старая версия сама
+      вытеснится.</li>
+      <li><strong>Негативное кэширование</strong> — кэшировать «не найдено» на короткий
+      срок, чтобы не долбить БД.</li>
+    </ul>
+
+    <h3>Лавина и горячие ключи</h3>
+    <p>Когда популярный ключ истёк, сотни запросов одновременно идут в БД. Лечится
+    <strong>singleflight</strong> (один запрос обновляет, остальные ждут),
+    <strong>stale-while-revalidate</strong> и <strong>jitter</strong> в TTL. Горячий
+    ключ дополнительно кэшируют локально или шардируют.</p>
+
+    <div class="callout warn">
+      <strong>Кэш не источник истины.</strong> Если БД потеряла данные, кэш не спасёт.
+      И наоборот: нельзя считать, что данные в кэше всегда правильные. Нужна стратегия
+      восстановления.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Практика: каталог видео</h2>
+
+    <p>Каталог читают в сотни раз чаще, чем меняют. Идеальный кандидат для
+    <strong>Cache-Aside</strong> с инвалидацией по событию.</p>
+
+    <ol>
+      <li><strong>Чтение:</strong> `GET /videos/42` → Redis → при промахе Postgres →
+      положить в Redis с TTL 5 минут.</li>
+      <li><strong>Запись:</strong> обновить Postgres, опубликовать `VideoUpdated` в Kafka.</li>
+      <li><strong>Инвалидация:</strong> consumer получает событие и удаляет
+      `video:42`; повторная доставка безопасна.</li>
+      <li><strong>Защита:</strong> singleflight на промах, jitter в TTL, негативный кэш
+      для удалённых видео.</li>
+      <li><strong>Наблюдаемость:</strong> hit ratio, latency, количество промахов,
+      consumer lag.</li>
+    </ol>
+
+<pre class="cmd">$key = "video:{$id}";
+$cached = $redis-&gt;get($key);
+
+if ($cached !== false) {
+    return json_decode($cached, true);
+}
+
+$video = $repository-&gt;find($id);          // Postgres
+$ttl = 300 + random_int(0, 30);           // jitter
+
+if ($video === null) {
+    $redis-&gt;setex($key, 30, 'null');      // негативный кэш
+    return null;
+}
+
+$redis-&gt;setex($key, $ttl, json_encode($video));
+
+return $video;</pre>
+
+    <div class="callout">
+      <strong>Что не кэшировать общим ключом:</strong> рекомендации, историю просмотров,
+      персональные подборки. Для них — ключ с `user_id` и короткий TTL либо отказ от
+      общего кэша.
+    </div>
+  </div>
+</section>
+
+<section id="mistakes">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Частые ошибки</h2>
+
+    <ul>
+      <li><strong>Kafka как база данных.</strong> Она хранит события ограниченное время,
+      а не обеспечивает произвольные запросы.</li>
+      <li><strong>Один consumer на всё.</strong> Падение останавливает обработку;
+      нужны группы, ретраи и DLQ.</li>
+      <li><strong>Коммит offset до обработки.</strong> Сообщение потеряется при сбое.</li>
+      <li><strong>Кэш без TTL и инвалидации.</strong> Данные устаревают навсегда.</li>
+      <li><strong>Локальный кэш в каждом pod.</strong> Разные пользователи видят разное;
+      нужен общий Redis или версионирование.</li>
+      <li><strong>Игнорировать stampede.</strong> Один истёкший ключ роняет БД.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Ответ для интервью.</strong> «Для каталога выбираю Cache-Aside: читаем
+      из Redis, при промахе — Postgres, запись инвалидирует ключ по событию. Consumer
+      идемпотентен, TTL с jitter, singleflight на промах. Kafka использую как транспорт
+      событий, а не как хранилище».
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Как устроен consumer group в Kafka?</span></div>
+      <p class="a">«Партиции топика распределяются между consumer'ами группы: одна
+      партиция — один consumer в группе. При добавлении consumer'а происходит rebalance
+      и партиции перераспределяются. Если партиций больше, лишние consumer'ы простаивают.
+      При добавлении партиции маппинг ключей меняется, поэтому число партиций планируют
+      заранее».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это бригада грузчиков: каждый вагон разгружает один, лишние ждут. Добавили
+        вагон — пересобрали бригаду.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>At-least-once и exactly-once: что реально достижимо?</span></div>
+      <p class="a">«At-least-once достижим и обычно достаточен, если consumer идемпотентен.
+      Exactly-once возможен внутри Kafka-транзакции, но не покрывает внешние системы:
+      запись в БД и отправку письма нельзя сделать атомарными одной транзакцией Kafka.
+      Поэтому на практике — at-least-once плюс дедупликация».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Легче сделать повтор безопасным, чем гарантировать единственную доставку.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Зачем retention и compaction?</span></div>
+      <p class="a">«Retention задаёт срок или размер хранения событий: старые удаляются.
+      Compaction оставляет последнее значение по каждому ключу и удаляет промежуточные.
+      Compaction удобен для снапшотов состояния, но не подходит для истории событий,
+      где важны все изменения. Выбор зависит от того, что потребитель хочет читать».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Retention — «сколько храним», compaction — «оставляем только последнюю
+        версию по ключу».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Чем Cache-Aside отличается от Write-Through и Write-Behind?</span></div>
+      <p class="a">«Cache-Aside: приложение само читает кэш и при промахе идёт в БД.
+      Write-Through пишет в кэш и БД синхронно — кэш свежий, запись медленнее.
+      Write-Behind пишет в кэш и откладывает запись в БД — быстро, но есть риск потери
+      при падении. Для каталога обычно Cache-Aside, для счётчиков — иногда Write-Behind».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Cache-Aside — «сходил в шкаф, если записки нет». Write-Through — «записал
+        сразу в два места». Write-Behind — «записал на стикер, в журнал потом».</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Что такое cache stampede и как его избежать?</span></div>
+      <p class="a">«Это лавина запросов в БД после истечения популярного ключа. Лечится
+      singleflight — один запрос обновляет, остальные ждут; stale-while-revalidate —
+      отдаём старое, пока обновляется; jitter в TTL, чтобы ключи не истекали одновременно.
+      Плюс локальный кэш для горячих ключей».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Все ломанулись в шкаф, потому что записка исчезла. Надо пустить одного, а
+        остальным дать подождать.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Какую стратегию кэша выбрать для каталога видео?</span></div>
+      <p class="a">«Cache-Aside с TTL и инвалидацией по событию `VideoUpdated`.
+      Чтений много, записей мало, данные терпимы к короткому устареванию. TTL с jitter,
+      singleflight на промах, негативный кэш для отсутствующих видео. Персональные
+      подборки кэширую отдельно по `user_id` или не кэширую общим ключом».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Читаем из быстрого кэша, при промахе — из базы; при изменении видео ключ
+        удаляем.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="kafka1" data-id="kafka1"><label for="kafka1">Как партиции и consumer groups связаны с параллелизмом?</label></li>
+      <li><input type="checkbox" class="check-item" id="kafka2" data-id="kafka2"><label for="kafka2">Что произойдёт при добавлении партиции и consumer'а?</label></li>
+      <li><input type="checkbox" class="check-item" id="kafka3" data-id="kafka3"><label for="kafka3">Почему at-least-once плюс идемпотентность лучше exactly-once?</label></li>
+      <li><input type="checkbox" class="check-item" id="kafka4" data-id="kafka4"><label for="kafka4">Сравни Cache-Aside, Write-Through и Write-Behind</label></li>
+      <li><input type="checkbox" class="check-item" id="kafka5" data-id="kafka5"><label for="kafka5">Как защитить кэш от лавины и устаревших данных?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> Kafka — журнал с порядком внутри партиции,
+      кэш — ускоритель с правилами устаревания. Дубли делают безопасными, а не
+      невозможными.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Инфраструктура» ·
+    <a href="ContainersKubernetes.html">Docker и Kubernetes</a> ·
+    <a href="CDNEdge.html">CDN и edge computing</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>
