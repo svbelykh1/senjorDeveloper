@@ -77,6 +77,14 @@ TechDocumentation.html Неделя 1: README, ADR, runbook, OpenAPI
 QualityAssurance.html Неделя 2: тесты, нагрузка, SonarQube, CI/CD
 Algorithms.html        Блок 4: структуры, сортировка, rate limiter, профилирование
 Patterns.html          Блок 5: ООП vs ФП, GoF, DI, feature toggles
+LegacyScenarios.html   Неделя 3: legacy и сложные сценарии
+AIQuality.html         Неделя 3: ИИ в процессах качества
+RAGPrompting.html      Неделя 3: RAG и Chain-of-Thought
+PrivacyGDPR.html       Неделя 3: GDPR и приватность данных
+DDDCleanArchitecture.html  Неделя 5: DDD и Clean Architecture
+ArchitectureStyles.html    Неделя 5: MVC, CQRS, Saga, Event Sourcing
+Resilience.html        Неделя 6: отказоустойчивость и согласованность
+Observability.html     Неделя 6: метрики, логи, трейсы
 assets/                Общие стили и скрипты сайта
 docs/                  Служебные файлы:
   PROJECT-NOTES.md     Справочник проекта: правила и дизайн-система

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDD и Clean Architecture — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Архитектура · неделя 5</p>
+    <h1>DDD и Clean Architecture — простыми словами</h1>
+    <p class="lead">
+      Как разложить сложный домен на понятные части, где провести границы контекстов
+      и зачем бизнес-логику отделяют от фреймворка и базы. С примерами для видео-платформы
+      и без культа «слоёв ради слоёв».
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#contexts">Контексты</a></li>
+      <li><a href="#blocks">Блоки DDD</a></li>
+      <li><a href="#layers">Слои</a></li>
+      <li><a href="#practice">Практика</a></li>
+      <li><a href="#mistakes">Ошибки</a></li>
+      <li><a href="#check">Проверка</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Зачем это нужно</h2>
+
+    <p><strong>DDD</strong> (Domain-Driven Design) — способ проектировать систему вокруг
+    <strong>предметной области</strong> и её языка, а не вокруг таблиц базы или фреймворка.
+    <strong>Clean Architecture</strong> — способ расположить код так, чтобы бизнес-правила
+    не зависели от Laravel, Postgres и Kafka и их можно было тестировать отдельно.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      DDD — это чертёж здания по назначению комнат: кухня, спальня, санузел. Clean
+      Architecture — несущие стены и коммуникации, которые не переделывают при каждой
+      смене мебели. Вместе они дают план, который переживает ремонт.
+    </div>
+
+    <p>На Senior-интервью не требуют знать все паттерны Эванса. Проверяют понимание:
+    <strong>где проходят границы</strong>, <strong>какие термины общие с бизнесом</strong>,
+    <strong>что является агрегатом</strong> и <strong>как изолировать домен от инфраструктуры</strong>.
+    И обязательно — когда DDD <strong>не нужен</strong>.</p>
+
+    <div class="callout warn">
+      <strong>DDD — не серебряная пуля.</strong> Для CRUD-сервиса из трёх таблиц
+      полноценный DDD добавит слоёв и мапперов без пользы. Он окупается там, где правил
+      много, они меняются и цена ошибки высока: биллинг, права, каталог, воспроизведение.
+    </div>
+  </div>
+</section>
+
+<section id="contexts">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Домен, подобласти и ограниченные контексты</h2>
+
+    <p><strong>Домен</strong> — вся область бизнеса: видео-платформа. <strong>Подобласти</strong>
+    — её крупные куски: каталог, воспроизведение, транскодинг, биллинг, рекомендации.
+    <strong>Bounded context</strong> — явная граница, внутри которой слово имеет одно
+    значение и действует одна модель.</p>
+
+    <h3>Почему одно слово — разные вещи</h3>
+    <p>Слово «видео» в каталоге — это карточка с названием, обложкой и жанром. В транскодинге —
+    исходный файл, профили и очереди. В биллинге — единица тарификации. Если свести всё
+    в один класс `Video`, получится объект на двести полей, который никто не понимает.
+    Контексты разделяют эти значения.</p>
+
+    <div class="flow">
+      <span class="node key">Catalog</span><span class="arrow">→</span>
+      <span class="node">Playback</span><span class="arrow">→</span>
+      <span class="node">Transcoding</span><span class="arrow">→</span>
+      <span class="node">Billing</span>
+    </div>
+    <p class="flow-note">Один и тот же фильм проходит через контексты, но в каждом
+    у него своя модель и свои правила.</p>
+
+    <h3>Ubiquitous language</h3>
+    <p><strong>Единый язык</strong> — термины бизнеса совпадают с именами в коде и в
+    разговоре. Если менеджер говорит «подписка», а в коде это `user_plan_link`, мост
+    теряется. Внутри контекста заводят словарь: «подписка», «план», «период», «продление» —
+    и используют эти слова везде.</p>
+
+    <h3>Карта контекстов</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Отношение</th><th>Что значит</th><th>Пример</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Shared Kernel</strong></td><td>Общее ядро, которое меняют вместе</td><td>Общие деньги и идентификаторы</td></tr>
+          <tr><td><strong>Customer / Supplier</strong></td><td>Один контекст зависит от другого по договорённости</td><td>Playback зависит от Catalog</td></tr>
+          <tr><td><strong>Conformist</strong></td><td>Зависимый принимает модель поставщика без перевода</td><td>Внутренний сервис следует чужой схеме</td></tr>
+          <tr><td><strong>Anticorruption Layer</strong></td><td>Переводчик, защищающий домен от чужой модели</td><td>Адаптер к внешнему платежному API</td></tr>
+          <tr><td><strong>Open Host Service</strong></td><td>Публичный контракт для многих потребителей</td><td>API каталога</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Практическое правило.</strong> Границу контекста часто видно по тому, где
+      меняются слова и правила. Если две команды спорят о значении термина — возможно,
+      это два контекста, а не один.
+    </div>
+  </div>
+</section>
+
+<section id="blocks">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Блоки DDD: сущности, значения, агрегаты</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Блок</th><th>Смысл</th><th>Пример</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Entity</strong></td><td>Важна идентичность, состояние может меняться</td><td>Video, User, Subscription</td></tr>
+          <tr><td><strong>Value Object</strong></td><td>Важно значение, объект неизменяемый</td><td>Money, Duration, Resolution</td></tr>
+          <tr><td><strong>Aggregate</strong></td><td>Граница согласованности: изменения идут через корень</td><td>Subscription + платежи</td></tr>
+          <tr><td><strong>Aggregate Root</strong></td><td>Единственная точка входа в агрегат</td><td>Subscription</td></tr>
+          <tr><td><strong>Domain Event</strong></td><td>Факт, который уже произошёл</td><td>VideoPublished, SubscriptionRenewed</td></tr>
+          <tr><td><strong>Repository</strong></td><td>Доступ к агрегатам как к коллекции</td><td>VideoRepository</td></tr>
+          <tr><td><strong>Domain Service</strong></td><td>Логика, не принадлежащая одной сущности</td><td>Расчёт доступного качества</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Value Object: деньги — не число</h3>
+    <p>Сумма без валюты — источник багов. Деньги, период, разрешение видео — это значения,
+    которые нельзя «просто сложить». Делаем неизменяемый объект с проверками в конструкторе.</p>
+
+<pre class="cmd">final readonly class Money
+{
+    public function __construct(
+        public int $amount,
+        public string $currency,
+    ) {
+        if ($amount &lt; 0) {
+            throw new InvalidArgumentException('amount must be positive');
+        }
+    }
+
+    public function add(self $other): self
+    {
+        if ($this->currency !== $other-&gt;currency) {
+            throw new DomainException('currency mismatch');
+        }
+
+        return new self($this-&gt;amount + $other-&gt;amount, $this-&gt;currency);
+    }
+}</pre>
+
+    <h3>Агрегат: одна транзакция — один агрегат</h3>
+    <p>Агрегат защищает инварианты. Например, нельзя продлить отменённую подписку.
+    Все изменения идут через корень, а сохраняется агрегат целиком. Если правило
+    затрагивает два агрегата, это уже не одна транзакция, а событие и согласованность
+    в процессе.</p>
+
+<pre class="cmd">final class Subscription
+{
+    private SubscriptionStatus $status = SubscriptionStatus::Active;
+
+    public function __construct(
+        private SubscriptionId $id,
+        private UserId $userId,
+        private Period $period,
+    ) {}
+
+    public function renew(Period $next): void
+    {
+        if ($this-&gt;status === SubscriptionStatus::Cancelled) {
+            throw new DomainException('cancelled subscription cannot be renewed');
+        }
+
+        $this-&gt;period = $next;
+    }
+}</pre>
+
+    <div class="callout">
+      <strong>Как выбрать границу агрегата.</strong> Спроси: «что должно быть верно
+      в один момент времени?» Если правило требует одновременной правки двух объектов,
+      они, скорее всего, один агрегат. Если можно подождать и согласовать событием —
+      это разные агрегаты.
+    </div>
+  </div>
+</section>
+
+<section id="layers">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Clean Architecture: правило зависимостей</h2>
+
+    <p>Главная идея — <strong>зависимости направлены внутрь</strong>. Домен не знает,
+    что его вызывают из HTTP-контроллера, хранят в Postgres и отправляют в Kafka.
+    Он описывает правила, а внешний мир подключается через интерфейсы.</p>
+
+    <div class="flow">
+      <span class="node">Frameworks &amp; drivers</span><span class="arrow">→</span>
+      <span class="node">Interface adapters</span><span class="arrow">→</span>
+      <span class="node">Use cases</span><span class="arrow">→</span>
+      <span class="node key">Entities / Domain</span>
+    </div>
+    <p class="flow-note">Стрелки — направление зависимостей. Домен в центре и не импортирует
+    ничего из внешних слоёв.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Слой</th><th>Что содержит</th><th>Чего там нет</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Domain</strong></td><td>Сущности, значения, агрегаты, события, интерфейсы репозиториев</td><td>SQL, HTTP, Laravel, Kafka</td></tr>
+          <tr><td><strong>Application</strong></td><td>Сценарии: опубликовать видео, продлить подписку</td><td>Бизнес-правил домена и деталей инфраструктуры</td></tr>
+          <tr><td><strong>Interface adapters</strong></td><td>Контроллеры, презентеры, адаптеры репозиториев</td><td>Сложной доменной логики</td></tr>
+          <tr><td><strong>Infrastructure</strong></td><td>Laravel, PDO, Redis, Kafka, внешние API</td><td>Правил предметной области</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Порты и адаптеры</h3>
+    <p><strong>Порт</strong> — интерфейс, который объявляет домен или приложение.
+    <strong>Адаптер</strong> — реализация порта во внешнем мире. Домен говорит
+    «мне нужен репозиторий видео», инфраструктура отвечает «вот Postgres». Замена
+    Postgres на другую базу не трогает домен.</p>
+
+<pre class="cmd">src/
+  Catalog/
+    Domain/
+      Video.php
+      VideoId.php
+      VideoRepository.php      // порт
+      VideoPublished.php       // доменное событие
+    Application/
+      PublishVideo/
+        PublishVideoHandler.php
+    Infrastructure/
+      Persistence/
+        PostgresVideoRepository.php   // адаптер
+      Http/
+        PublishVideoController.php</pre>
+
+    <p>Сценарий приложения тонкий: загрузить агрегат, вызвать доменный метод, сохранить,
+    опубликовать событие. Бизнес-правило «нельзя опубликовать удалённое видео» живёт
+    в домене, а не в контроллере.</p>
+
+    <div class="callout">
+      <strong>Проверка архитектуры.</strong> Если доменный класс импортирует `Illuminate`,
+      `PDO` или `RdKafka`, граница протекла. Это ловится статическим анализом и
+      архитектурными тестами.
+    </div>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Практика: домен видео-платформы</h2>
+
+    <p>Выделяем контексты и для каждого — свою модель. Не пытаемся сделать один
+    универсальный `Video` на все случаи.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Контекст</th><th>Ключевые понятия</th><th>События</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Catalog</strong></td><td>Видео, жанр, доступность, обложка</td><td>VideoPublished, VideoUnpublished</td></tr>
+          <tr><td><strong>Playback</strong></td><td>Сессия просмотра, качество, DRM, позиция</td><td>PlaybackStarted, PlaybackHeartbeat</td></tr>
+          <tr><td><strong>Transcoding</strong></td><td>Задача, исходный файл, профиль, статус</td><td>TranscodeRequested, TranscodeCompleted</td></tr>
+          <tr><td><strong>Billing</strong></td><td>Подписка, план, период, платёж</td><td>SubscriptionRenewed, PaymentFailed</td></tr>
+          <tr><td><strong>Recommendations</strong></td><td>Профиль интересов, история</td><td>RecommendationServed</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Агрегаты и границы</h3>
+    <ul>
+      <li><strong>Video</strong> в каталоге — агрегат: метаданные и статус публикации
+      меняются вместе.</li>
+      <li><strong>ViewSession</strong> в playback — отдельный агрегат: позиция и качество
+      не должны блокировать каталог.</li>
+      <li><strong>Subscription</strong> в биллинге — агрегат: период и статус подписки
+      согласованы.</li>
+      <li><strong>TranscodeJob</strong> — агрегат: статус и попытки обработки.</li>
+    </ul>
+
+    <h3>Как связать контексты</h3>
+    <p>Каталог публикует `VideoPublished`, транскодинг запускает обработку, playback
+    получает доступные качества, биллинг проверяет право на просмотр. Связь — через
+    события и явные контракты, а не через общую таблицу.</p>
+
+    <div class="callout">
+      <strong>Артефакт недели.</strong> ADR с границами контекстов и диаграмма: какие
+      контексты есть, кто от кого зависит, какие события пересекают границу. Этого
+      достаточно, чтобы обсуждать архитектуру на интервью.
+    </div>
+  </div>
+</section>
+
+<section id="mistakes">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Частые ошибки</h2>
+
+    <ul>
+      <li><strong>DDD ради DDD.</strong> Пять слоёв и мапперы для CRUD-формы. Сложность
+      выросла, правил не прибавилось.</li>
+      <li><strong>Анемичная модель.</strong> В классах только геттеры и сеттеры, а правила
+      размазаны по сервисам. Это уже не DDD, а данные сбоку.</li>
+      <li><strong>Гигантский агрегат.</strong> Внутрь сложили всё, что связано. Теперь
+      любая правка блокирует всех и требует длинной транзакции.</li>
+      <li><strong>Доменные события как интеграционные.</strong> Внутреннее событие
+      улетает наружу без стабильного контракта и версии. Потребители ломаются при
+      рефакторинге.</li>
+      <li><strong>Утечка ORM.</strong> Репозиторий возвращает Eloquent-модель, и домен
+      начинает зависеть от фреймворка.</li>
+      <li><strong>Слои ради слоёв.</strong> Контроллер вызывает сервис, сервис — менеджер,
+      менеджер — хелпер, и всё это ради одного `SELECT`.</li>
+    </ul>
+
+    <div class="two">
+      <div class="plus">
+        <b>Когда DDD окупается</b>
+        Много бизнес-правил, частые изменения, разные термины у команд, высокая цена
+        ошибки, долгая жизнь продукта.
+      </div>
+      <div class="minus">
+        <b>Когда проще CRUD</b>
+        Мало правил, простая админка, короткий срок жизни, небольшой домен. Здесь
+        достаточно аккуратных сервисов и тестов.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Что такое bounded context и как его выделить?</span></div>
+      <p class="a">«Это граница, внутри которой термины и модель имеют одно значение.
+      Выделяю по смене языка и правил: если в каталоге «видео» — карточка, а в транскодинге —
+      файл и профили, это разные контексты. Помогают карта зависимостей, интервью с
+      бизнесом и анализ того, где чаще меняются правила. Границы не должны совпадать
+      с командами один к одному, но часто коррелируют».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это комнаты в доме: в каждой свои правила и свой смысл слов. Не надо делать
+        одну комнату на всё.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Чем Entity отличается от Value Object?</span></div>
+      <p class="a">«У сущности важна идентичность: два видео с одинаковым названием —
+      разные видео. У значения важна только величина: две суммы 100 рублей равны, и
+      объект неизменяем. Деньги, период, разрешение — value objects с проверками в
+      конструкторе. Это убирает класс ошибок вроде сложения рублей с долларами».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Сущность — «кто это», значение — «сколько это». Сумму можно заменить новой,
+        а пользователя с тем же именем — нельзя.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Что такое агрегат и как выбрать его границу?</span></div>
+      <p class="a">«Агрегат — граница согласованности, изменения идут через корень, одна
+      транзакция — один агрегат. Границу выбираю по инвариантам: что должно быть верно
+      одновременно. Если правило требует правки двух объектов в один момент, это один
+      агрегат; если можно согласовать событием — разные. Слишком крупный агрегат создаёт
+      блокировки и мешает масштабированию».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Это неделимая сделка: либо все изменения внутри согласованы, либо ничего.
+        Всё, что можно досогласовать потом, выносим наружу.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>В чём главное правило Clean Architecture?</span></div>
+      <p class="a">«Зависимости направлены внутрь: домен не знает про фреймворк, БД и
+      брокер. Внешние слои зависят от домена, а домен общается с миром через интерфейсы-
+      порты, которые реализуют адаптеры. Это позволяет тестировать правила без
+      инфраструктуры и менять детали, не трогая бизнес-логику».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Правила в центре, инструменты снаружи. Замена базы — это замена адаптера,
+        а не переписывание бизнеса.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Когда DDD не нужен?</span></div>
+      <p class="a">«Когда домен простой и правил мало: CRUD-админка, небольшой сервис,
+      короткий срок жизни. Полноценные слои и агрегаты добавят стоимость без выгоды.
+      В таких местах достаточно аккуратных сервисов, валидации и тестов. DDD вводят
+      там, где сложность правил и цена ошибки оправдывают вложения».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Не надо строить метро в деревне. Для трёх таблиц хватит простого кода.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Какие ошибки чаще всего допускают при DDD?</span></div>
+      <p class="a">«Анемичная модель, гигантские агрегаты, доменные события без контракта,
+      утечка ORM в домен и слои ради слоёв. Ещё — попытка применить DDD к простому CRUD.
+      Признак проблемы: бизнес-правила живут в контроллерах и сервисах, а классы домена
+      только переносят данные».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Самая частая ошибка — сделать много умных слов и ни одного правила в домене.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="ddd1" data-id="ddd1"><label for="ddd1">Что такое bounded context и как понять, где проходит граница?</label></li>
+      <li><input type="checkbox" class="check-item" id="ddd2" data-id="ddd2"><label for="ddd2">Чем Entity отличается от Value Object на примере денег?</label></li>
+      <li><input type="checkbox" class="check-item" id="ddd3" data-id="ddd3"><label for="ddd3">Как выбрать границу агрегата и что такое инвариант?</label></li>
+      <li><input type="checkbox" class="check-item" id="ddd4" data-id="ddd4"><label for="ddd4">Сформулируй правило зависимостей Clean Architecture</label></li>
+      <li><input type="checkbox" class="check-item" id="ddd5" data-id="ddd5"><label for="ddd5">Когда DDD вредит и что выбрать вместо него?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> DDD — про язык и границы, Clean Architecture —
+      про направление зависимостей. Вместе они делают сложные правила независимыми от
+      инструментов.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Архитектура» ·
+    <a href="ArchitectureStyles.html">MVC, CQRS, Saga, Event Sourcing</a> ·
+    <a href="Resilience.html">Отказоустойчивость и согласованность</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>

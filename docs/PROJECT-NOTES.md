@@ -44,6 +44,14 @@ Project1/
 ├── QualityAssurance.html   материалы недели 2
 ├── Algorithms.html         компетенция 4: структуры и алгоритмы
 ├── Patterns.html           компетенция 5: паттерны, ООП vs ФП, DI
+├── LegacyScenarios.html    неделя 3: legacy и сложные сценарии
+├── AIQuality.html          неделя 3: ИИ в процессах качества
+├── RAGPrompting.html       неделя 3: RAG и Chain-of-Thought
+├── PrivacyGDPR.html        неделя 3: GDPR и приватность
+├── DDDCleanArchitecture.html  неделя 5: DDD и Clean Architecture
+├── ArchitectureStyles.html    неделя 5: MVC, CQRS, Saga, Event Sourcing
+├── Resilience.html         неделя 6: отказоустойчивость и согласованность
+├── Observability.html      неделя 6: метрики, логи, трейсы
 ├── assets/
 │   ├── site.css            общий дизайн всех страниц
 │   ├── theme.js            тема до отрисовки (без вспышки)
@@ -74,6 +82,14 @@ Project1/
 | `QualityAssurance.html` | Компетенция 2: пирамида тестов, integration-тесты с Postgres и Kafka, нагрузочные тесты и метрики, JMeter/Gatling, SonarQube и Quality Gate, рефакторинг, CI/CD и метрики процесса |
 | `Algorithms.html` | Компетенция 4: сложность O(n), структуры данных, сортировка и поиск, rate limiter, профилирование PHP, LRU-кэш |
 | `Patterns.html` | Компетенция 5: ООП vs ФП, паттерны GoF, IoC/DI, feature toggles, баланс переиспользования и сложности |
+| `LegacyScenarios.html` | Компетенция 2, неделя 3: оценка legacy, characterization-тесты, швы, Strangler Fig, конкурентность и частичные сбои |
+| `AIQuality.html` | Компетенция 3: ИИ в тестах, ревью и разборе инцидентов, встраивание в CI, риски и метрики |
+| `RAGPrompting.html` | Компетенция 3: RAG-пайплайн, метрики поиска, Chain-of-Thought, структура промптов |
+| `PrivacyGDPR.html` | Компетенция 3: принципы GDPR, права субъекта, retention и удаление, PII в LLM, действия при утечке |
+| `DDDCleanArchitecture.html` | Компетенция 6: bounded contexts, строительные блоки DDD, Clean Architecture, порты и адаптеры, домен видео |
+| `ArchitectureStyles.html` | Компетенция 6: MVC/MVP/MVVM, CQRS, Event Sourcing, Pub-Sub, Saga, Microkernel, сравнение стилей |
+| `Resilience.html` | Компетенция 6: timeout, retry, circuit breaker, fallback, bulkhead, конкурентность, Saga vs 2PC, видео-пайплайн |
+| `Observability.html` | Компетенция 6: метрики, логи, трейсы, golden signals, SLO, требования к логам и безопасность |
 | `assets/site.css` | Общая дизайн-система: палитра, каркас, компоненты страниц и главной |
 | `assets/theme.js` | Ранняя установка темы из localStorage |
 | `assets/site.js` | Переключатель темы, сохранение чекбоксов, счётчики `0 / N` |
@@ -162,7 +178,9 @@ Project1/
 
 ID чекбоксов уникальны по страницам: `w1…w12`, `s1…s5`, `a1…a8` в плане, `jq1…jq6`,
 `sk1…sk5`, `ds1…ds5`, `gt1…gt5`, `gl1…gl5`, `doc1…doc5`, `qa1…qa5`, `alg1…alg5`,
-`pat1…pat5` в материалах. Новые страницы продолжают эту схему своим префиксом.
+`pat1…pat5`, `lg1…lg5`, `aiq1…aiq5`, `rag1…rag5`, `gdpr1…gdpr5`, `ddd1…ddd5`,
+`style1…style5`, `res1…res5`, `obs1…obs5` в материалах. Новые страницы продолжают
+эту схему своим префиксом.
 
 ## Правила работы
 
@@ -217,12 +235,10 @@ node --check assets\home.js
 ## Следующие темы
 
 - По запросу — ветвление в команде из 8 человек: `git flow`, trunk-based, release-ветки.
-- Неделя 3 — ИИ и сложные сценарии качества: legacy, ИИ в контроле качества, RAG и
-  Chain-of-Thought, GDPR. Алгоритмическая часть уже закрыта `Algorithms.html`.
-- Недели 5–7 — архитектура: DDD, Clean Architecture, MVC/MVVM/CQRS/Saga,
-  границы сервисов, ADR и диаграммы контекстов.
-- Далее — недели 8–12: инфраструктура и Kafka, API, безопасность, базы данных,
-  mock-интервью.
+- Неделя 7 — документирование архитектуры, распределённые системы, LB и sidecar,
+  отладка распределённых систем, балансировщики и прокси.
+- Недели 8–9 — инфраструктура, Cloud, Kafka, протоколы и API.
+- Далее — недели 10–12: безопасность, базы данных, mock-интервью.
 
 ## Открытые вопросы к пользователю
 

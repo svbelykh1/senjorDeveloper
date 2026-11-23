@@ -150,10 +150,10 @@
             <td>Качество + ИИ + алгоритмы</td>
             <td>
               <ol class="topics">
-                <li>Legacy и сложные сценарии</li>
-                <li>ИИ в процессах качества</li>
-                <li>RAG-промпты и Chain-of-Thought</li>
-                <li>GDPR и приватность данных</li>
+                <li><a class="topic noarrow" href="LegacyScenarios.html">Legacy и сложные сценарии</a></li>
+                <li><a class="topic noarrow" href="AIQuality.html">ИИ в процессах качества</a></li>
+                <li><a class="topic noarrow" href="RAGPrompting.html">RAG-промпты и Chain-of-Thought</a></li>
+                <li><a class="topic noarrow" href="PrivacyGDPR.html">GDPR и приватность данных</a></li>
                 <li><a class="topic noarrow" href="Algorithms.html">Деревья и списки, rate limiting, профилирование</a></li>
               </ol>
             </td>
@@ -182,8 +182,8 @@
             <td>
               <ol class="topics">
                 <li><a class="topic noarrow" href="Patterns.html#balance">Баланс переиспользования и сложности</a></li>
-                <li>DDD и Clean Architecture</li>
-                <li>MVC / MVVM / MVP / CQRS / Saga / Pub-Sub / Event Sourcing / Microkernel — различия и цена</li>
+                <li><a class="topic noarrow" href="DDDCleanArchitecture.html">DDD и Clean Architecture</a></li>
+                <li><a class="topic noarrow" href="ArchitectureStyles.html">MVC / MVVM / MVP / CQRS / Saga / Pub-Sub / Event Sourcing / Microkernel — различия и цена</a></li>
               </ol>
             </td>
             <td>Спроектировать домен: каталог видео, сессии просмотра, биллинг. Выделить bounded contexts</td>
@@ -194,10 +194,10 @@
             <td>Архитектура</td>
             <td>
               <ol class="topics">
-                <li>Паттерны отказоустойчивости: rate limiting, circuit breaker, timeout, retry, fallback, bulkhead</li>
-                <li>Concurrency и согласованность</li>
-                <li>Наблюдаемость</li>
-                <li>Требования к логам и безопасности</li>
+                <li><a class="topic noarrow" href="Resilience.html">Паттерны отказоустойчивости: rate limiting, circuit breaker, timeout, retry, fallback, bulkhead</a></li>
+                <li><a class="topic noarrow" href="Resilience.html#consistency">Concurrency и согласованность</a></li>
+                <li><a class="topic noarrow" href="Observability.html">Наблюдаемость</a></li>
+                <li><a class="topic noarrow" href="Observability.html#logging">Требования к логам и безопасности</a></li>
               </ol>
             </td>
             <td>Видео-пайплайн: ingest → transcode → package → CDN → playback. Saga + Circuit Breaker. Prometheus/Grafana, логи</td>
@@ -327,14 +327,16 @@
           <li><a class="topic noarrow" href="QualityAssurance.html">Как тестировать взаимодействие микросервисов? Что закрывает integration-тест, а что — contract-тест?</a></li>
           <li><a class="topic noarrow" href="QualityAssurance.html">Как настроить Quality Gate, чтобы он не мешал, но ловил регресс?</a></li>
           <li><a class="topic noarrow" href="QualityAssurance.html">Как убедить команду, что технический долг пора гасить?</a></li>
+          <li><a class="topic noarrow" href="LegacyScenarios.html">Как безопасно менять legacy: с чего начать и как не сломать прод?</a></li>
         </ul>
       </div>
 
       <div class="card">
         <h3>Инструменты ИИ</h3>
         <ul>
-          <li>Как декомпозируешь задачу для LLM? Что такое RAG и зачем он нужен?</li>
-          <li>Какие данные нельзя отправлять в модель? Что требует GDPR?</li>
+          <li><a class="topic noarrow" href="RAGPrompting.html">Как декомпозируешь задачу для LLM? Что такое RAG и зачем он нужен?</a></li>
+          <li><a class="topic noarrow" href="AIQuality.html">Как использовать ИИ в ревью и тестах, не потеряв качество?</a></li>
+          <li><a class="topic noarrow" href="PrivacyGDPR.html">Какие данные нельзя отправлять в модель? Что требует GDPR?</a></li>
         </ul>
       </div>
 
@@ -359,10 +361,13 @@
       <div class="card">
         <h3>Архитектура</h3>
         <ul>
-          <li>Saga vs two-phase commit — когда что?</li>
-          <li>Circuit breaker, retry, timeout, bulkhead: как взаимодействуют и где легко сделать хуже?</li>
-          <li>Как обеспечиваешь согласованность при конкурентном доступе?</li>
-          <li>Как логировать, не нарушая требования безопасности?</li>
+          <li><a class="topic noarrow" href="DDDCleanArchitecture.html">Что такое bounded context и как его выделить? Где проходят границы агрегатов?</a></li>
+          <li><a class="topic noarrow" href="ArchitectureStyles.html">Чем CQRS отличается от Event Sourcing и когда это оправдано?</a></li>
+          <li><a class="topic noarrow" href="Resilience.html#consistency">Saga vs two-phase commit — когда что?</a></li>
+          <li><a class="topic noarrow" href="Resilience.html#patterns">Circuit breaker, retry, timeout, bulkhead: как взаимодействуют и где легко сделать хуже?</a></li>
+          <li><a class="topic noarrow" href="Resilience.html#consistency">Как обеспечиваешь согласованность при конкурентном доступе?</a></li>
+          <li><a class="topic noarrow" href="Observability.html">Как построить SLO и не утонуть в алертах?</a></li>
+          <li><a class="topic noarrow" href="Observability.html#logging">Как логировать, не нарушая требования безопасности?</a></li>
         </ul>
       </div>
 

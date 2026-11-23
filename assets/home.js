@@ -26,7 +26,15 @@
     docs: ['doc1', 'doc2', 'doc3', 'doc4', 'doc5'],
     quality: ['qa1', 'qa2', 'qa3', 'qa4', 'qa5'],
     algorithms: ['alg1', 'alg2', 'alg3', 'alg4', 'alg5'],
-    patterns: ['pat1', 'pat2', 'pat3', 'pat4', 'pat5']
+    patterns: ['pat1', 'pat2', 'pat3', 'pat4', 'pat5'],
+    legacy: ['lg1', 'lg2', 'lg3', 'lg4', 'lg5'],
+    aiquality: ['aiq1', 'aiq2', 'aiq3', 'aiq4', 'aiq5'],
+    rag: ['rag1', 'rag2', 'rag3', 'rag4', 'rag5'],
+    gdpr: ['gdpr1', 'gdpr2', 'gdpr3', 'gdpr4', 'gdpr5'],
+    ddd: ['ddd1', 'ddd2', 'ddd3', 'ddd4', 'ddd5'],
+    archstyles: ['style1', 'style2', 'style3', 'style4', 'style5'],
+    resilience: ['res1', 'res2', 'res3', 'res4', 'res5'],
+    observability: ['obs1', 'obs2', 'obs3', 'obs4', 'obs5']
   };
 
   var groups = [

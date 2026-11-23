@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отказоустойчивость и согласованность — простыми словами</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Компетенция 6 · Архитектура · неделя 6</p>
+    <h1>Отказоустойчивость и согласованность</h1>
+    <p class="lead">
+      Timeout, retry, circuit breaker, fallback и bulkhead — как они работают вместе
+      и почему по отдельности могут сделать хуже. Плюс конкурентность, идемпотентность
+      и Saga против two-phase commit.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#why">Зачем</a></li>
+      <li><a href="#patterns">Паттерны</a></li>
+      <li><a href="#consistency">Согласованность</a></li>
+      <li><a href="#video">Видео-пайплайн</a></li>
+      <li><a href="#testing">Проверка</a></li>
+      <li><a href="#check">Вопросы</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="badge">1</span> Отказ неизбежен</h2>
+
+    <p>В распределённой системе что-то ломается всегда: сеть моргает, база отвечает
+    медленно, чужой сервис возвращает 500, под падает. Вопрос не «как избежать отказа»,
+    а <strong>как система ведёт себя, когда отказ случился</strong>. Хорошая система
+    деградирует частично, плохая — падает целиком.</p>
+
+    <div class="idea">
+      <span class="lbl">Аналогия</span>
+      Водопровод в доме: если прорвало кран, перекрывают стояк в этой квартире, а не
+      весь район. Отказоустойчивость — это заранее расставленные краны, чтобы одна
+      протечка не оставила без воды всех.
+    </div>
+
+    <p>На интервью Senior проверяют, умеешь ли ты <strong>сочетать</strong> паттерны.
+    Timeout без retry обрывает полезные операции. Retry без backoff устраивает шторм.
+    Circuit breaker без fallback просто быстро отдаёт ошибку. Bulkhead без метрик
+    незаметно съедает ресурсы.</p>
+
+    <div class="callout">
+      <strong>Главная мысль.</strong> Отказоустойчивость — это управляемая деградация:
+      лучше отдать устаревшие данные или понизить качество, чем уронить весь сервис.
+      Но деградация должна быть видимой и честной.
+    </div>
+  </div>
+</section>
+
+<section id="patterns">
+  <div class="wrap">
+    <h2><span class="badge">2</span> Паттерны отказоустойчивости</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Паттерн</th><th>Что решает</th><th>Как настраивать</th><th>Ошибка настройки</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Rate limiting</strong></td>
+            <td>Защита от перегрузки и одного шумного клиента</td>
+            <td>Лимит на пользователя, IP, эндпоинт; 429 и Retry-After</td>
+            <td>Локальный счётчик в каждом pod умножает лимит</td>
+          </tr>
+          <tr>
+            <td><strong>Timeout</strong></td>
+            <td>Не ждать вечно и не держать воркер</td>
+            <td>Короче, чем SLA вызывающего; deadline пробрасывать вниз</td>
+            <td>Таймаут больше, чем у клиента — работа впустую</td>
+          </tr>
+          <tr>
+            <td><strong>Retry</strong></td>
+            <td>Пережить кратковременный сбой</td>
+            <td>Только идемпотентные операции, exponential backoff + jitter, лимит попыток</td>
+            <td>Мгновенные повторы без ограничения — retry storm</td>
+          </tr>
+          <tr>
+            <td><strong>Circuit breaker</strong></td>
+            <td>Не долбить упавшую зависимость</td>
+            <td>Порог ошибок, окно, пауза, half-open проба</td>
+            <td>Слишком чувствительный — открывается на единичном сбое</td>
+          </tr>
+          <tr>
+            <td><strong>Fallback</strong></td>
+            <td>Отдать хоть что-то вместо ошибки</td>
+            <td>Кэш, значение по умолчанию, урезанная функция</td>
+            <td>Скрытая деградация: пользователь не знает, что данные старые</td>
+          </tr>
+          <tr>
+            <td><strong>Bulkhead</strong></td>
+            <td>Изолировать пулы ресурсов</td>
+            <td>Отдельные соединения и воркеры на зависимость</td>
+            <td>Один общий пул: медленный сервис съедает всё</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Circuit breaker по шагам</h3>
+    <div class="flow">
+      <span class="node key">Closed</span><span class="arrow">→ ошибок много →</span>
+      <span class="node">Open</span><span class="arrow">→ пауза →</span>
+      <span class="node">Half-open</span><span class="arrow">→ успех →</span>
+      <span class="node key">Closed</span>
+    </div>
+    <p class="flow-note">В Closed запросы идут в зависимость. В Open сразу возвращается
+    ошибка или fallback. В Half-open пропускается пробный запрос: успех закрывает цепь,
+    ошибка снова открывает.</p>
+
+    <h3>Как они работают вместе</h3>
+    <ol>
+      <li><strong>Bulkhead</strong> ограничивает ресурсы на зависимость.</li>
+      <li><strong>Timeout</strong> не даёт одному вызову занять ресурс навсегда.</li>
+      <li><strong>Retry</strong> повторяет только то, что безопасно повторять.</li>
+      <li><strong>Circuit breaker</strong> прекращает попытки, когда зависимость явно
+      лежит.</li>
+      <li><strong>Fallback</strong> отдаёт допустимый ответ, если он есть.</li>
+      <li><strong>Rate limiting</strong> стоит на входе и не пускает лишнюю нагрузку
+      внутрь.</li>
+    </ol>
+
+<pre class="cmd">$client-&gt;withTimeout(800)        // timeout
+       -&gt;retry(3, 100, 2.0)      // 3 попытки, backoff x2 + jitter
+       -&gt;circuitBreaker($breaker)
+       -&gt;fallback(fn () =&gt; $cachedResponse)
+       -&gt;get('/recommendations');</pre>
+
+    <div class="callout warn">
+      <strong>Retry — самый опасный паттерн.</strong> Если зависимость перегружена,
+      повторы добивают её окончательно. Поэтому: только идемпотентные вызовы, backoff
+      с jitter, общий retry budget и уважение к `Retry-After`.
+    </div>
+  </div>
+</section>
+
+<section id="consistency">
+  <div class="wrap">
+    <h2><span class="badge">3</span> Конкурентность и согласованность</h2>
+
+    <p>Два пользователя одновременно продлевают подписку, два консьюмера обрабатывают
+    одно событие, ретрай приходит повторно. Без защиты получаются двойные списания и
+    потерянные обновления.</p>
+
+    <h3>Способы защититься</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Проблема</th><th>Приём</th><th>Как выглядит</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Потерянное обновление</strong></td><td>Оптимистичная блокировка</td><td>Поле `version`, `UPDATE ... WHERE version = ?`</td></tr>
+          <tr><td><strong>Гонка на ресурсе</strong></td><td>Пессимистичная блокировка</td><td>`SELECT ... FOR UPDATE`</td></tr>
+          <tr><td><strong>Двойная запись</strong></td><td>Idempotency key / unique constraint</td><td>Уникальный ключ операции в БД</td></tr>
+          <tr><td><strong>Повторная доставка</strong></td><td>Идемпотентный consumer</td><td>Проверка `event_id` перед обработкой</td></tr>
+          <tr><td><strong>Запись + событие</strong></td><td>Transactional outbox</td><td>Событие пишется в ту же транзакцию, потом публикуется</td></tr>
+          <tr><td><strong>Длинная операция</strong></td><td>Saga</td><td>Шаги и компенсации вместо общей транзакции</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Saga против two-phase commit</h3>
+    <p><strong>2PC</strong> — протокол с координатором: все участники готовятся, затем
+    подтверждают. Он даёт атомарность, но блокирует ресурсы и плохо переносит падение
+    координатора. В микросервисах это редкий гость.</p>
+
+    <p><strong>Saga</strong> — последовательность локальных транзакций. Если шаг упал,
+    выполняются компенсации: вернуть платёж, снять доступ, отправить уведомление.
+    Saga не блокирует и масштабируется, но допускает промежуточные состояния и требует
+    идемпотентных компенсаций.</p>
+
+    <div class="two">
+      <div class="plus">
+        <b>Saga подходит</b>
+        Длинные бизнес-процессы между сервисами: заказ, оплата, подписка, доставка.
+        Нужна гибкость и отсутствие глобальных блокировок.
+      </div>
+      <div class="minus">
+        <b>2PC подходит</b>
+        Короткие транзакции в одной системе или там, где участники поддерживают протокол
+        и допустимы блокировки. В микросервисах — скорее исключение.
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Про exactly-once.</strong> На практике получаем at-least-once доставку
+      и делаем обработку идемпотентной. Это надёжнее, чем надеяться на «ровно один раз»
+      и однажды получить двойное списание.
+    </div>
+  </div>
+</section>
+
+<section id="video">
+  <div class="wrap">
+    <h2><span class="badge">4</span> Практика: видео-пайплайн</h2>
+
+    <p>Путь видео: загрузка → транскодинг → упаковка → CDN → воспроизведение. На каждом
+    шаге свои отказы и свои паттерны.</p>
+
+    <div class="flow">
+      <span class="node key">ingest</span><span class="arrow">→</span>
+      <span class="node">transcode</span><span class="arrow">→</span>
+      <span class="node">package</span><span class="arrow">→</span>
+      <span class="node">CDN</span><span class="arrow">→</span>
+      <span class="node">playback</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Шаг</th><th>Что может отказать</th><th>Что делаем</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Ingest</strong></td><td>Обрыв загрузки, повтор файла</td><td>Idempotency key, докачка, проверка контрольной суммы</td></tr>
+          <tr><td><strong>Transcode</strong></td><td>Долгая задача, падение воркера</td><td>Очередь, retry с лимитом, DLQ, bulkhead на CPU</td></tr>
+          <tr><td><strong>Package</strong></td><td>Битая сегментация, таймаут</td><td>Идемпотентная задача, проверка манифеста</td></tr>
+          <tr><td><strong>CDN</strong></td><td>Промах кэша, недоступность edge</td><td>Origin shield, fallback на другой edge, TTL</td></tr>
+          <tr><td><strong>Playback</strong></td><td>Медленная лицензия DRM</td><td>Timeout, circuit breaker, fallback на низкое качество</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Подписка и оплата</h3>
+    <p>Оформление подписки — классическая Saga: создать платёж → активировать доступ →
+    отправить письмо. Если активация не удалась, компенсация отменяет платёж. Если письмо
+    не ушло, это не повод откатывать подписку: уведомление досылается отдельно.</p>
+
+    <div class="callout">
+      <strong>Что показать на интервью.</strong> Нарисуй пайплайн, отметь на каждом шаге
+      тип отказа и паттерн. Затем объясни, что критично откатывать, а что можно
+      досогласовать. Это ценится выше, чем список терминов.
+    </div>
+  </div>
+</section>
+
+<section id="testing">
+  <div class="wrap">
+    <h2><span class="badge">5</span> Как проверить, что это работает</h2>
+
+    <p>Паттерны, которые никогда не срабатывали, — это конфигурация, а не защита.
+    Нужно намеренно ломать систему и смотреть на поведение.</p>
+
+    <ul>
+      <li><strong>Fault injection.</strong> Отключить зависимость, добавить задержку,
+      вернуть 500 и проверить, что timeout, retry и breaker срабатывают.</li>
+      <li><strong>Chaos-эксперименты на staging.</strong> Убить pod, брокер, DNS; убедиться,
+      что сервис деградирует, а не падает.</li>
+      <li><strong>Повторная доставка.</strong> Отправить одно событие дважды и проверить
+      отсутствие дубля.</li>
+      <li><strong>Конкурентный тест.</strong> Два параллельных запроса на один ресурс:
+      нет двойной записи и потерянного обновления.</li>
+      <li><strong>Нагрузочный тест.</strong> Проверить, что лимиты и пулы действительно
+      ограничивают, а очередь не растёт бесконечно.</li>
+    </ul>
+
+    <h3>Метрики</h3>
+    <ul>
+      <li>Доля ошибок и таймаутов по зависимости.</li>
+      <li>p95 и p99 latency, а не среднее.</li>
+      <li>Количество retry и открытий circuit breaker.</li>
+      <li>Глубина очередей и размер DLQ.</li>
+      <li>Насыщение CPU, памяти и пулов соединений.</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Не тестируй только счастливый путь.</strong> Если в тестах зависимость
+      всегда отвечает за 10 мс, вы не узнаете, что таймаут выставлен на 30 секунд,
+      а retry утраивает нагрузку.
+    </div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="wrap">
+    <h2><span class="badge">6</span> Вопросы и самопроверка</h2>
+
+    <p class="sub">
+      У каждого вопроса два ответа: <strong>модельный</strong> — структура и формулировки
+      для интервью, и <strong>«своими словами»</strong> — как это звучит вживую.
+    </p>
+
+    <div class="qa">
+      <div class="q"><span class="num">01</span><span>Зачем timeout и чем он отличается от retry?</span></div>
+      <p class="a">«Timeout ограничивает время ожидания и не даёт одному вызову занять
+      воркер навсегда. Retry повторяет операцию, чтобы пережить кратковременный сбой.
+      Они решают разные задачи: timeout защищает ресурсы, retry повышает успешность.
+      Таймаут вызывающего должен быть больше, чем у зависимости, иначе повтор бессмысленен».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Timeout — «сколько жду», retry — «сколько раз пробую». Одно без другого легко
+        делает хуже.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">02</span><span>Как работает circuit breaker?</span></div>
+      <p class="a">«В закрытом состоянии запросы идут в зависимость. Когда ошибок
+      становится больше порога, цепь открывается и вызовы сразу возвращают ошибку или
+      fallback. Через паузу наступает half-open: пропускается пробный запрос. Успех
+      закрывает цепь, ошибка снова открывает. Смысл — не тратить ресурсы на заведомо
+      падающую зависимость и дать ей восстановиться».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Предохранитель: пока всё нормально — ток идёт, при перегрузке выбивает, потом
+        аккуратно проверяем.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">03</span><span>Почему retry может сделать хуже?</span></div>
+      <p class="a">«Если зависимость перегружена, повторы добавляют нагрузку и мешают
+      ей восстановиться. Особенно опасны мгновенные повторы без ограничения. Поэтому
+      повторяю только идемпотентные операции, с exponential backoff и jitter, ограничиваю
+      число попыток и общий retry budget, уважаю Retry-After и использую circuit breaker».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Если дверь заклинило, бесполезно дёргать её сто раз в секунду. Нужно подождать
+        и попробовать иначе.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">04</span><span>Что такое bulkhead и зачем он нужен?</span></div>
+      <p class="a">«Bulkhead изолирует ресурсы по зависимостям: отдельные пулы соединений,
+      воркеры или лимиты. Если один сервис начал отвечать медленно, он забирает только
+      свой пул и не останавливает остальные. Без изоляции общий пул исчерпывается, и
+      сервис падает целиком из-за одной медленной зависимости».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Водонепроницаемые переборки в корабле: одна пробоина не топит весь корабль.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">05</span><span>Как обеспечить согласованность при конкурентном доступе?</span></div>
+      <p class="a">«Зависит от сценария. Для потерянного обновления — оптимистичная
+      блокировка по версии. Для короткой критической секции — `SELECT FOR UPDATE`.
+      Для повторных операций — idempotency key и unique constraint. Для записи и события —
+      outbox. Для длинной операции между сервисами — Saga с идемпотентными компенсациями.
+      И всегда короткие транзакции».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>Либо не даём двоим менять одновременно, либо делаем повтор безопасным.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="q"><span class="num">06</span><span>Saga и two-phase commit: когда что?</span></div>
+      <p class="a">«2PC даёт атомарность, но блокирует ресурсы и требует координатора;
+      подходит для коротких транзакций, где участники поддерживают протокол. Saga —
+      последовательность локальных транзакций с компенсациями; подходит для длинных
+      бизнес-процессов между сервисами. В микросервисах обычно выбирают Saga, принимая
+      промежуточные состояния и eventual consistency».</p>
+      <div class="own">
+        <span class="own-tag">Своими словами</span>
+        <p>2PC — все замерли и ждут. Saga — делаем шаги и умеем отменить сделанное.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin:24px 0 14px">
+      Ответь вслух, не подглядывая.
+      <span class="progress" id="checkProgress">0 / 5</span>
+    </p>
+
+    <ul class="checklist">
+      <li><input type="checkbox" class="check-item" id="res1" data-id="res1"><label for="res1">Объясни разницу между timeout и retry и как их согласовать</label></li>
+      <li><input type="checkbox" class="check-item" id="res2" data-id="res2"><label for="res2">Опиши три состояния circuit breaker</label></li>
+      <li><input type="checkbox" class="check-item" id="res3" data-id="res3"><label for="res3">Почему retry без backoff и jitter опасен?</label></li>
+      <li><input type="checkbox" class="check-item" id="res4" data-id="res4"><label for="res4">Как bulkhead защищает от медленной зависимости?</label></li>
+      <li><input type="checkbox" class="check-item" id="res5" data-id="res5"><label for="res5">Saga vs 2PC: какой сценарий и почему?</label></li>
+    </ul>
+
+    <div class="callout">
+      <strong>Если запомнить одно:</strong> паттерны работают только вместе и только
+      с измерениями. Отказоустойчивость — это проверенное поведение при сбое, а не
+      набор аннотаций в коде.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Компетенция «Архитектура» ·
+    <a href="Observability.html">Наблюдаемость и логи</a> ·
+    <a href="ArchitectureStyles.html">MVC, CQRS, Saga, Event Sourcing</a> ·
+    <a href="DDDCleanArchitecture.html">DDD и Clean Architecture</a> ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">Вернуться к плану</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+
+</body>
+</html>
