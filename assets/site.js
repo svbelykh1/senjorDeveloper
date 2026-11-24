@@ -9,22 +9,103 @@
   var icon = document.getElementById('themeIcon');
   var label = document.getElementById('themeLabel');
 
+  var THEMES = {
+    dark:     { icon: '☾', label: 'Тёмная' },
+    light:    { icon: '☀', label: 'Светлая' },
+    sepia:    { icon: '◐', label: 'Сепия' },
+    ocean:    { icon: '≋', label: 'Синяя' },
+    contrast: { icon: '◑', label: 'Контраст' }
+  };
+
+  function isTheme(name) {
+    return Object.prototype.hasOwnProperty.call(THEMES, name);
+  }
+
   function applyTheme(theme) {
+    if (!isTheme(theme)) theme = 'dark';
     root.setAttribute('data-theme', theme);
-    if (icon) icon.textContent = theme === 'dark' ? '☾' : '☀';
-    if (label) label.textContent = theme === 'dark' ? 'Тёмная' : 'Светлая';
+    var meta = THEMES[theme];
+    if (icon) icon.textContent = meta.icon;
+    if (label) label.textContent = meta.label;
+    Array.prototype.forEach.call(document.querySelectorAll('.theme-option'), function (opt) {
+      opt.setAttribute('aria-checked', opt.getAttribute('data-theme-value') === theme ? 'true' : 'false');
+    });
   }
 
   var savedTheme = null;
   try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) {}
-  applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+  applyTheme(isTheme(savedTheme) ? savedTheme : 'dark');
 
   if (btn) {
-    btn.addEventListener('click', function () {
-      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-      try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+    var picker = document.createElement('div');
+    picker.className = 'theme-picker';
+    btn.parentNode.insertBefore(picker, btn);
+    picker.appendChild(btn);
+
+    var menu = document.createElement('div');
+    menu.className = 'theme-menu';
+    menu.id = 'themeMenu';
+    menu.hidden = true;
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', 'Тема оформления');
+
+    Object.keys(THEMES).forEach(function (name) {
+      var opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'theme-option';
+      opt.setAttribute('role', 'menuitemradio');
+      opt.setAttribute('data-theme-value', name);
+      opt.setAttribute('aria-checked', 'false');
+      opt.innerHTML = '<span class="swatch" aria-hidden="true"></span>' +
+                      '<span class="theme-ico" aria-hidden="true">' + THEMES[name].icon + '</span>' +
+                      '<span>' + THEMES[name].label + '</span>';
+      opt.addEventListener('click', function () {
+        applyTheme(name);
+        try { localStorage.setItem(THEME_KEY, name); } catch (e) {}
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      });
+      menu.appendChild(opt);
     });
+
+    picker.appendChild(menu);
+    btn.setAttribute('aria-haspopup', 'menu');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'themeMenu');
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = menu.hidden;
+      if (open) {
+        menu.hidden = false;
+        menu.classList.remove('up');
+        var rect = menu.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight - 8) {
+          menu.classList.add('up');
+        }
+      } else {
+        menu.hidden = true;
+      }
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!picker.contains(e.target)) {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !menu.hidden) {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      }
+    });
+
+    applyTheme(root.getAttribute('data-theme'));
   }
 
   /* ---------- Состояние чекбоксов ---------- */
@@ -112,7 +193,7 @@
       updateCounters();
     }
     if (e.key === THEME_KEY) {
-      applyTheme(e.newValue === 'light' ? 'light' : 'dark');
+      applyTheme(isTheme(e.newValue) ? e.newValue : 'dark');
     }
   });
 
