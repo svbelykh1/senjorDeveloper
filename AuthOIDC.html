@@ -33,6 +33,7 @@
       <li><a href="#access">Доступ</a></li>
       <li><a href="#practice">Практика</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -242,6 +243,39 @@ if ($payload-&gt;exp &lt; time())                       throw new Unauthorized()
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>ABAC</strong></td><td>Attribute-Based Access Control</td><td>доступ по атрибутам: регион, тариф, владелец</td></tr>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс: методы, через которые сервисы общаются</td></tr>
+          <tr><td><strong>JWKS</strong></td><td>JSON Web Key Set</td><td>набор публичных ключей для проверки подписи JWT</td></tr>
+          <tr><td><strong>JWT</strong></td><td>JSON Web Token</td><td>подписанный токен с набором утверждений</td></tr>
+          <tr><td><strong>OAuth</strong></td><td>Open Authorization</td><td>протокол делегированного доступа</td></tr>
+          <tr><td><strong>OIDC</strong></td><td>OpenID Connect</td><td>аутентификация и профиль поверх OAuth 2.0</td></tr>
+          <tr><td><strong>PII</strong></td><td>Personally Identifiable Information</td><td>персональные данные: можно опознать человека</td></tr>
+          <tr><td><strong>PKCE</strong></td><td>Proof Key for Code Exchange</td><td>защита кода авторизации одноразовым верификатором</td></tr>
+          <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control</td><td>доступ по ролям</td></tr>
+          <tr><td><strong>SSO</strong></td><td>Single Sign-On</td><td>единый вход: один логин для нескольких систем</td></tr>
+          <tr><td><strong>TTL</strong></td><td>Time To Live</td><td>время жизни: сколько данных живут в кэше или сообщении</td></tr>
+          <tr><td><strong>XSS</strong></td><td>Cross-Site Scripting</td><td>межсайтовый скриптинг: чужой JavaScript на странице</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
@@ -352,7 +386,7 @@ if ($payload-&gt;exp &lt; time())                       throw new Unauthorized()
     Компетенция «Безопасность» ·
     <a href="WebSecurity.html">OWASP, hashing, CORS</a> ·
     <a href="PrivacyGDPR.html">GDPR и приватность</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>

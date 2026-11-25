@@ -33,6 +33,7 @@
       <li><a href="#compare">Сравнение</a></li>
       <li><a href="#choice">Выбор</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -311,6 +312,41 @@ VideoPublished    { id: 42, at: "2026-03-01T10:00:00Z" }</pre>
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>2PC</strong></td><td>Two-Phase Commit</td><td>двухфазная фиксация: координатор и блокировки участников</td></tr>
+          <tr><td><strong>CDC</strong></td><td>Change Data Capture</td><td>захват изменений данных из журнала БД</td></tr>
+          <tr><td><strong>CQRS</strong></td><td>Command Query Responsibility Segregation</td><td>разделение команд (запись) и запросов (чтение)</td></tr>
+          <tr><td><strong>DLQ</strong></td><td>Dead Letter Queue</td><td>очередь необработанных сообщений для разбора</td></tr>
+          <tr><td><strong>Event Sourcing</strong></td><td>event sourcing</td><td>хранение состояния как последовательности событий</td></tr>
+          <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>распределённый журнал событий</td></tr>
+          <tr><td><strong>Microkernel</strong></td><td>microkernel / plugin architecture</td><td>ядро с расширениями-плагинами</td></tr>
+          <tr><td><strong>MVC</strong></td><td>Model-View-Controller</td><td>модель — представление — контроллер</td></tr>
+          <tr><td><strong>MVP</strong></td><td>Model-View-Presenter (или Minimum Viable Product)</td><td>в архитектуре — модель — представление — презентер; в продукте — минимально жизнеспособный продукт</td></tr>
+          <tr><td><strong>MVVM</strong></td><td>Model-View-ViewModel</td><td>модель — представление — модель представления</td></tr>
+          <tr><td><strong>Outbox</strong></td><td>transactional outbox</td><td>таблица исходящих событий в одной транзакции с данными</td></tr>
+          <tr><td><strong>PII</strong></td><td>Personally Identifiable Information</td><td>персональные данные: можно опознать человека</td></tr>
+          <tr><td><strong>Pub-Sub</strong></td><td>Publish-Subscribe</td><td>издатель — подписчик: издатель не знает потребителей</td></tr>
+          <tr><td><strong>Saga</strong></td><td>saga</td><td>распределённая транзакция из шагов с компенсациями</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">8</span> Вопросы и самопроверка</h2>
@@ -427,7 +463,7 @@ VideoPublished    { id: 42, at: "2026-03-01T10:00:00Z" }</pre>
     Компетенция «Архитектура» ·
     <a href="DDDCleanArchitecture.html">DDD и Clean Architecture</a> ·
     <a href="Resilience.html">Отказоустойчивость и согласованность</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>

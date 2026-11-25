@@ -68,6 +68,7 @@ Ctrl+X, затем W     Закрыть вкладку
 ----------------------------------------------------------------
 index.html             Главная: прогресс, карта курса, материалы
 planSenjor.html        План подготовки на 12 недель
+Glossary.html          Общий словарь терминов: расшифровка и перевод
 JiraWorkflow.html      Неделя 1: Jira workflow и оценка
 ScrumKanban.html       Неделя 1: Scrum и Kanban
 DeployStrategies.html  Неделя 1: blue-green, canary, rolling

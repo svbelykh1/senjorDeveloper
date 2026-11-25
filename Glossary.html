@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Словарь терминов проекта — расшифровка и перевод</title>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Справочник · все страницы проекта</p>
+    <h1>Словарь терминов</h1>
+    <p class="lead">
+      Аббревиатуры и англицизмы из всех 12 недель и дополнительных тем: расшифровка,
+      перевод и смысл по-русски. Ищи по слову — фильтр ниже.
+    </p>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="home" href="index.html" aria-label="На главную" title="Главная">⌂</a>
+    <a class="back" href="planSenjor.html">← К плану</a>
+    <ul>
+      <li><a href="#cat-docs">Процессы</a></li>
+      <li><a href="#cat-quality">Качество</a></li>
+      <li><a href="#cat-architecture">Архитектура</a></li>
+      <li><a href="#cat-network">Сеть и API</a></li>
+      <li><a href="#cat-data">Данные</a></li>
+      <li><a href="#cat-security">Безопасность</a></li>
+      <li><a href="#cat-ai">ИИ</a></li>
+      <li><a href="#cat-interview">Интервью</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
+      <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+<section id="search">
+  <div class="wrap">
+    <div class="search-row">
+      <input class="search" id="glossarySearch" type="search" placeholder="Найти термин: ADR, CQRS, SLA…" aria-label="Поиск по словарю">
+      <span class="search-count" id="glossaryCount"></span>
+    </div>
+  </div>
+</section>
+
+<section id="cat-docs" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">1</span> Процессы и документация</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ADR</strong></td><td>Architecture Decision Record</td><td>запись архитектурного решения: контекст, выбор, альтернативы, последствия</td></tr>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс: методы, через которые сервисы общаются</td></tr>
+          <tr><td><strong>approval</strong></td><td>approval</td><td>одобрение изменения перед merge</td></tr>
+          <tr><td><strong>artifact</strong></td><td>artifact</td><td>артефакт сборки: файл или отчёт, сохранённый после стадии</td></tr>
+          <tr><td><strong>Backlog</strong></td><td>backlog</td><td>упорядоченный список задач продукта или спринта</td></tr>
+          <tr><td><strong>cache</strong></td><td>cache</td><td>кэш: временное хранилище для ускорения</td></tr>
+          <tr><td><strong>CD</strong></td><td>Continuous Delivery / Continuous Deployment</td><td>непрерывная поставка или развёртывание изменений</td></tr>
+          <tr><td><strong>Changelog</strong></td><td>change log</td><td>журнал изменений по релизам</td></tr>
+          <tr><td><strong>CI</strong></td><td>Continuous Integration</td><td>непрерывная интеграция: автоматическая сборка и проверки на каждое изменение</td></tr>
+          <tr><td><strong>DoD</strong></td><td>Definition of Done</td><td>определение готовности: условия, без которых задача не закрыта</td></tr>
+          <tr><td><strong>Kanban</strong></td><td>Kanban</td><td>визуальное управление потоком задач и ограничение WIP</td></tr>
+          <tr><td><strong>MR</strong></td><td>Merge Request</td><td>запрос на слияние изменений с ревью и проверками (GitLab)</td></tr>
+          <tr><td><strong>Onboarding</strong></td><td>onboarding</td><td>ввод в должность и адаптация нового сотрудника</td></tr>
+          <tr><td><strong>OpenAPI</strong></td><td>OpenAPI Specification (OAS)</td><td>открытая спецификация API: машиночитаемое описание методов и ответов</td></tr>
+          <tr><td><strong>pipeline</strong></td><td>pipeline</td><td>конвейер CI/CD: стадии сборки, проверок и деплоя</td></tr>
+          <tr><td><strong>Postmortem</strong></td><td>post mortem — «после факта»</td><td>разбор инцидента без поиска виноватых</td></tr>
+          <tr><td><strong>PR</strong></td><td>Pull Request</td><td>запрос на включение изменений (GitHub и аналоги)</td></tr>
+          <tr><td><strong>protected branch</strong></td><td>protected branch</td><td>защищённая ветка: прямые push запрещены</td></tr>
+          <tr><td><strong>README</strong></td><td>read me — «прочти меня»</td><td>стартовый файл проекта: что это, как запустить, какие доступы нужны</td></tr>
+          <tr><td><strong>Runbook</strong></td><td>run book — «книга действий»</td><td>инструкция дежурного: что проверить и сделать при инциденте</td></tr>
+          <tr><td><strong>Scrum</strong></td><td>Scrum</td><td>фреймворк управления работой: роли, события, инкременты</td></tr>
+          <tr><td><strong>SLA</strong></td><td>Service Level Agreement</td><td>соглашение об уровне сервиса с пользователями</td></tr>
+          <tr><td><strong>SLI</strong></td><td>Service Level Indicator</td><td>измеряемый показатель уровня сервиса</td></tr>
+          <tr><td><strong>SLO</strong></td><td>Service Level Objective</td><td>целевой уровень сервиса внутри компании</td></tr>
+          <tr><td><strong>Sprint</strong></td><td>sprint</td><td>итерация в Scrum фиксированной длины</td></tr>
+          <tr><td><strong>WIP</strong></td><td>Work In Progress</td><td>незавершённая работа; в Kanban ограничивается</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-quality" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">2</span> Качество и тестирование</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>BDD</strong></td><td>Behavior-Driven Development</td><td>разработка через поведение: сценарии на языке бизнеса</td></tr>
+          <tr><td><strong>DAST</strong></td><td>Dynamic Application Security Testing</td><td>динамический анализ безопасности работающего приложения</td></tr>
+          <tr><td><strong>E2E</strong></td><td>End-to-End</td><td>сквозной тест: весь путь пользователя через систему</td></tr>
+          <tr><td><strong>flaky test</strong></td><td>flaky test</td><td>нестабильный тест: падает без изменения кода</td></tr>
+          <tr><td><strong>N+1</strong></td><td>N plus 1 queries</td><td>проблема лишних запросов: один запрос в цикле на каждую строку</td></tr>
+          <tr><td><strong>p95</strong></td><td>95th percentile</td><td>95-й процентиль задержки: медленнее только 5% запросов</td></tr>
+          <tr><td><strong>p99</strong></td><td>99th percentile</td><td>99-й процентиль задержки: хвост самых медленных запросов</td></tr>
+          <tr><td><strong>QA</strong></td><td>Quality Assurance</td><td>обеспечение качества: процессы и проверки, а не только тестирование</td></tr>
+          <tr><td><strong>Quality Gate</strong></td><td>quality gate</td><td>порог качества: условия, без которых изменение не проходит</td></tr>
+          <tr><td><strong>RPS</strong></td><td>Requests Per Second</td><td>запросов в секунду: measure нагрузки</td></tr>
+          <tr><td><strong>SAST</strong></td><td>Static Application Security Testing</td><td>статический анализ безопасности по исходному коду</td></tr>
+          <tr><td><strong>SCA</strong></td><td>Software Composition Analysis</td><td>анализ зависимостей и известных уязвимостей</td></tr>
+          <tr><td><strong>TDD</strong></td><td>Test-Driven Development</td><td>разработка через тесты: сначала тест, потом код</td></tr>
+          <tr><td><strong>WAF</strong></td><td>Web Application Firewall</td><td>межсетевой экран для веб-приложений</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-architecture" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">3</span> Архитектура и паттерны</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>2PC</strong></td><td>Two-Phase Commit</td><td>двухфазная фиксация: координатор и блокировки участников</td></tr>
+          <tr><td><strong>Backpressure</strong></td><td>backpressure</td><td>обратное давление: замедление производителя под нагрузкой</td></tr>
+          <tr><td><strong>Bulkhead</strong></td><td>bulkhead</td><td>изоляция пулов ресурсов по зависимостям</td></tr>
+          <tr><td><strong>Circuit Breaker</strong></td><td>circuit breaker</td><td>предохранитель: перестаёт вызывать упавшую зависимость</td></tr>
+          <tr><td><strong>CQRS</strong></td><td>Command Query Responsibility Segregation</td><td>разделение команд (запись) и запросов (чтение)</td></tr>
+          <tr><td><strong>DDD</strong></td><td>Domain-Driven Design</td><td>предметно-ориентированное проектирование: модель вокруг бизнес-домена</td></tr>
+          <tr><td><strong>DI</strong></td><td>Dependency Injection</td><td>внедрение зависимостей: объект получает зависимости снаружи</td></tr>
+          <tr><td><strong>Event Sourcing</strong></td><td>event sourcing</td><td>хранение состояния как последовательности событий</td></tr>
+          <tr><td><strong>Feature Toggle</strong></td><td>feature toggle</td><td>переключатель функции без релиза</td></tr>
+          <tr><td><strong>FP</strong></td><td>Functional Programming</td><td>функциональное программирование</td></tr>
+          <tr><td><strong>GoF</strong></td><td>Gang of Four</td><td>«банда четырёх»: авторы классических паттернов проектирования</td></tr>
+          <tr><td><strong>Graceful shutdown</strong></td><td>graceful shutdown</td><td>корректное завершение: доработать текущие запросы</td></tr>
+          <tr><td><strong>HOF</strong></td><td>Higher-Order Function</td><td>функция высшего порядка: принимает или возвращает функцию</td></tr>
+          <tr><td><strong>IoC</strong></td><td>Inversion of Control</td><td>инверсия управления: создание зависимостей вынесено наружу</td></tr>
+          <tr><td><strong>Microkernel</strong></td><td>microkernel / plugin architecture</td><td>ядро с расширениями-плагинами</td></tr>
+          <tr><td><strong>MVC</strong></td><td>Model-View-Controller</td><td>модель — представление — контроллер</td></tr>
+          <tr><td><strong>MVP</strong></td><td>Model-View-Presenter (или Minimum Viable Product)</td><td>в архитектуре — модель — представление — презентер; в продукте — минимально жизнеспособный продукт</td></tr>
+          <tr><td><strong>MVVM</strong></td><td>Model-View-ViewModel</td><td>модель — представление — модель представления</td></tr>
+          <tr><td><strong>OOP</strong></td><td>Object-Oriented Programming</td><td>объектно-ориентированное программирование</td></tr>
+          <tr><td><strong>Pub-Sub</strong></td><td>Publish-Subscribe</td><td>издатель — подписчик: издатель не знает потребителей</td></tr>
+          <tr><td><strong>Rate limiting</strong></td><td>rate limiting</td><td>ограничение частоты запросов</td></tr>
+          <tr><td><strong>Saga</strong></td><td>saga</td><td>распределённая транзакция из шагов с компенсациями</td></tr>
+          <tr><td><strong>SOLID</strong></td><td>five design principles</td><td>пять принципов объектного дизайна</td></tr>
+          <tr><td><strong>YAGNI</strong></td><td>You Aren't Gonna Need It</td><td>«вам это не понадобится»: не строить под гипотетическое требование</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-network" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">4</span> Сеть, API и инфраструктура</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CDN</strong></td><td>Content Delivery Network</td><td>сеть доставки контента: серверы ближе к пользователю</td></tr>
+          <tr><td><strong>ConfigMap</strong></td><td>ConfigMap</td><td>конфигурация Kubernetes отдельно от образа</td></tr>
+          <tr><td><strong>DASH</strong></td><td>Dynamic Adaptive Streaming over HTTP</td><td>адаптивный стриминг через HTTP</td></tr>
+          <tr><td><strong>DNS</strong></td><td>Domain Name System</td><td>система доменных имён</td></tr>
+          <tr><td><strong>Docker</strong></td><td>Docker</td><td>платформа контейнеров: образ и запущенный контейнер</td></tr>
+          <tr><td><strong>DRM</strong></td><td>Digital Rights Management</td><td>управление цифровыми правами: защита видео от копирования</td></tr>
+          <tr><td><strong>GraphQL</strong></td><td>Graph Query Language</td><td>язык запросов к API с выбором полей клиентом</td></tr>
+          <tr><td><strong>gRPC</strong></td><td>Google Remote Procedure Call</td><td>удалённый вызов процедур с контрактом и HTTP/2</td></tr>
+          <tr><td><strong>HLS</strong></td><td>HTTP Live Streaming</td><td>протокол потокового видео через HTTP-сегменты</td></tr>
+          <tr><td><strong>HPA</strong></td><td>Horizontal Pod Autoscaler</td><td>автоматическое масштабирование числа pod по метрике</td></tr>
+          <tr><td><strong>HTTP/1.1</strong></td><td>HyperText Transfer Protocol, version 1.1</td><td>версия 1.1 протокола HTTP</td></tr>
+          <tr><td><strong>HTTP/2</strong></td><td>HyperText Transfer Protocol, version 2</td><td>версия 2: мультиплексирование в одном соединении</td></tr>
+          <tr><td><strong>HTTP/3</strong></td><td>HyperText Transfer Protocol, version 3</td><td>версия 3 поверх QUIC</td></tr>
+          <tr><td><strong>Ingress</strong></td><td>Ingress</td><td>правила HTTP-маршрутизации в Kubernetes</td></tr>
+          <tr><td><strong>JSON</strong></td><td>JavaScript Object Notation</td><td>текстовый формат обмена данными</td></tr>
+          <tr><td><strong>K8s</strong></td><td>Kubernetes</td><td>сокращение для Kubernetes</td></tr>
+          <tr><td><strong>Kubernetes</strong></td><td>Kubernetes (K8s)</td><td>оркестратор контейнеров</td></tr>
+          <tr><td><strong>L4</strong></td><td>Layer 4</td><td>балансировка на уровне TCP/UDP</td></tr>
+          <tr><td><strong>L7</strong></td><td>Layer 7</td><td>балансировка на уровне HTTP: пути, заголовки, cookie</td></tr>
+          <tr><td><strong>LB</strong></td><td>Load Balancer</td><td>балансировщик нагрузки</td></tr>
+          <tr><td><strong>mTLS</strong></td><td>mutual TLS</td><td>взаимная аутентификация клиента и сервера по TLS</td></tr>
+          <tr><td><strong>OOMKilled</strong></td><td>OOM killed</td><td>контейнер убит из-за превышения лимита памяти</td></tr>
+          <tr><td><strong>PDB</strong></td><td>Pod Disruption Budget</td><td>бюджет прерываний: сколько pod можно погасить сразу</td></tr>
+          <tr><td><strong>Pod</strong></td><td>pod</td><td>pod: минимальная единица запуска; в Kubernetes — группа контейнеров</td></tr>
+          <tr><td><strong>PoP</strong></td><td>Point of Presence</td><td>точка присутствия CDN в регионе</td></tr>
+          <tr><td><strong>QUIC</strong></td><td>Quick UDP Internet Connections</td><td>транспорт поверх UDP для HTTP/3</td></tr>
+          <tr><td><strong>REST</strong></td><td>Representational State Transfer</td><td>архитектурный стиль API поверх HTTP</td></tr>
+          <tr><td><strong>Secret</strong></td><td>Secret</td><td>секрет: пароль, токен или ключ; в Kubernetes — объект Secret</td></tr>
+          <tr><td><strong>SSE</strong></td><td>Server-Sent Events</td><td>поток событий от сервера к клиенту по HTTP</td></tr>
+          <tr><td><strong>TCP</strong></td><td>Transmission Control Protocol</td><td>надёжный потоковый протокол транспортного уровня</td></tr>
+          <tr><td><strong>TLS</strong></td><td>Transport Layer Security</td><td>протокол шифрования транспортного уровня</td></tr>
+          <tr><td><strong>TTFB</strong></td><td>Time To First Byte</td><td>время до первого байта ответа</td></tr>
+          <tr><td><strong>TTL</strong></td><td>Time To Live</td><td>время жизни: сколько данных живут в кэше или сообщении</td></tr>
+          <tr><td><strong>UDP</strong></td><td>User Datagram Protocol</td><td>датаграммный протокол без гарантии доставки</td></tr>
+          <tr><td><strong>WebSocket</strong></td><td>WebSocket</td><td>двустороннее постоянное соединение поверх HTTP-upgrade</td></tr>
+          <tr><td><strong>YAML</strong></td><td>YAML Ain't Markup Language</td><td>человекочитаемый формат конфигурации</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-data" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">5</span> Данные и базы</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ACID</strong></td><td>Atomicity, Consistency, Isolation, Durability</td><td>атомарность, согласованность, изолированность, долговечность</td></tr>
+          <tr><td><strong>CDC</strong></td><td>Change Data Capture</td><td>захват изменений данных из журнала БД</td></tr>
+          <tr><td><strong>consumer group</strong></td><td>consumer group</td><td>группа потребителей, делящих партиции</td></tr>
+          <tr><td><strong>CTE</strong></td><td>Common Table Expression</td><td>общее табличное выражение: именованный подзапрос</td></tr>
+          <tr><td><strong>DLQ</strong></td><td>Dead Letter Queue</td><td>очередь необработанных сообщений для разбора</td></tr>
+          <tr><td><strong>EXPLAIN</strong></td><td>query plan</td><td>план выполнения запроса: как база ищет данные</td></tr>
+          <tr><td><strong>GIN</strong></td><td>Generalized Inverted Index</td><td>обратный индекс для JSONB, массивов и поиска</td></tr>
+          <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>распределённый журнал событий</td></tr>
+          <tr><td><strong>MVCC</strong></td><td>Multi-Version Concurrency Control</td><td>многоверсионность: читатели не блокируют писателей</td></tr>
+          <tr><td><strong>NoSQL</strong></td><td>Not Only SQL</td><td>нереляционные базы: документные, ключ-значение, колоночные</td></tr>
+          <tr><td><strong>offset</strong></td><td>offset</td><td>позиция потребителя в партиции</td></tr>
+          <tr><td><strong>Outbox</strong></td><td>transactional outbox</td><td>таблица исходящих событий в одной транзакции с данными</td></tr>
+          <tr><td><strong>partition</strong></td><td>partition</td><td>партиция: единица порядка и параллелизма в Kafka</td></tr>
+          <tr><td><strong>PgBouncer</strong></td><td>PostgreSQL connection pooler</td><td>пул соединений к PostgreSQL</td></tr>
+          <tr><td><strong>PHP-FPM</strong></td><td>PHP FastCGI Process Manager</td><td>менеджер процессов PHP для веб-сервера</td></tr>
+          <tr><td><strong>SQL</strong></td><td>Structured Query Language</td><td>язык структурированных запросов</td></tr>
+          <tr><td><strong>WAL</strong></td><td>Write-Ahead Log</td><td>журнал предзаписи: изменения сначала пишутся в лог</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-security" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">6</span> Безопасность и приватность</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ABAC</strong></td><td>Attribute-Based Access Control</td><td>доступ по атрибутам: регион, тариф, владелец</td></tr>
+          <tr><td><strong>CORS</strong></td><td>Cross-Origin Resource Sharing</td><td>разрешение браузеру читать ответ с другого origin</td></tr>
+          <tr><td><strong>CSP</strong></td><td>Content Security Policy</td><td>политика безопасности контента: откуда можно грузить скрипты</td></tr>
+          <tr><td><strong>CSRF</strong></td><td>Cross-Site Request Forgery</td><td>подделка межсайтового запроса с cookie пользователя</td></tr>
+          <tr><td><strong>DPA</strong></td><td>Data Processing Agreement</td><td>договор об обработке данных с подрядчиком</td></tr>
+          <tr><td><strong>DPIA</strong></td><td>Data Protection Impact Assessment</td><td>оценка влияния обработки на приватность</td></tr>
+          <tr><td><strong>DPO</strong></td><td>Data Protection Officer</td><td>ответственный за защиту персональных данных</td></tr>
+          <tr><td><strong>DSAR</strong></td><td>Data Subject Access Request</td><td>запрос субъекта данных на доступ к своим данным</td></tr>
+          <tr><td><strong>GDPR</strong></td><td>General Data Protection Regulation</td><td>общий регламент ЕС о защите персональных данных</td></tr>
+          <tr><td><strong>HSTS</strong></td><td>HTTP Strict Transport Security</td><td>заголовок, требующий только HTTPS</td></tr>
+          <tr><td><strong>JWKS</strong></td><td>JSON Web Key Set</td><td>набор публичных ключей для проверки подписи JWT</td></tr>
+          <tr><td><strong>JWT</strong></td><td>JSON Web Token</td><td>подписанный токен с набором утверждений</td></tr>
+          <tr><td><strong>MFA</strong></td><td>Multi-Factor Authentication</td><td>многофакторная аутентификация</td></tr>
+          <tr><td><strong>OAuth</strong></td><td>Open Authorization</td><td>протокол делегированного доступа</td></tr>
+          <tr><td><strong>OIDC</strong></td><td>OpenID Connect</td><td>аутентификация и профиль поверх OAuth 2.0</td></tr>
+          <tr><td><strong>OWASP</strong></td><td>Open Worldwide Application Security Project</td><td>сообщество и список главных веб-уязвимостей</td></tr>
+          <tr><td><strong>PII</strong></td><td>Personally Identifiable Information</td><td>персональные данные: можно опознать человека</td></tr>
+          <tr><td><strong>PKCE</strong></td><td>Proof Key for Code Exchange</td><td>защита кода авторизации одноразовым верификатором</td></tr>
+          <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control</td><td>доступ по ролям</td></tr>
+          <tr><td><strong>RoPA</strong></td><td>Record of Processing Activities</td><td>реестр видов обработки персональных данных</td></tr>
+          <tr><td><strong>SCC</strong></td><td>Standard Contractual Clauses</td><td>стандартные договорные условия для передачи данных</td></tr>
+          <tr><td><strong>SQLi</strong></td><td>SQL Injection</td><td>SQL-инъекция: подстановка SQL через пользовательский ввод</td></tr>
+          <tr><td><strong>SSO</strong></td><td>Single Sign-On</td><td>единый вход: один логин для нескольких систем</td></tr>
+          <tr><td><strong>SSRF</strong></td><td>Server-Side Request Forgery</td><td>подделка серверного запроса к внутренним адресам</td></tr>
+          <tr><td><strong>XSS</strong></td><td>Cross-Site Scripting</td><td>межсайтовый скриптинг: чужой JavaScript на странице</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-ai" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">7</span> ИИ и алгоритмы</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AI</strong></td><td>Artificial Intelligence</td><td>искусственный интеллект</td></tr>
+          <tr><td><strong>BM25</strong></td><td>Best Matching 25</td><td>алгоритм полнотекстового поиска по релевантности</td></tr>
+          <tr><td><strong>CoT</strong></td><td>Chain-of-Thought</td><td>рассуждение по шагам перед ответом</td></tr>
+          <tr><td><strong>embeddings</strong></td><td>vector embeddings</td><td>векторные представления текста для поиска по смыслу</td></tr>
+          <tr><td><strong>LLM</strong></td><td>Large Language Model</td><td>большая языковая модель</td></tr>
+          <tr><td><strong>LRU</strong></td><td>Least Recently Used</td><td>вытеснение давно использованных записей из кэша</td></tr>
+          <tr><td><strong>prompt injection</strong></td><td>prompt injection</td><td>инъекция инструкции в промпт через данные</td></tr>
+          <tr><td><strong>RAG</strong></td><td>Retrieval-Augmented Generation</td><td>генерация с дополненным поиском по документам</td></tr>
+          <tr><td><strong>top-K</strong></td><td>top K</td><td>первые K результатов поиска или кандидатов</td></tr>
+          <tr><td><strong>vector DB</strong></td><td>vector database</td><td>база для хранения и поиска векторов</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="cat-interview" data-glossary>
+  <div class="wrap">
+    <h2><span class="badge">8</span> Интервью и команда</h2>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead><tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr></thead>
+        <tbody>
+          <tr><td><strong>behavioral interview</strong></td><td>behavioral interview</td><td>поведенческое интервью: вопросы про опыт и ситуации</td></tr>
+          <tr><td><strong>code review</strong></td><td>code review</td><td>ревью кода: проверка изменений коллегой</td></tr>
+          <tr><td><strong>mock</strong></td><td>mock interview</td><td>тренировочное интервью</td></tr>
+          <tr><td><strong>scorecard</strong></td><td>scorecard</td><td>оценочный лист компетенций</td></tr>
+          <tr><td><strong>STAR</strong></td><td>Situation, Task, Action, Result</td><td>структура поведенческого ответа: ситуация, задача, действие, результат</td></tr>
+          <tr><td><strong>system design</strong></td><td>system design</td><td>проектирование системы: требования, схема, компромиссы</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Словарь терминов ·
+    <a href="index.html">Главная</a> ·
+    <a href="planSenjor.html">План на 12 недель</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+<script src="assets/glossary.js"></script>
+
+</body>
+</html>

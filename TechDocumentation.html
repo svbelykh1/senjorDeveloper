@@ -31,6 +31,7 @@
       <li><a href="#adr">ADR</a></li>
       <li><a href="#api">API и схемы</a></li>
       <li><a href="#process">Процесс</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
       <li><a href="#check">Проверка</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
@@ -77,55 +78,55 @@
     и свой вопрос.</p>
 
     <div class="table-wrap">
-      <table class="terms">
+      <table class="terms terms-expand">
         <thead>
-          <tr><th>Вид</th><th>Кому</th><th>Какой вопрос закрывает</th><th>Где держать</th></tr>
+          <tr><th>Вид и расшифровка</th><th>Кому</th><th>Какой вопрос закрывает</th><th>Где держать</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td>README</td>
+            <td><strong>README</strong><span class="expand">read me — «прочти меня»: стартовый файл проекта</span></td>
             <td>Новый разработчик</td>
             <td>Что это за проект, как запустить, какие нужны доступы</td>
             <td>Корень репозитория</td>
           </tr>
           <tr>
-            <td>ADR</td>
+            <td><strong>ADR</strong><span class="expand">Architecture Decision Record — «запись архитектурного решения»</span></td>
             <td>Команда и будущие разработчики</td>
             <td>Почему выбрали это решение и что рассматривали вместо него</td>
             <td>Репозиторий, папка <code>docs/adr</code></td>
           </tr>
           <tr>
-            <td>API reference</td>
+            <td><strong>API reference</strong><span class="expand">Application Programming Interface — «справочник программного интерфейса»</span></td>
             <td>Потребители API</td>
             <td>Какие есть методы, параметры, ответы и ошибки</td>
             <td>OpenAPI рядом с кодом</td>
           </tr>
           <tr>
-            <td>Runbook</td>
+            <td><strong>Runbook</strong><span class="expand">run book — «книга действий»: инструкция дежурного</span></td>
             <td>On-call и дежурный</td>
             <td>Что проверить и сделать при инциденте</td>
             <td>Рядом с алертами, ссылка из мониторинга</td>
           </tr>
           <tr>
-            <td>Архитектура</td>
+            <td><strong>Архитектура</strong><span class="expand">architecture — «устройство системы»</span></td>
             <td>Команда, новые люди</td>
             <td>Из каких компонентов состоит система и как они общаются</td>
             <td>Репозиторий или база знаний</td>
           </tr>
           <tr>
-            <td>Onboarding</td>
+            <td><strong>Onboarding</strong><span class="expand">onboarding — «ввод в должность, адаптация новичка»</span></td>
             <td>Новый сотрудник</td>
             <td>Первые шаги, доступы, окружения, к кому идти</td>
             <td>База знаний команды</td>
           </tr>
           <tr>
-            <td>Changelog</td>
+            <td><strong>Changelog</strong><span class="expand">change log — «журнал изменений»</span></td>
             <td>Пользователи и поддержка</td>
             <td>Что изменилось в релизе и что сломается</td>
             <td>Репозиторий, release notes</td>
           </tr>
           <tr>
-            <td>Postmortem</td>
+            <td><strong>Postmortem</strong><span class="expand">post mortem — «после факта»: разбор инцидента без поиска виноватых</span></td>
             <td>Команда</td>
             <td>Что случилось, почему и как не повторить</td>
             <td>База знаний, ссылка из инцидента</td>
@@ -135,18 +136,19 @@
     </div>
 
     <h3>Четыре типа по Diátaxis</h3>
-    <p>Полезно держать в голове простое разделение: документация отвечает на разные вопросы,
-    и смешивать их в одном тексте — плохо.</p>
+    <p><strong>Diátaxis</strong> — фреймворк документации (от греч. «расположение, порядок»).
+    Он делит тексты по вопросу читателя. Полезно держать в голове простое разделение:
+    документация отвечает на разные вопросы, и смешивать их в одном тексте — плохо.</p>
     <div class="table-wrap">
-      <table>
+      <table class="terms terms-expand">
         <thead>
-          <tr><th>Тип</th><th>Вопрос читателя</th><th>Пример</th></tr>
+          <tr><th>Тип и перевод</th><th>Вопрос читателя</th><th>Пример</th></tr>
         </thead>
         <tbody>
-          <tr><td>Tutorial</td><td>«Я новичок, проведи меня за руку»</td><td>Первый запуск сервиса за 15 минут</td></tr>
-          <tr><td>How-to</td><td>«Мне нужно решить задачу»</td><td>Как добавить новое поле в API</td></tr>
-          <tr><td>Reference</td><td>«Мне нужен точный факт»</td><td>Список эндпоинтов и кодов ошибок</td></tr>
-          <tr><td>Explanation</td><td>«Я хочу понять, как это устроено»</td><td>Почему выбрали Kafka, а не RabbitMQ</td></tr>
+          <tr><td><strong>Tutorial</strong><span class="expand">tutorial — «обучающий пример, туториал»</span></td><td>«Я новичок, проведи меня за руку»</td><td>Первый запуск сервиса за 15 минут</td></tr>
+          <tr><td><strong>How-to</strong><span class="expand">how to — «как сделать»: инструкция под задачу</span></td><td>«Мне нужно решить задачу»</td><td>Как добавить новое поле в API</td></tr>
+          <tr><td><strong>Reference</strong><span class="expand">reference — «справочник»</span></td><td>«Мне нужен точный факт»</td><td>Список эндпоинтов и кодов ошибок</td></tr>
+          <tr><td><strong>Explanation</strong><span class="expand">explanation — «объяснение»</span></td><td>«Я хочу понять, как это устроено»</td><td>Почему выбрали Kafka, а не RabbitMQ</td></tr>
         </tbody>
       </table>
     </div>
@@ -206,13 +208,13 @@
 
 <section id="adr">
   <div class="wrap">
-    <h2><span class="badge">4</span> ADR: почему решили именно так</h2>
+    <h2><span class="badge">4</span> ADR (Architecture Decision Record): почему решили именно так</h2>
 
     <div class="idea">
       <span class="lbl">Идея на пальцах</span>
-      ADR (Architecture Decision Record) — запись в бортовом журнале. Не инструкция «как
-      пользоваться», а объяснение: какая была проблема, что решили, какие варианты
-      отбросили и чем это решение нам аукнется.
+      ADR (Architecture Decision Record — «запись архитектурного решения») — запись
+      в бортовом журнале. Не инструкция «как пользоваться», а объяснение: какая была
+      проблема, что решили, какие варианты отбросили и чем это решение нам аукнется.
     </div>
 
     <p>Через год никто не помнит, почему выбрали Kafka, почему отказались от шардирования
@@ -268,8 +270,9 @@ Consumer group — billing-core, гарантия at-least-once.
 
     <h3>API-документация</h3>
     <p>Хорошая API-документация отвечает не только «какие поля», но и «что будет, если...».
-    Источник истины — <strong>OpenAPI-спецификация рядом с кодом</strong>, а не отдельная
-    страница, которую забывают обновлять.</p>
+    Источник истины — <strong>OpenAPI-спецификация</strong> рядом с кодом
+    (OpenAPI Specification — открытая спецификация API), а не отдельная страница,
+    которую забывают обновлять.</p>
 
 <pre class="cmd">openapi: 3.1.0
 info:
@@ -307,8 +310,9 @@ paths:
 
     <h3>Схемы и диаграммы</h3>
     <p>Диаграмма стоит тысячи слов, но только если она отвечает на конкретный вопрос.
-    Для архитектуры удобна модель <strong>C4</strong>: контекст → контейнеры → компоненты.
-    Для сценариев — <strong>sequence diagram</strong>.</p>
+    Для архитектуры удобна модель <strong>C4</strong> (Context, Containers, Components,
+    Code — «контекст, контейнеры, компоненты, код»): контекст → контейнеры → компоненты.
+    Для сценариев — <strong>sequence diagram</strong> (диаграмма последовательности).</p>
 
 <pre class="cmd">sequenceDiagram
   participant C as Client
@@ -347,11 +351,14 @@ paths:
 
     <h3>Как сделать, чтобы документация жила</h3>
     <ol class="steps">
-      <li><strong>Docs-as-code.</strong> Markdown рядом с кодом, изменения — в том же MR.</li>
+      <li><strong>Docs-as-code</strong> (documentation as code — «документация как код»).
+      Markdown (лёгкий язык разметки) рядом с кодом, изменения — в том же MR
+      (Merge Request — запрос на слияние).</li>
       <li><strong>Документация в Definition of Done.</strong> Нет описания — задача не закрыта.</li>
       <li><strong>Один источник истины.</strong> Либо репозиторий, либо база знаний. Не два.</li>
       <li><strong>Владелец у каждого документа.</strong> Без владельца текст умирает.</li>
-      <li><strong>Проверка в CI.</strong> Битая ссылка, опечатка, невалидный OpenAPI — пайплайн скажет.</li>
+      <li><strong>Проверка в CI</strong> (Continuous Integration — непрерывная интеграция).
+      Битая ссылка, опечатка, невалидный OpenAPI — пайплайн скажет.</li>
       <li><strong>Регулярная ревизия.</strong> Раз в квартал: что устарело, что удалить, что дописать.</li>
     </ol>
 
@@ -373,6 +380,51 @@ paths:
     <div class="callout">
       <strong>Формула хорошей документации:</strong> правильный читатель + ответ в первом абзаце +
       пример + владелец + регулярная проверка. Всё остальное — оформление.
+    </div>
+  </div>
+</section>
+
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на странице. Полный список —
+      в <a href="Glossary.html">общем словаре проекта</a>. Формат можно повторять
+      на других страницах: термин — расшифровка — смысл по-русски.
+    </p>
+
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс приложения: набор методов, через которые один сервис обращается к другому</td></tr>
+          <tr><td><strong>OpenAPI</strong></td><td>OpenAPI Specification (OAS)</td><td>открытая спецификация API: машиночитаемое описание методов, параметров и ответов</td></tr>
+          <tr><td><strong>REST</strong></td><td>Representational State Transfer</td><td>«передача состояния представления»: архитектурный стиль API поверх HTTP</td></tr>
+          <tr><td><strong>JSON</strong></td><td>JavaScript Object Notation</td><td>текстовый формат обмена данными: объекты, массивы, пары «ключ — значение»</td></tr>
+          <tr><td><strong>YAML</strong></td><td>YAML Ain't Markup Language</td><td>«YAML — не язык разметки»: человекочитаемый формат конфигурации</td></tr>
+          <tr><td><strong>C4</strong></td><td>Context, Containers, Components, Code</td><td>четыре уровня архитектурных схем: контекст, контейнеры, компоненты, код</td></tr>
+          <tr><td><strong>ER diagram</strong></td><td>Entity-Relationship diagram</td><td>схема «сущность — связь»: таблицы и связи между ними</td></tr>
+          <tr><td><strong>Sequence diagram</strong></td><td>sequence diagram</td><td>диаграмма последовательности: кто кого вызывает и в каком порядке</td></tr>
+          <tr><td><strong>Mermaid</strong></td><td>Mermaid</td><td>инструмент текстовых диаграмм: схема хранится как текст и рендерится автоматически</td></tr>
+          <tr><td><strong>PlantUML</strong></td><td>PlantUML</td><td>инструмент диаграмм из текстового описания</td></tr>
+          <tr><td><strong>Markdown</strong></td><td>Markdown</td><td>лёгкий язык разметки: заголовки, списки, ссылки, код</td></tr>
+          <tr><td><strong>CI</strong></td><td>Continuous Integration</td><td>непрерывная интеграция: автоматическая сборка и проверки на каждое изменение</td></tr>
+          <tr><td><strong>CD</strong></td><td>Continuous Delivery / Continuous Deployment</td><td>непрерывная поставка или развёртывание: автоматическая доставка изменений в среду</td></tr>
+          <tr><td><strong>MR</strong></td><td>Merge Request</td><td>запрос на слияние: предложение изменений с ревью и проверками (в GitLab)</td></tr>
+          <tr><td><strong>Docs-as-code</strong></td><td>documentation as code</td><td>«документация как код»: тексты в репозитории, ревью и проверки как у кода</td></tr>
+          <tr><td><strong>Definition of Done</strong></td><td>definition of done</td><td>«определение готовности»: список условий, без которых задача не считается закрытой</td></tr>
+          <tr><td><strong>Contract test</strong></td><td>contract test</td><td>контрактный тест: проверка, что API и его потребители понимают друг друга одинаково</td></tr>
+          <tr><td><strong>On-call</strong></td><td>on call</td><td>«на дежурстве»: инженер, который первым реагирует на инциденты</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>Как читать словарь.</strong> Первая колонка — как термин пишут в коде
+      и документации, вторая — что означает аббревиатура, третья — объяснение
+      по-русски. На интервью достаточно знать смысл, а не заучивать полную расшифровку.
     </div>
   </div>
 </section>
@@ -401,10 +453,11 @@ paths:
 
     <div class="qa">
       <div class="q"><span class="num">02</span><span>Какие виды документации ты знаешь?</span></div>
-      <p class="a">«README — как запустить. ADR — почему приняли решение. API reference —
-      контракт для потребителей. Runbook — что делать при инциденте. Архитектурные схемы —
-      из чего состоит система. Onboarding, changelog и postmortem закрывают остальные
-      повторяющиеся вопросы».</p>
+      <p class="a">«README (read me — «прочти меня») — как запустить.
+      ADR (Architecture Decision Record — «запись архитектурного решения») — почему
+      приняли решение. API reference — контракт для потребителей. Runbook — что делать
+      при инциденте. Архитектурные схемы — из чего состоит система. Onboarding, changelog
+      и postmortem закрывают остальные повторяющиеся вопросы».</p>
       <div class="own">
         <span class="own-tag">Своими словами</span>
         <p>У каждого документа свой читатель: новичку — README, дежурному — runbook,
@@ -414,7 +467,8 @@ paths:
 
     <div class="qa">
       <div class="q"><span class="num">03</span><span>Что такое ADR и зачем он нужен?</span></div>
-      <p class="a">«ADR фиксирует архитектурное решение: контекст, само решение, альтернативы
+      <p class="a">«ADR (Architecture Decision Record — «запись архитектурного решения»)
+      фиксирует архитектурное решение: контекст, само решение, альтернативы
       и последствия. Он нужен, чтобы через год было понятно не только что сделали, но и почему,
       и какие варианты отбросили. Старые ADR не переписывают: новое решение оформляют
       новым документом со ссылкой на предыдущий».</p>
@@ -490,7 +544,7 @@ paths:
     <a href="GitLabWorkflow.html">GitLab: protected branches, approvals, CI</a> ·
     <a href="GitOperations.html">Git: cherry-pick, stash, rebase, bisect</a> ·
     <a href="DeployStrategies.html">Blue-green, canary, rolling</a> ·
-    <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>
 

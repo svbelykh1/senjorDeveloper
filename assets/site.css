@@ -293,6 +293,16 @@
   tr:last-child td{border-bottom:none}
   tbody tr:hover{background:var(--surface-2)}
   table.terms td:first-child{white-space:nowrap;width:1%}
+  table.terms-expand td:first-child{white-space:normal;width:22%}
+  table.terms-expand td:first-child strong{color:var(--ink)}
+  .expand{
+    display:block;
+    margin-top:4px;
+    font-size:12px;
+    line-height:1.45;
+    color:var(--muted);
+    font-weight:400;
+  }
 
   .idea{
     border:1px solid var(--line);

@@ -33,6 +33,7 @@
       <li><a href="#cors">CORS</a></li>
       <li><a href="#practice">Практика</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -256,6 +257,46 @@ if (!in_array($host, $allowedHosts, true)) {
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс: методы, через которые сервисы общаются</td></tr>
+          <tr><td><strong>artifact</strong></td><td>artifact</td><td>артефакт сборки: файл или отчёт, сохранённый после стадии</td></tr>
+          <tr><td><strong>CDN</strong></td><td>Content Delivery Network</td><td>сеть доставки контента: серверы ближе к пользователю</td></tr>
+          <tr><td><strong>CI</strong></td><td>Continuous Integration</td><td>непрерывная интеграция: автоматическая сборка и проверки на каждое изменение</td></tr>
+          <tr><td><strong>CORS</strong></td><td>Cross-Origin Resource Sharing</td><td>разрешение браузеру читать ответ с другого origin</td></tr>
+          <tr><td><strong>CSP</strong></td><td>Content Security Policy</td><td>политика безопасности контента: откуда можно грузить скрипты</td></tr>
+          <tr><td><strong>CSRF</strong></td><td>Cross-Site Request Forgery</td><td>подделка межсайтового запроса с cookie пользователя</td></tr>
+          <tr><td><strong>DAST</strong></td><td>Dynamic Application Security Testing</td><td>динамический анализ безопасности работающего приложения</td></tr>
+          <tr><td><strong>DRM</strong></td><td>Digital Rights Management</td><td>управление цифровыми правами: защита видео от копирования</td></tr>
+          <tr><td><strong>MFA</strong></td><td>Multi-Factor Authentication</td><td>многофакторная аутентификация</td></tr>
+          <tr><td><strong>MR</strong></td><td>Merge Request</td><td>запрос на слияние изменений с ревью и проверками (GitLab)</td></tr>
+          <tr><td><strong>OWASP</strong></td><td>Open Worldwide Application Security Project</td><td>сообщество и список главных веб-уязвимостей</td></tr>
+          <tr><td><strong>SAST</strong></td><td>Static Application Security Testing</td><td>статический анализ безопасности по исходному коду</td></tr>
+          <tr><td><strong>SCA</strong></td><td>Software Composition Analysis</td><td>анализ зависимостей и известных уязвимостей</td></tr>
+          <tr><td><strong>Secret</strong></td><td>Secret</td><td>секрет: пароль, токен или ключ; в Kubernetes — объект Secret</td></tr>
+          <tr><td><strong>SQL</strong></td><td>Structured Query Language</td><td>язык структурированных запросов</td></tr>
+          <tr><td><strong>SQLi</strong></td><td>SQL Injection</td><td>SQL-инъекция: подстановка SQL через пользовательский ввод</td></tr>
+          <tr><td><strong>SSRF</strong></td><td>Server-Side Request Forgery</td><td>подделка серверного запроса к внутренним адресам</td></tr>
+          <tr><td><strong>XSS</strong></td><td>Cross-Site Scripting</td><td>межсайтовый скриптинг: чужой JavaScript на странице</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
@@ -365,7 +406,7 @@ if (!in_array($host, $allowedHosts, true)) {
     Компетенция «Безопасность» ·
     <a href="AuthOIDC.html">OAuth, OIDC, PKCE</a> ·
     <a href="PrivacyGDPR.html">GDPR и приватность</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>

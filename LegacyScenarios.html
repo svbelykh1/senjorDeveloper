@@ -34,6 +34,7 @@
       <li><a href="#scenarios">Сценарии</a></li>
       <li><a href="#rules">Правила</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -383,6 +384,42 @@ final class ReportBuilder
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>ADR</strong></td><td>Architecture Decision Record</td><td>запись архитектурного решения: контекст, выбор, альтернативы, последствия</td></tr>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс: методы, через которые сервисы общаются</td></tr>
+          <tr><td><strong>cache</strong></td><td>cache</td><td>кэш: временное хранилище для ускорения</td></tr>
+          <tr><td><strong>CDC</strong></td><td>Change Data Capture</td><td>захват изменений данных из журнала БД</td></tr>
+          <tr><td><strong>Circuit Breaker</strong></td><td>circuit breaker</td><td>предохранитель: перестаёт вызывать упавшую зависимость</td></tr>
+          <tr><td><strong>DNS</strong></td><td>Domain Name System</td><td>система доменных имён</td></tr>
+          <tr><td><strong>Feature Toggle</strong></td><td>feature toggle</td><td>переключатель функции без релиза</td></tr>
+          <tr><td><strong>JSON</strong></td><td>JavaScript Object Notation</td><td>текстовый формат обмена данными</td></tr>
+          <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>распределённый журнал событий</td></tr>
+          <tr><td><strong>MR</strong></td><td>Merge Request</td><td>запрос на слияние изменений с ревью и проверками (GitLab)</td></tr>
+          <tr><td><strong>Outbox</strong></td><td>transactional outbox</td><td>таблица исходящих событий в одной транзакции с данными</td></tr>
+          <tr><td><strong>Pod</strong></td><td>pod</td><td>pod: минимальная единица запуска; в Kubernetes — группа контейнеров</td></tr>
+          <tr><td><strong>Runbook</strong></td><td>run book — «книга действий»</td><td>инструкция дежурного: что проверить и сделать при инциденте</td></tr>
+          <tr><td><strong>Saga</strong></td><td>saga</td><td>распределённая транзакция из шагов с компенсациями</td></tr>
+          <tr><td><strong>SQL</strong></td><td>Structured Query Language</td><td>язык структурированных запросов</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">8</span> Вопросы и самопроверка</h2>
@@ -501,7 +538,7 @@ final class ReportBuilder
     Компетенция «Обеспечение качества» ·
     <a href="AIQuality.html">ИИ в процессах качества</a> ·
     <a href="QualityAssurance.html">Тесты, нагрузка, Quality Gate</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>

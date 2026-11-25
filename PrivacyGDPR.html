@@ -34,6 +34,7 @@
       <li><a href="#ai">ИИ</a></li>
       <li><a href="#incident">Утечка</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -331,6 +332,34 @@ WHERE last_seen_at &lt; now() - interval '24 months'
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>DPA</strong></td><td>Data Processing Agreement</td><td>договор об обработке данных с подрядчиком</td></tr>
+          <tr><td><strong>DPIA</strong></td><td>Data Protection Impact Assessment</td><td>оценка влияния обработки на приватность</td></tr>
+          <tr><td><strong>GDPR</strong></td><td>General Data Protection Regulation</td><td>общий регламент ЕС о защите персональных данных</td></tr>
+          <tr><td><strong>JSON</strong></td><td>JavaScript Object Notation</td><td>текстовый формат обмена данными</td></tr>
+          <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>распределённый журнал событий</td></tr>
+          <tr><td><strong>LLM</strong></td><td>Large Language Model</td><td>большая языковая модель</td></tr>
+          <tr><td><strong>PII</strong></td><td>Personally Identifiable Information</td><td>персональные данные: можно опознать человека</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">8</span> Вопросы и самопроверка</h2>
@@ -444,7 +473,7 @@ WHERE last_seen_at &lt; now() - interval '24 months'
     Компетенция «ИИ и приватность» ·
     <a href="AIQuality.html">ИИ в процессах качества</a> ·
     <a href="RAGPrompting.html">RAG и Chain-of-Thought</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>

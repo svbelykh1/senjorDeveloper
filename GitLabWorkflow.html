@@ -32,6 +32,7 @@
       <li><a href="#ci">CI</a></li>
       <li><a href="#rules">Правила</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -376,6 +377,36 @@ deploy:
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>approval</strong></td><td>approval</td><td>одобрение изменения перед merge</td></tr>
+          <tr><td><strong>artifact</strong></td><td>artifact</td><td>артефакт сборки: файл или отчёт, сохранённый после стадии</td></tr>
+          <tr><td><strong>cache</strong></td><td>cache</td><td>кэш: временное хранилище для ускорения</td></tr>
+          <tr><td><strong>CD</strong></td><td>Continuous Delivery / Continuous Deployment</td><td>непрерывная поставка или развёртывание изменений</td></tr>
+          <tr><td><strong>CI</strong></td><td>Continuous Integration</td><td>непрерывная интеграция: автоматическая сборка и проверки на каждое изменение</td></tr>
+          <tr><td><strong>MR</strong></td><td>Merge Request</td><td>запрос на слияние изменений с ревью и проверками (GitLab)</td></tr>
+          <tr><td><strong>pipeline</strong></td><td>pipeline</td><td>конвейер CI/CD: стадии сборки, проверок и деплоя</td></tr>
+          <tr><td><strong>protected branch</strong></td><td>protected branch</td><td>защищённая ветка: прямые push запрещены</td></tr>
+          <tr><td><strong>YAML</strong></td><td>YAML Ain't Markup Language</td><td>человекочитаемый формат конфигурации</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
@@ -491,7 +522,7 @@ deploy:
     <a href="GitOperations.html">Git: cherry-pick, stash, rebase, bisect</a> ·
     <a href="DeployStrategies.html">Blue-green, canary, rolling</a> ·
     <a href="JiraWorkflow.html">Jira workflow и оценка</a> ·
-    <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> · <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>
 

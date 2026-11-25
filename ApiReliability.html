@@ -33,6 +33,7 @@
       <li><a href="#access">Доступ</a></li>
       <li><a href="#practice">Практика</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -256,6 +257,40 @@ Content-Type: application/json
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс: методы, через которые сервисы общаются</td></tr>
+          <tr><td><strong>CORS</strong></td><td>Cross-Origin Resource Sharing</td><td>разрешение браузеру читать ответ с другого origin</td></tr>
+          <tr><td><strong>gRPC</strong></td><td>Google Remote Procedure Call</td><td>удалённый вызов процедур с контрактом и HTTP/2</td></tr>
+          <tr><td><strong>JSON</strong></td><td>JavaScript Object Notation</td><td>текстовый формат обмена данными</td></tr>
+          <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>распределённый журнал событий</td></tr>
+          <tr><td><strong>offset</strong></td><td>offset</td><td>позиция потребителя в партиции</td></tr>
+          <tr><td><strong>PgBouncer</strong></td><td>PostgreSQL connection pooler</td><td>пул соединений к PostgreSQL</td></tr>
+          <tr><td><strong>PHP-FPM</strong></td><td>PHP FastCGI Process Manager</td><td>менеджер процессов PHP для веб-сервера</td></tr>
+          <tr><td><strong>Pod</strong></td><td>pod</td><td>pod: минимальная единица запуска; в Kubernetes — группа контейнеров</td></tr>
+          <tr><td><strong>Rate limiting</strong></td><td>rate limiting</td><td>ограничение частоты запросов</td></tr>
+          <tr><td><strong>TCP</strong></td><td>Transmission Control Protocol</td><td>надёжный потоковый протокол транспортного уровня</td></tr>
+          <tr><td><strong>TTL</strong></td><td>Time To Live</td><td>время жизни: сколько данных живут в кэше или сообщении</td></tr>
+          <tr><td><strong>WAF</strong></td><td>Web Application Firewall</td><td>межсетевой экран для веб-приложений</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
@@ -369,7 +404,7 @@ Content-Type: application/json
     Компетенция «Протоколы и API» ·
     <a href="ApiProtocols.html">HTTP/2, WebSocket, SSE</a> ·
     <a href="Resilience.html">Отказоустойчивость</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>

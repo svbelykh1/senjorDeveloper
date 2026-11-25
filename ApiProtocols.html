@@ -32,6 +32,7 @@
       <li><a href="#practice">Практика</a></li>
       <li><a href="#mistakes">Ошибки</a></li>
       <li><a href="#check">Проверка</a></li>
+      <li><a href="Glossary.html">Словарь</a></li>
     </ul>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">
       <span class="ico" id="themeIcon">☾</span><span id="themeLabel">Тёмная</span>
@@ -235,6 +236,44 @@ data: {"transcode": 42, "url": "/streams/42/master.m3u8"}</pre>
   </div>
 </section>
 
+<!-- glossary:start -->
+<section id="glossary">
+  <div class="wrap">
+    <h2><span class="badge">i</span> Словарь терминов</h2>
+    <p class="sub">
+      Расшифровки и перевод терминов, которые встречаются на этой странице.
+      Полный список — в <a href="Glossary.html">общем словаре проекта</a>.
+    </p>
+    <div class="table-wrap">
+      <table class="terms terms-expand">
+        <thead>
+          <tr><th>Термин</th><th>Расшифровка</th><th>По-русски</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>программный интерфейс: методы, через которые сервисы общаются</td></tr>
+          <tr><td><strong>CDN</strong></td><td>Content Delivery Network</td><td>сеть доставки контента: серверы ближе к пользователю</td></tr>
+          <tr><td><strong>GraphQL</strong></td><td>Graph Query Language</td><td>язык запросов к API с выбором полей клиентом</td></tr>
+          <tr><td><strong>gRPC</strong></td><td>Google Remote Procedure Call</td><td>удалённый вызов процедур с контрактом и HTTP/2</td></tr>
+          <tr><td><strong>HTTP/1.1</strong></td><td>HyperText Transfer Protocol, version 1.1</td><td>версия 1.1 протокола HTTP</td></tr>
+          <tr><td><strong>HTTP/2</strong></td><td>HyperText Transfer Protocol, version 2</td><td>версия 2: мультиплексирование в одном соединении</td></tr>
+          <tr><td><strong>HTTP/3</strong></td><td>HyperText Transfer Protocol, version 3</td><td>версия 3 поверх QUIC</td></tr>
+          <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>распределённый журнал событий</td></tr>
+          <tr><td><strong>N+1</strong></td><td>N plus 1 queries</td><td>проблема лишних запросов: один запрос в цикле на каждую строку</td></tr>
+          <tr><td><strong>Pub-Sub</strong></td><td>Publish-Subscribe</td><td>издатель — подписчик: издатель не знает потребителей</td></tr>
+          <tr><td><strong>QUIC</strong></td><td>Quick UDP Internet Connections</td><td>транспорт поверх UDP для HTTP/3</td></tr>
+          <tr><td><strong>REST</strong></td><td>Representational State Transfer</td><td>архитектурный стиль API поверх HTTP</td></tr>
+          <tr><td><strong>SSE</strong></td><td>Server-Sent Events</td><td>поток событий от сервера к клиенту по HTTP</td></tr>
+          <tr><td><strong>TCP</strong></td><td>Transmission Control Protocol</td><td>надёжный потоковый протокол транспортного уровня</td></tr>
+          <tr><td><strong>TLS</strong></td><td>Transport Layer Security</td><td>протокол шифрования транспортного уровня</td></tr>
+          <tr><td><strong>UDP</strong></td><td>User Datagram Protocol</td><td>датаграммный протокол без гарантии доставки</td></tr>
+          <tr><td><strong>WebSocket</strong></td><td>WebSocket</td><td>двустороннее постоянное соединение поверх HTTP-upgrade</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- glossary:end -->
+
 <section id="check">
   <div class="wrap">
     <h2><span class="badge">7</span> Вопросы и самопроверка</h2>
@@ -343,7 +382,7 @@ data: {"transcode": 42, "url": "/streams/42/master.m3u8"}</pre>
     Компетенция «Протоколы и API» ·
     <a href="ApiReliability.html">Идемпотентность и пулинг</a> ·
     <a href="KafkaCaching.html">Kafka и кэширование</a> ·
-    <a href="index.html">Главная</a> ·
+    <a href="Glossary.html">Словарь</a> · <a href="index.html">Главная</a> ·
     <a href="planSenjor.html">Вернуться к плану</a>
   </div>
 </footer>
